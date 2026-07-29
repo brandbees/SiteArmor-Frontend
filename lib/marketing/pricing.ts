@@ -1,32 +1,25 @@
 /**
- * Single source of truth for marketing pricing.
- * Set PLAN_PRICES values to flip the entire site from placeholders to live numbers.
- * Add-on prices are confirmed and safe to display.
+ * Marketing pricing — monthly amounts mirror lib/constants.ts (agency billing).
+ * Annual billing is not offered yet; UI shows monthly only.
  */
 
 export type PlanCode = "free" | "freemium" | "premium" | "agency_plus";
-export type BillingPeriod = "monthly" | "annual";
+export type BillingPeriod = "monthly";
 
 /** Public display names → internal Stripe/plan codes */
 export const PLAN_CODES = {
   Free: "free",
   Starter: "freemium",
   Growth: "premium",
-  Agency: "agency_plus",
+  "Agency+": "agency_plus",
 } as const satisfies Record<string, PlanCode>;
 
-/**
- * Prices in USD. Keep null until announced — cards render "—" + note.
- * When ready: { monthly: 49, annual: 39 } etc.
- */
-export const PLAN_PRICES: Record<
-  PlanCode,
-  { monthly: number | null; annual: number | null }
-> = {
-  free: { monthly: 0, annual: 0 },
-  freemium: { monthly: null, annual: null },
-  premium: { monthly: null, annual: null },
-  agency_plus: { monthly: null, annual: null },
+/** Monthly USD prices — same as agency-level PLAN_PRICES in lib/constants.ts */
+export const PLAN_PRICES: Record<PlanCode, { monthly: number }> = {
+  free: { monthly: 0 },
+  freemium: { monthly: 29 },
+  premium: { monthly: 79 },
+  agency_plus: { monthly: 149 },
 };
 
 export interface PlanDefinition {
@@ -117,10 +110,10 @@ export const PLANS: PlanDefinition[] = [
   },
   {
     code: "agency_plus",
-    name: "Agency",
+    name: "Agency+",
     tagline: "Portfolio-scale operations, fully branded.",
     siteLimit: 9_999,
-    siteLimitLabel: "9,999 sites",
+    siteLimitLabel: "Unlimited sites",
     aiTokens: 100_000,
     storage: "5 GB",
     backups: true,
@@ -130,12 +123,12 @@ export const PLANS: PlanDefinition[] = [
     cta: "Start 14-day Trial",
     ctaHref: "/register?plan=agency_plus",
     features: [
-      "Up to 9,999 sites (effectively unlimited)",
+      "Unlimited sites",
       "100,000 AI tokens / month",
       "5 GB storage",
       "Automated backups (30-day retention)",
       "Full white-label + team roles",
-      "Priority portfolio operations",
+      "AI agent + custom domain",
     ],
   },
 ];
@@ -155,10 +148,8 @@ export const ADDONS = {
 
 export function formatPlanPrice(
   code: PlanCode,
-  period: BillingPeriod
+  _period: BillingPeriod = "monthly"
 ): { display: string; announced: boolean } {
-  const value = PLAN_PRICES[code][period];
-  if (code === "free") return { display: "$0", announced: true };
-  if (value === null) return { display: "—", announced: false };
-  return { display: `$${value}`, announced: true };
+  if (code === "free") return { display: "Free", announced: true };
+  return { display: `$${PLAN_PRICES[code].monthly}`, announced: true };
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Check, X, Minus } from "lucide-react";
 import { getPageContent, field } from "@/lib/cms";
 import { sf } from "@/lib/marketing/cms";
-import { ADDONS, PLANS } from "@/lib/marketing/pricing";
+import { ADDONS, PLANS, PLAN_PRICES } from "@/lib/marketing/pricing";
 import { Container, Section, SectionHeading } from "@/components/marketing/ui/Section";
 import { Reveal } from "@/components/marketing/ui/Reveal";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
@@ -16,15 +16,17 @@ const DEFAULT_DESC = "Four plans with real site limits, AI token allowances, sto
 
 const PRICING_FAQS = [
   { q: "What counts as a site?", a: "Each WordPress installation you connect counts as one site. Staging and production count separately if both are monitored." },
-  { q: "What happens when I hit my site limit?", a: "You can upgrade or remove a site. The Agency plan caps at 9,999 sites (effectively unlimited)." },
+  { q: "What happens when I hit my site limit?", a: "You can upgrade or remove a site. Agency+ includes unlimited sites." },
   { q: "Can I cancel anytime?", a: "Yes. Cancel from billing settings. Your access continues through the current billing period." },
   { q: "What are AI tokens?", a: "Tokens power the AI agent and report narratives. Unused allotments reset monthly; top-ups are available." },
   { q: "Is there a free trial?", a: "All paid plans include a 14-day trial with no card required. The Free plan stays free for one site." },
-  { q: "Do you charge per user?", a: "No. Plans are priced by site count. Team members are unlimited on all plans." },
+  { q: "Do you charge per user?", a: "No. Plans are priced by site count. Seat limits apply per plan (Free: 1, Starter: 3, Growth: 10, Agency+: unlimited)." },
 ];
 
 const COMPARISON_ROWS: { label: string; values: (boolean | string)[] }[] = [
-  { label: "Sites", values: ["1", "10", "50", "9,999"] },
+  { label: "Sites", values: ["1", "10", "50", "Unlimited"] },
+  { label: "Seats", values: ["1", "3", "10", "Unlimited"] },
+  { label: "Price / month", values: ["Free", "$29", "$79", "$149"] },
   { label: "AI tokens / month", values: ["1,000", "5,000", "20,000", "100,000"] },
   { label: "Storage", values: ["100 MB", "500 MB", "1 GB", "5 GB"] },
   { label: "All 5 health pillars", values: [true, true, true, true] },
@@ -67,7 +69,13 @@ export default async function PricingPage() {
     name: "SnapshotAI",
     description: DEFAULT_DESC,
     brand: { "@type": "Brand", name: "BrandBees" },
-    offers: [{ "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", availability: "https://schema.org/InStock" }],
+    offers: PLANS.map((p) => ({
+      "@type": "Offer",
+      name: p.name,
+      price: String(PLAN_PRICES[p.code].monthly),
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    })),
   };
 
   return (

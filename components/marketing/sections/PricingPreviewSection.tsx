@@ -1,16 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Check, ArrowRight } from "lucide-react";
 import { Container, Section, SectionHeading } from "@/components/marketing/ui/Section";
 import { Reveal } from "@/components/marketing/ui/Reveal";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
-import {
-  PLANS,
-  formatPlanPrice,
-  type BillingPeriod,
-} from "@/lib/marketing/pricing";
+import { PLANS, formatPlanPrice } from "@/lib/marketing/pricing";
 import { cmsField } from "@/lib/marketing/cms";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +17,6 @@ export function PricingPreviewSection({
   showAllFeatures?: boolean;
 }) {
   const c = cmsField(cms);
-  const [period, setPeriod] = useState<BillingPeriod>("monthly");
 
   return (
     <Section id="pricing" tone="muted">
@@ -33,36 +27,14 @@ export function PricingPreviewSection({
             title={c("title", "Four tiers. Real limits. No surprises.")}
             description={c(
               "description",
-              "All paid plans include a 14-day trial — no card required at signup."
+              "All paid plans include a 14-day trial — no card required at signup. Billed monthly."
             )}
           />
         </Reveal>
 
-        <Reveal delay={0.05}>
-          <div className="mb-10 flex justify-center">
-            <div className="inline-flex rounded-xl bg-[var(--mkt-surface)] p-1 shadow-elevated-xs">
-              {(["monthly", "annual"] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPeriod(p)}
-                  className={cn(
-                    "rounded-lg px-4 py-2 text-sm font-semibold capitalize transition-all",
-                    period === p
-                      ? "bg-accent text-white shadow-elevated-xs"
-                      : "text-[var(--mkt-muted)] hover:text-[var(--mkt-fg)]"
-                  )}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {PLANS.map((plan, i) => {
-            const price = formatPlanPrice(plan.code, period);
+            const price = formatPlanPrice(plan.code);
             return (
               <Reveal key={plan.code} delay={0.05 * i}>
                 <div
@@ -93,17 +65,11 @@ export function PricingPreviewSection({
                       <span className="font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)]">
                         {price.display}
                       </span>
-                      {plan.code !== "free" && price.announced ? (
-                        <span className="text-sm text-[var(--mkt-muted)]">
-                          /{period === "monthly" ? "mo" : "mo, billed annually"}
-                        </span>
+                      {plan.code !== "free" ? (
+                        <span className="text-sm text-[var(--mkt-muted)]">/mo</span>
                       ) : null}
                     </div>
-                    {!price.announced ? (
-                      <p className="mt-1 text-xs text-[var(--mkt-muted)]">
-                        Pricing announced soon
-                      </p>
-                    ) : plan.code === "free" ? (
+                    {plan.code === "free" ? (
                       <p className="mt-1 text-xs text-[var(--mkt-muted)]">
                         Forever free · 1 site
                       </p>
