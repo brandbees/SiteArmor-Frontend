@@ -38,13 +38,13 @@ export default async function MarketingLayout({
   const brandCss = hasBrandOverride
     ? `:root {
   --accent: ${bp};
-  --accent-hover: color-mix(in srgb, ${bp} 82%, black);
-  --accent-light: color-mix(in srgb, ${bp} 12%, white);
   --accent-deep: color-mix(in srgb, ${bp} 55%, black);
   --gradient-brand: linear-gradient(135deg, color-mix(in srgb, ${bp} 85%, white) 0%, ${bp} 45%, color-mix(in srgb, ${bp} 55%, black) 100%);
   --ring: ${bp};
   --mkt-secondary: ${ba};
-  --mkt-wash: color-mix(in srgb, ${bp} 10%, white);
+}
+html.mkt-dark, html.dark {
+  --mkt-wash: color-mix(in srgb, ${bp} 18%, #0b1220);
 }`
     : "";
 

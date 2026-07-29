@@ -26,8 +26,6 @@ import { cmsField } from "@/lib/marketing/cms";
 function applyBrandVars(bp: string, ba: string) {
   const r = document.documentElement.style;
   r.setProperty("--accent", bp);
-  r.setProperty("--accent-hover", `color-mix(in srgb, ${bp} 82%, black)`);
-  r.setProperty("--accent-light", `color-mix(in srgb, ${bp} 12%, white)`);
   r.setProperty("--accent-deep", `color-mix(in srgb, ${bp} 55%, black)`);
   r.setProperty(
     "--gradient-brand",
@@ -41,7 +39,6 @@ function applyBrandVars(bp: string, ba: string) {
       `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`
     );
   }
-  // Keep accent_color available for rare secondary accents without inventing new hues
   r.setProperty("--mkt-secondary", ba);
 }
 

@@ -19,7 +19,7 @@
   --primary-foreground: #ffffff;
   --accent: #1a56db;
   --accent-hover: #1347b8;
-  --accent-light: #e9effc;
+  --accent-light: color-mix(in srgb, var(--accent) 12%, white);
   --accent-deep: #102850;
   --accent-rgb: 26, 86, 219;
   --accent-foreground: #ffffff;
@@ -73,6 +73,8 @@
 
 html.mkt-dark,
 html.dark {
+  --accent-light: color-mix(in srgb, var(--accent) 22%, #0b1220);
+  --accent-hover: color-mix(in srgb, var(--accent) 78%, white);
   --mkt-bg: #0b1220;
   --mkt-bg-muted: #131c2e;
   --mkt-wash: #102038;

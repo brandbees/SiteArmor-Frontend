@@ -185,12 +185,24 @@ export default async function PricingPage() {
       <Section className="!py-12">
         <Container>
           <Reveal>
-            <div className="flex flex-col items-center justify-between gap-5 rounded-2xl bg-accent-light px-8 py-7 sm:flex-row">
-              <div>
-                <p className="text-lg font-semibold text-[var(--mkt-fg)]">All paid plans: 14-day trial, no card required.</p>
-                <p className="mt-1 text-sm text-[var(--mkt-muted)]">Start with the Free plan and upgrade when your portfolio grows.</p>
+            <div className="relative flex flex-col items-start justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-brand px-8 py-7 shadow-elevated-md sm:flex-row sm:items-center">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-25"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 15% 50%, white 0%, transparent 45%)",
+                }}
+              />
+              <div className="relative">
+                <p className="text-lg font-semibold text-white">
+                  All paid plans: 14-day trial, no card required.
+                </p>
+                <p className="mt-1 text-sm text-white/70">
+                  Start with the Free plan and upgrade when your portfolio grows.
+                </p>
               </div>
-              <ButtonLink href="/register" className="shrink-0">
+              <ButtonLink href="/register" variant="inverse" className="relative shrink-0">
                 Start Free
                 <ArrowRight size={15} />
               </ButtonLink>
