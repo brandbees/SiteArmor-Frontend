@@ -12,22 +12,23 @@
   --card: #ffffff;
   --card-foreground: #111827;
 
-  /* Brand — sampled from the Brandbees logo mark (public/Brandbees-sas-x512.png):
-     top face #2060b8, side face #185090, shadow face #102850. */
+  /* Brand — #1a56db: a saturated royal blue that reads clearly on
+     both light and dark backgrounds while staying in the BrandBees
+     navy family. Derived tints/shades stay blue, never muddy. */
   --primary: #111827;
   --primary-foreground: #ffffff;
-  --accent: #1f5fb8;
-  --accent-hover: #164a92;
-  --accent-light: #eaf1fb;
+  --accent: #1a56db;
+  --accent-hover: #1347b8;
+  --accent-light: #e9effc;
   --accent-deep: #102850;
-  --accent-rgb: 31, 95, 184;
+  --accent-rgb: 26, 86, 219;
   --accent-foreground: #ffffff;
-  --gradient-brand: linear-gradient(135deg, #2668c4 0%, #1f5fb8 45%, #102850 100%);
+  --gradient-brand: linear-gradient(135deg, #2563eb 0%, #1a56db 45%, #102850 100%);
 
   /* Feedback */
   --destructive: #dc2626;
   --destructive-light: #fef2f2;
-  --ring: #1f5fb8;
+  --ring: #1a56db;
   --radius: 0.75rem;
 
   /* Shadows — a hairline "shadow-border" (0 0 0 1px) replaces hard borders on cards,
@@ -55,6 +56,33 @@
   --score-bad: #dc2626;
   --score-bad-bg: #fef2f2;
   --score-bad-border: #fecaca;
+
+  /* Marketing site surface tokens — consume brand accent; do not invent new hues */
+  --mkt-bg: #f7f8fb;
+  --mkt-bg-muted: #eef1f6;
+  --mkt-wash: #eaf1fb;
+  --mkt-surface: #ffffff;
+  --mkt-fg: #0f172a;
+  --mkt-muted: #5b6577;
+  --mkt-border: rgb(15 23 42 / 0.06);
+  --mkt-border-strong: #c8d0dc;
+  --mkt-inverse: #0f1d35;
+  --mkt-inverse-fg: #f8fafc;
+  --mkt-secondary: #1a56db;
+}
+
+html.mkt-dark,
+html.dark {
+  --mkt-bg: #0b1220;
+  --mkt-bg-muted: #131c2e;
+  --mkt-wash: #102038;
+  --mkt-surface: #111a2b;
+  --mkt-fg: #f1f5f9;
+  --mkt-muted: #94a3b8;
+  --mkt-border: rgb(148 163 184 / 0.12);
+  --mkt-border-strong: #334155;
+  --mkt-inverse: #060b14;
+  --mkt-inverse-fg: #f8fafc;
 }
 
 @theme inline {
@@ -235,3 +263,21 @@ button, a, input, select, textarea {
 }
 
 .animate-slide-in-right { animation: slide-in-right 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* Marketing shell */
+.marketing-root {
+  background: var(--mkt-bg);
+  color: var(--mkt-fg);
+  min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-root *,
+  .marketing-root *::before,
+  .marketing-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

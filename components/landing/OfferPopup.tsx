@@ -10,11 +10,11 @@ const DEFAULTS  = {
   badge:         "Limited Time Offer",
   badge_sub:     "Launch special · Ends soon",
   heading:       "Get 30% off your first 3 months",
-  body:          "Sign up today and lock in 30% off any paid plan for 3 months. Join 240+ agencies already monitoring smarter.",
+  body:          "Sign up today and lock in 30% off any paid plan for 3 months. Start free — no card required.",
   promo_code:    "LAUNCH30",
   cta:           "Claim Offer — Start Free →",
   cta_url:       "/register",
-  dismiss_text:  "No thanks, I'll pay full price",
+  dismiss_text:  "No thanks",
 };
 
 interface Props {
@@ -68,7 +68,7 @@ export function OfferPopup({ enabled, data }: Props) {
       {/* Card */}
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl animate-scale-in overflow-hidden">
         {/* Gradient top stripe */}
-        <div className="h-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
+        <div className="h-1.5 bg-gradient-brand" />
 
         <div className="p-6 pt-5">
           {/* Close */}
@@ -81,11 +81,11 @@ export function OfferPopup({ enabled, data }: Props) {
 
           {/* Icon + badge */}
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center shrink-0 shadow-elevated-sm">
               <Zap size={22} className="text-white" fill="white" />
             </div>
             <div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold mb-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent-light text-accent text-xs font-bold mb-1">
                 <Clock size={10} />
                 {f("badge")}
               </span>
@@ -108,7 +108,7 @@ export function OfferPopup({ enabled, data }: Props) {
             </div>
             <button
               onClick={copy}
-              className="shrink-0 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-600 text-xs font-semibold border border-sky-200 hover:bg-sky-100 transition-colors min-w-[52px]"
+              className="shrink-0 px-3 py-1.5 rounded-lg bg-accent-light text-accent text-xs font-semibold hover:bg-accent hover:text-white transition-colors min-w-[52px]"
             >
               {copied ? "✓" : "Copy"}
             </button>
@@ -117,7 +117,7 @@ export function OfferPopup({ enabled, data }: Props) {
           <Link
             href={f("cta_url")}
             onClick={dismiss}
-            className="block text-center px-5 py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/25 transition-all mb-3"
+            className="block text-center px-5 py-3.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-semibold text-sm shadow-elevated-sm transition-all mb-3"
           >
             {f("cta")}
           </Link>
