@@ -97,7 +97,7 @@ export function FAQSection({
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <Section id="faq">
+    <Section id="faq" className="!pb-10 sm:!pb-12 lg:!pb-14">
       <Container>
         <Reveal>
           <SectionHeading

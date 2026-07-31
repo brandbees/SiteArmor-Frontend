@@ -5,9 +5,11 @@ import { ArrowRight, ArrowUpRight, Check, Zap, AlertTriangle, Wrench, Brain } fr
 import { getPageContent, field } from "@/lib/cms";
 import { sf, cmsField } from "@/lib/marketing/cms";
 import { FEATURE_PAGES, PILLARS, CONNECTION_TIERS } from "@/lib/marketing/features";
+import { FEATURE_SNAPSHOT, SNAPSHOTS } from "@/lib/marketing/snapshots";
 import { Container, Section, SectionHeading } from "@/components/marketing/ui/Section";
 import { Reveal } from "@/components/marketing/ui/Reveal";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
+import { ProductFrame } from "@/components/marketing/ProductFrame";
 import { FAQSection, FaqJsonLd } from "@/components/marketing/sections/FAQSection";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
 
@@ -46,36 +48,29 @@ const FEATURE_DETAIL: Record<string, {
 }> = {
   "performance-monitoring": {
     problem: "Slow sites lose clients.",
-    problemDetail: "Agencies discover performance regressions weeks late — usually when a client complains about bounce rates or Google flags Core Web Vitals failures.",
+    problemDetail:
+      "Agencies discover performance regressions weeks late — usually when a client complains about bounce rates or Google flags Core Web Vitals failures. Recommendations alone don't help if nobody has time to apply them across 50 sites.",
     mechanisms: [
-      { icon: Zap, title: "Lighthouse scores", desc: "Automated PageSpeed Insights on every audit — mobile and desktop, with LCP, FID, CLS, and overall score." },
+      { icon: Zap, title: "Lighthouse & Core Web Vitals", desc: "Automated PageSpeed Insights on every audit — mobile and desktop, with LCP, INP, CLS, and overall score." },
       { icon: Brain, title: "Trend history", desc: "Score trends over time so you can pinpoint exactly when something changed — across any date range." },
+      { icon: Wrench, title: "AI Optimize", desc: "Measure → diagnose → fix → re-measure. Detects existing cache plugins, applies fixes with backup, and rolls back if the score regresses." },
       { icon: AlertTriangle, title: "Instant alerts", desc: "Get notified the moment a performance score drops below your threshold — email or Slack." },
-      { icon: Wrench, title: "AI Optimize tie-in", desc: "The AI agent can diagnose render-blocking assets and apply fixes with rollback if the score regresses." },
     ],
-    technical: ["Google PageSpeed Insights API (Lighthouse)", "Core Web Vitals: LCP, FID/INP, CLS", "Server response time (TTFB)", "Page weight analysis", "Real-user JS metrics (plugin connected)", "Mobile + desktop separate"],
-    availableFrom: "Free",
+    technical: [
+      "Google PageSpeed Insights API (Lighthouse)",
+      "Core Web Vitals: LCP, FID/INP, CLS",
+      "Measure → diagnose → fix → re-measure loop",
+      "10+ cache/optimization plugin integrations",
+      "Automatic backup before changes + rollback on regression",
+      "Real-user JS metrics (plugin connected)",
+      "Mobile + desktop separate",
+    ],
+    availableFrom: "Free (AI Optimize from Growth)",
     faqs: [
       { q: "How often are performance scores checked?", a: "On every audit cycle. Free plans run manual audits; paid plans support scheduled automatic audits at daily or weekly intervals." },
-      { q: "Does it measure real user metrics?", a: "Yes, when the WordPress plugin is installed. It collects real-user JavaScript performance metrics in addition to lab-based Lighthouse scores." },
-      { q: "Can I compare mobile vs desktop?", a: "Yes. Each audit produces separate mobile and desktop scores, displayed side by side in the dashboard." },
-    ],
-  },
-  "ai-optimization": {
-    problem: "Recommendations are useless if nobody applies them.",
-    problemDetail: "Every performance tool gives a list of fixes. Most agencies don't have the time or confidence to apply them manually — especially across 50 sites.",
-    mechanisms: [
-      { icon: Zap, title: "Causal diagnosis", desc: "Not 'your images are big' — which plugin is loading which render-blocking asset on which route." },
-      { icon: Brain, title: "Existing plugin detection", desc: "Detects LiteSpeed, WP Rocket, W3 Total Cache, and 7 more — configures that plugin instead of layering a second optimizer." },
-      { icon: Wrench, title: "Apply + re-measure", desc: "Backs up, deploys fixes (critical CSS, JS delay, LCP preload, caching), then re-measures. Rolls back if the score drops." },
-      { icon: AlertTriangle, title: "Per-site memory", desc: "Remembers what didn't work on each specific site. Never retries a fix that broke a particular setup." },
-    ],
-    technical: ["Measure → diagnose → fix → re-measure loop", "10+ cache/optimization plugin integrations", "Critical CSS extraction / non-critical deferral", "JS delay-until-interaction", "LCP image preloading + lazy loading", "WebP conversion", "Automatic backup before changes", "Automatic rollback on regression"],
-    availableFrom: "Growth",
-    faqs: [
-      { q: "Does it install a new optimization plugin?", a: "No. It detects the existing cache/optimization plugin on your site and configures that. No conflicting double-optimizers." },
+      { q: "Does AI Optimize install a new plugin?", a: "No. It detects the existing cache/optimization plugin on your site and configures that — no conflicting double-optimizers." },
       { q: "What if a fix breaks the site?", a: "The agent re-measures after every change. If the site breaks or the score regresses, everything is rolled back automatically." },
-      { q: "Which cache plugins does it recognize?", a: "LiteSpeed, WP Rocket, WP Fastest Cache, W3 Total Cache, Autoptimize, Perfmatters, SG Optimizer, NitroPack, Breeze, and Hummingbird." },
+      { q: "Can I compare mobile vs desktop?", a: "Yes. Each audit produces separate mobile and desktop scores, displayed side by side in the dashboard." },
     ],
   },
 };
@@ -151,7 +146,7 @@ export default async function FeatureDetailPage({ params }: Props) {
               <span className="text-accent">{meta.shortTitle}</span>
             </p>
           </Reveal>
-          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-12">
             <div>
               <Reveal delay={0.04}>
                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-white shadow-elevated-sm">
@@ -179,27 +174,34 @@ export default async function FeatureDetailPage({ params }: Props) {
                   </ButtonLink>
                 </div>
               </Reveal>
-            </div>
-            <Reveal delay={0.1}>
-              <div className="grid grid-cols-2 gap-3">
-                {pillarInfo ? (
-                  <div className="col-span-2 flex items-center gap-3 rounded-2xl bg-[var(--mkt-surface)] p-4 shadow-elevated-xs">
-                    {(() => { const PI = pillarInfo.icon; return <PI size={18} className="text-accent" />; })()}
-                    <div>
-                      <p className="text-xs text-[var(--mkt-muted)]">Health pillar</p>
-                      <p className="text-sm font-semibold text-[var(--mkt-fg)]">{pillarInfo.label} · {pillarInfo.weight} weight</p>
+              {(pillarInfo || detail.availableFrom) && (
+                <Reveal delay={0.2}>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    {pillarInfo ? (
+                      <div className="rounded-xl bg-[var(--mkt-surface)] px-3.5 py-2.5 shadow-elevated-xs">
+                        <p className="text-[10px] uppercase tracking-wide text-[var(--mkt-muted)]">Pillar</p>
+                        <p className="text-sm font-semibold text-[var(--mkt-fg)]">{pillarInfo.label}</p>
+                      </div>
+                    ) : null}
+                    <div className="rounded-xl bg-[var(--mkt-surface)] px-3.5 py-2.5 shadow-elevated-xs">
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--mkt-muted)]">From</p>
+                      <p className="text-sm font-semibold text-[var(--mkt-fg)]">{detail.availableFrom}</p>
                     </div>
                   </div>
-                ) : null}
-                <div className="rounded-2xl bg-[var(--mkt-surface)] p-4 shadow-elevated-xs">
-                  <p className="text-xs text-[var(--mkt-muted)]">Available from</p>
-                  <p className="mt-1 text-sm font-semibold text-[var(--mkt-fg)]">{detail.availableFrom}</p>
-                </div>
-                <div className="rounded-2xl bg-[var(--mkt-surface)] p-4 shadow-elevated-xs">
-                  <p className="text-xs text-[var(--mkt-muted)]">Connection tier</p>
-                  <p className="mt-1 text-sm font-semibold text-[var(--mkt-fg)]">URL, Plugin, or SSH</p>
-                </div>
-              </div>
+                </Reveal>
+              )}
+            </div>
+            <Reveal delay={0.1}>
+              {FEATURE_SNAPSHOT[slug] ? (
+                <ProductFrame
+                  snapshot={SNAPSHOTS[FEATURE_SNAPSHOT[slug]]}
+                  size="lg"
+                  priority
+                  showCaption
+                />
+              ) : (
+                <ProductFrame snapshot={SNAPSHOTS.dash} size="lg" showCaption />
+              )}
             </Reveal>
           </div>
         </Container>

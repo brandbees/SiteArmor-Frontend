@@ -12,7 +12,7 @@ import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection
 
 const DEFAULT_TITLE = "Features — SnapshotAI WordPress operations platform";
 const DEFAULT_DESC =
-  "Explore SnapshotAI capabilities: performance, SEO, security, malware, uptime, AI optimize, white-label reports, backups, and more.";
+  "Explore SnapshotAI capabilities: performance & AI Optimize, SEO, security, malware, uptime, white-label reports, backups, and more.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getPageContent("features");
@@ -31,13 +31,7 @@ const GROUPS: { key: string; label: string; description: string; pillars: string
     key: "health",
     label: "Health pillars",
     description: "Five weighted scores that roll up into one portfolio health number.",
-    pillars: ["performance", "seo", "security", "malware", "uptime"],
-  },
-  {
-    key: "ai",
-    label: "AI & remediation",
-    description: "An agent that investigates, fixes, and remembers — with confirmation before writes.",
-    pillars: ["ai"],
+    pillars: ["ai", "performance", "seo", "security", "malware", "uptime"],
   },
   {
     key: "reporting",
@@ -124,9 +118,11 @@ export default async function FeaturesHubPage() {
         </Container>
       </Section>
 
-      {/* Feature groups */}
+      {/* Feature groups — icon boxes (no screenshots) */}
       {GROUPS.map((group, gi) => {
-        const items = FEATURE_PAGES.filter((f) => group.pillars.includes(f.pillar));
+        const items = group.pillars.flatMap((pillar) =>
+          FEATURE_PAGES.filter((f) => f.pillar === pillar)
+        );
         if (!items.length) return null;
         return (
           <Section key={group.key} tone={gi % 2 === 0 ? "default" : "muted"}>
@@ -144,7 +140,7 @@ export default async function FeaturesHubPage() {
                     <Reveal key={feature.slug} delay={0.04 * i}>
                       <Link
                         href={feature.href}
-                        className="group flex h-full flex-col rounded-2xl bg-[var(--mkt-surface)] p-6 shadow-elevated-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated-md"
+                        className="group flex h-full flex-col rounded-2xl bg-[var(--mkt-surface)] p-5 shadow-elevated-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated-md"
                       >
                         <div className="mb-4 flex items-start justify-between">
                           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-light text-accent transition-colors duration-200 group-hover:bg-accent group-hover:text-white">
@@ -156,12 +152,12 @@ export default async function FeaturesHubPage() {
                           />
                         </div>
                         <h3 className="text-base font-semibold text-[var(--mkt-fg)]">
-                          {feature.title}
+                          {feature.shortTitle}
                         </h3>
-                        <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--mkt-muted)]">
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--mkt-muted)]">
                           {feature.description}
                         </p>
-                        <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-accent opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="mt-auto inline-flex items-center gap-1 pt-4 text-xs font-semibold text-accent transition-opacity group-hover:opacity-100 sm:opacity-70">
                           Learn more <ArrowRight size={12} />
                         </span>
                       </Link>

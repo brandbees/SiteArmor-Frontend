@@ -41,6 +41,7 @@ const built = buildSimplePage({
       icon: Shield,
     },
   ],
+  snapshots: ["plugin"],
 });
 
 export const generateMetadata = built.generateMetadata;

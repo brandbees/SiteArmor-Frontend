@@ -41,6 +41,7 @@ const built = buildSimplePage({
       icon: ShieldCheck,
     },
   ],
+  snapshots: ["security", "settings", "agent"],
 });
 
 export const generateMetadata = built.generateMetadata;

@@ -46,7 +46,7 @@ export function NewsletterSection({
   }
 
   return (
-    <Section className="!py-14 sm:!py-16">
+    <Section className="!pt-6 sm:!pt-8 !pb-16 sm:!pb-20">
       <Container>
         <Reveal>
           <div className="relative overflow-hidden rounded-2xl border border-[var(--mkt-border)] bg-[var(--mkt-surface)] px-6 py-8 shadow-elevated-sm sm:px-10 sm:py-10">

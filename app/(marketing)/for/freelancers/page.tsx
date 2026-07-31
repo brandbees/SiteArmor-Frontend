@@ -41,6 +41,7 @@ const built = buildSimplePage({
       icon: Clock,
     },
   ],
+  snapshots: ["sites", "reports", "site-dash"],
 });
 
 export const generateMetadata = built.generateMetadata;

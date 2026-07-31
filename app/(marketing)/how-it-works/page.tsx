@@ -4,14 +4,18 @@ import { ArrowRight, Check, Shield, Zap, Package, Bot, Globe, Lock, RotateCcw } 
 import { getPageContent, field } from "@/lib/cms";
 import { sf, cmsField } from "@/lib/marketing/cms";
 import { CONNECTION_TIERS } from "@/lib/marketing/features";
+import { SNAPSHOTS, type SnapshotId } from "@/lib/marketing/snapshots";
 import { Container, Section, SectionHeading } from "@/components/marketing/ui/Section";
 import { Reveal } from "@/components/marketing/ui/Reveal";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
+import { ProductFrame } from "@/components/marketing/ProductFrame";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
 import { FAQSection, FaqJsonLd } from "@/components/marketing/sections/FAQSection";
 
 const DEFAULT_TITLE = "How it works — Monitor client WordPress sites with SnapshotAI";
 const DEFAULT_DESC = "Three connection tiers: URL-only in 30 seconds, WordPress plugin in 2 minutes, SSH when you're ready for autonomous remediation.";
+
+const TIER_SNAPSHOTS: SnapshotId[] = ["sites", "site-dash", "agent"];
 
 const TIER_UNLOCKS: Record<string, { items: string[]; icon: typeof Globe }> = {
   "01": {
@@ -114,7 +118,7 @@ export default async function HowItWorksPage() {
               return (
                 <Reveal key={tier.step} delay={0.06 * i}>
                   <div className="overflow-hidden rounded-2xl bg-[var(--mkt-surface)] shadow-elevated-sm transition-all hover:shadow-elevated-md">
-                    <div className="grid gap-0 lg:grid-cols-[1fr_auto]">
+                    <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
                       <div className="p-6 sm:p-8">
                         <div className="mb-4 flex items-center gap-4">
                           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-white shadow-elevated-sm">
@@ -126,17 +130,25 @@ export default async function HowItWorksPage() {
                           </div>
                         </div>
                         <p className="mb-5 max-w-lg text-base leading-relaxed text-[var(--mkt-muted)]">{tier.desc}</p>
+                        <div className="rounded-xl bg-[var(--mkt-bg-muted)] p-4">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--mkt-muted)]">Unlocks</p>
+                          <ul className="grid gap-2 sm:grid-cols-2">
+                            {unlocks.items.map((item) => (
+                              <li key={item} className="flex items-center gap-2 text-sm text-[var(--mkt-fg)]">
+                                <Check size={13} className="shrink-0 text-accent" strokeWidth={2.5} />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                      <div className="border-t border-[var(--mkt-border)] bg-[var(--mkt-bg-muted)] p-6 sm:p-8 lg:border-l lg:border-t-0 lg:w-[320px]">
-                        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--mkt-muted)]">Unlocks</p>
-                        <ul className="space-y-2">
-                          {unlocks.items.map((item) => (
-                            <li key={item} className="flex items-center gap-2 text-sm text-[var(--mkt-fg)]">
-                              <Check size={13} className="shrink-0 text-accent" strokeWidth={2.5} />
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
+                      <div className="border-t border-[var(--mkt-border)] bg-[var(--mkt-bg-muted)] p-4 lg:border-l lg:border-t-0">
+                        <ProductFrame
+                          snapshot={SNAPSHOTS[TIER_SNAPSHOTS[i]]}
+                          size="sm"
+                          chrome={false}
+                          className="[&>div]:shadow-none [&>div]:ring-0"
+                        />
                       </div>
                     </div>
                   </div>

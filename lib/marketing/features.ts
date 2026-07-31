@@ -12,7 +12,6 @@ import {
   Shield,
   ShieldAlert,
   ShoppingCart,
-  Sparkles,
   Users,
   Zap,
 } from "lucide-react";
@@ -42,19 +41,9 @@ export const FEATURE_PAGES: FeaturePageMeta[] = [
     title: "Performance monitoring",
     shortTitle: "Performance",
     description:
-      "Core Web Vitals and Lighthouse scores across every client site — mobile and desktop.",
+      "Core Web Vitals and Lighthouse on every site — with AI Optimize that can fix regressions and roll back safely.",
     pillar: "performance",
     icon: Gauge,
-  },
-  {
-    slug: "ai-optimization",
-    href: "/features/ai-optimization",
-    title: "AI performance optimization",
-    shortTitle: "AI Optimize",
-    description:
-      "Measure, diagnose, fix, and re-measure — with automatic rollback if a change hurts the score.",
-    pillar: "performance",
-    icon: Sparkles,
   },
   {
     slug: "seo-monitoring",
@@ -62,7 +51,7 @@ export const FEATURE_PAGES: FeaturePageMeta[] = [
     title: "SEO monitoring",
     shortTitle: "SEO",
     description:
-      "Meta tags, headings, canonicals, indexability, thin content, and broken internal links.",
+      "Catch meta, heading, canonical, and indexability issues before they cost rankings — across the whole portfolio.",
     pillar: "seo",
     icon: Search,
   },
@@ -102,7 +91,7 @@ export const FEATURE_PAGES: FeaturePageMeta[] = [
     title: "AI agent",
     shortTitle: "AI Agent",
     description:
-      "A conversational agent with real tools — it investigates, acts, and asks before it writes.",
+      "Investigate and remediate with real tools — it asks before it writes, and remembers what failed on each site.",
     pillar: "ai",
     icon: Bot,
   },

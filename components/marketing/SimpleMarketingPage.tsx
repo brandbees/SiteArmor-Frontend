@@ -12,6 +12,8 @@ import {
 import { Reveal } from "@/components/marketing/ui/Reveal";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
+import { ProductFrame } from "@/components/marketing/ProductFrame";
+import { SNAPSHOTS, type SnapshotId } from "@/lib/marketing/snapshots";
 
 type Beat = {
   title: string;
@@ -36,6 +38,7 @@ export function buildSimplePage({
   beats,
   stats,
   bottomCta,
+  snapshots,
 }: {
   pageKey: string;
   path: string;
@@ -48,6 +51,8 @@ export function buildSimplePage({
   beats: Beat[];
   stats?: Stat[];
   bottomCta?: { label: string; href: string };
+  /** Optional product screens to show after the beats */
+  snapshots?: SnapshotId[];
 }) {
   async function generateMetadata(): Promise<Metadata> {
     const content = await getPageContent(pageKey);
@@ -206,6 +211,41 @@ export function buildSimplePage({
             </div>
           </Container>
         </Section>
+
+        {snapshots && snapshots.length > 0 ? (
+          <Section>
+            <Container>
+              <Reveal>
+                <SectionHeading
+                  eyebrow="Inside the product"
+                  title="See it in SnapshotAI."
+                />
+              </Reveal>
+              <div
+                className={`grid gap-5 ${
+                  snapshots.length === 1
+                    ? "mx-auto max-w-3xl"
+                    : snapshots.length === 2
+                      ? "md:grid-cols-2"
+                      : "md:grid-cols-3"
+                }`}
+              >
+                {snapshots.map((id, i) => (
+                  <Reveal key={id} delay={0.05 * i}>
+                    <ProductFrame
+                      snapshot={SNAPSHOTS[id]}
+                      size="md"
+                      showCaption
+                      aspectOverride={
+                        snapshots.length > 1 ? "16 / 10" : undefined
+                      }
+                    />
+                  </Reveal>
+                ))}
+              </div>
+            </Container>
+          </Section>
+        ) : null}
 
         {/* Cross-link strip */}
         <Section className="!py-14">

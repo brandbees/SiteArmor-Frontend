@@ -259,6 +259,40 @@ button, a, input, select, textarea {
 .animate-scale-in   { animation: scale-in   0.45s ease-out forwards; }
 .animate-spin       { animation: spin 0.8s linear infinite; }
 
+@keyframes mkt-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes mkt-float-slow {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+@keyframes mkt-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-mkt-float      { animation: mkt-float 5.5s ease-in-out infinite; }
+.animate-mkt-float-slow { animation: mkt-float-slow 7s ease-in-out infinite; }
+.animate-mkt-marquee    { animation: mkt-marquee 48s linear infinite; }
+
+@keyframes mkt-story-bar {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+.animate-mkt-story-bar {
+  width: 0%;
+  animation-name: mkt-story-bar;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-mkt-float,
+  .animate-mkt-float-slow { animation: none; }
+  .animate-mkt-marquee { animation: none; }
+  .animate-mkt-story-bar { animation: none; width: 100%; }
+}
+
 @keyframes slide-in-right {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }

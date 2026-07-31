@@ -41,6 +41,7 @@ const built = buildSimplePage({
       icon: Bot,
     },
   ],
+  snapshots: ["dash", "agent", "reports"],
 });
 
 export const generateMetadata = built.generateMetadata;

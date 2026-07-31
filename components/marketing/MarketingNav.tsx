@@ -10,7 +10,6 @@ import {
   Sun,
   X,
   Gauge,
-  Sparkles,
   Shield,
   Bot,
   FileText,
@@ -43,9 +42,8 @@ function applyBrandVars(bp: string, ba: string) {
 }
 
 const FEATURE_DROPDOWN = [
-  { href: "/features/ai-optimization", label: "AI Optimize", desc: "Fix performance automatically", icon: Sparkles },
+  { href: "/features/performance-monitoring", label: "Performance", desc: "Monitor & AI Optimize", icon: Gauge },
   { href: "/features/ai-agent", label: "AI Agent", desc: "Ask it — then it does the work", icon: Bot },
-  { href: "/features/performance-monitoring", label: "Performance", desc: "Core Web Vitals & Lighthouse", icon: Gauge },
   { href: "/features/security-scanning", label: "Security", desc: "Hardening & SSL monitoring", icon: Shield },
   { href: "/features/client-reports", label: "Client reports", desc: "White-label PDFs", icon: FileText },
   { href: "/features/backups", label: "Backups", desc: "Schedule & one-click restore", icon: HardDrive },
@@ -71,11 +69,18 @@ export function MarketingNav({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(initialDark);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setLoggedIn(isLoggedIn());
-  }, []);
+    const saved = localStorage.getItem("landingDark");
+    const active = saved !== null ? saved === "true" : initialDark;
+    setIsDark(active);
+    document.documentElement.classList.toggle("dark", active);
+    document.documentElement.classList.toggle("mkt-dark", active);
+  }, [initialDark]);
 
   useEffect(() => {
     const base = API_BASE_URL.replace(/\/+$/, "");
@@ -88,14 +93,6 @@ export function MarketingNav({
       })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("landingDark");
-    const active = saved !== null ? saved === "true" : initialDark;
-    setIsDark(active);
-    document.documentElement.classList.toggle("dark", active);
-    document.documentElement.classList.toggle("mkt-dark", active);
-  }, [initialDark]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -223,10 +220,11 @@ export function MarketingNav({
             onClick={toggleDark}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             className="rounded-lg p-2 text-[var(--mkt-muted)] transition-colors hover:bg-[var(--mkt-bg-muted)] hover:text-[var(--mkt-fg)]"
+            suppressHydrationWarning
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          {loggedIn ? (
+          {mounted && loggedIn ? (
             <ButtonLink href="/dashboard" size="sm">
               Go to Dashboard
             </ButtonLink>

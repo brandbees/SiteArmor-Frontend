@@ -14,9 +14,10 @@ const LINKS = {
   Solutions: [
     { label: "For agencies", href: "/for/agencies" },
     { label: "For freelancers", href: "/for/freelancers" },
-    { label: "AI Optimize", href: "/features/ai-optimization" },
+    { label: "Performance", href: "/features/performance-monitoring" },
     { label: "AI Agent", href: "/features/ai-agent" },
     { label: "Client reports", href: "/features/client-reports" },
+    { label: "Backups", href: "/features/backups" },
   ],
   Company: [
     { label: "About", href: "/about" },

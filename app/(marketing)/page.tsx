@@ -3,6 +3,7 @@ import { getPageContent, field } from "@/lib/cms";
 import { sf } from "@/lib/marketing/cms";
 import { HeroSection } from "@/components/marketing/sections/HeroSection";
 import { ProblemSection } from "@/components/marketing/sections/ProblemSection";
+import { ProductTourSection } from "@/components/marketing/sections/ProductTourSection";
 import { PillarsSection } from "@/components/marketing/sections/PillarsSection";
 import { DifferentiatorSection } from "@/components/marketing/sections/DifferentiatorSection";
 import { FeatureGridSection } from "@/components/marketing/sections/FeatureGridSection";
@@ -82,14 +83,15 @@ export default async function HomePage() {
       <FaqJsonLd faqs={HOME_FAQS} />
       <HeroSection cms={sf(sections, "hero")} />
       <ProblemSection cms={sf(sections, "problem")} />
+      <ProductTourSection cms={sf(sections, "product_tour")} />
       <PillarsSection cms={sf(sections, "pillars")} />
       <DifferentiatorSection cms={sf(sections, "differentiator")} />
       <FeatureGridSection cms={sf(sections, "features")} />
       <HowItWorksSection cms={sf(sections, "how_it_works")} />
       <WhiteLabelSection cms={sf(sections, "white_label")} />
       <PricingPreviewSection cms={sf(sections, "pricing")} />
-      <FAQSection cms={sf(sections, "faq")} />
       <FinalCTASection cms={sf(sections, "cta_banner")} />
+      <FAQSection cms={sf(sections, "faq")} />
       <NewsletterSection cms={sf(sections, "newsletter")} />
     </main>
   );
