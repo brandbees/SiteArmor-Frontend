@@ -1256,7 +1256,7 @@ function BillingContent() {
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 bg-white border-b border-border px-6 py-2 flex items-center gap-1">
+      <div className="sticky -top-6 z-10 bg-white border-b border-border px-6 py-2 flex items-center gap-1">
         {(["plans", "tokens", "storage", "history", "coupon"] as const).map((id) => (
           <button
             key={id}
