@@ -1185,6 +1185,20 @@ function BillingContent() {
           } else if (storageSuccess || planSuccess) {
             await refreshAgency();
           }
+
+          // A plan change moves the monthly token and storage allowances, so pull both
+          // again. Without this the new allowance only appeared after a reload or a
+          // route switch, because these are otherwise fetched once on mount.
+          if (planSuccess) {
+            await Promise.all([
+              api.get<TokenState>("/agent/tokens")
+                .then(({ data }) => setTokenState(data))
+                .catch(() => {}),
+              api.get<{ limits: Record<string, PlanLimits> }>("/billing/limits")
+                .then(({ data }) => setPlanLimits(data.limits ?? {}))
+                .catch(() => {}),
+            ]);
+          }
           // Refresh history so new entry appears without page reload
           await fetchHistory();
           if (tokensSuccess)  toast.success("AI tokens added to your account! Your balance has been updated.");
