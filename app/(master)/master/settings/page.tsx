@@ -46,9 +46,13 @@ const TABS = [
 ];
 
 const PLAN_DEFS = [
+  // Must mirror the plans the agency portal actually sells, and the products that exist
+  // in Stripe. An "Agency" ($99) tier used to be listed here, but it had no Stripe
+  // product and no entry in PLAN_CONFIGS, so nothing could ever be purchased on it —
+  // editing it silently did nothing.
+  { key: "free",        label: "Free",     color: "#64748b", desc: "Trial & single site" },
   { key: "freemium",    label: "Starter",  color: "#3b82f6", desc: "Solo freelancers & small sites" },
   { key: "premium",     label: "Growth",   color: "#8b5cf6", desc: "Growing agencies" },
-  { key: "agency",      label: "Agency",   color: "#64748b", desc: "Mid-size agencies" },
   { key: "agency_plus", label: "Agency+",  color: "#f59e0b", desc: "Large agencies & power users" },
 ];
 
