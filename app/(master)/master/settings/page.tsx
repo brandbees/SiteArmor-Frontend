@@ -708,12 +708,18 @@ export default function MasterSettingsPage() {
                     {/* Storage limit */}
                     <div>
                       <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-1.5">
-                        <HardDrive size={10} /> Storage limit (bytes)
+                        <HardDrive size={10} /> Storage limit (GB)
                       </label>
+                      {/* Entered in GB for readability, still stored in bytes so nothing
+                          downstream changes. The conversion happens only on edit — simply
+                          viewing the page never rewrites a stored value. */}
                       <input
-                        type="number" min={0}
-                        value={get(storageKey)}
-                        onChange={e => set(storageKey, e.target.value)}
+                        type="number" min={0} step={0.1}
+                        value={get(storageKey) ? String(parseInt(get(storageKey), 10) / 1073741824) : ""}
+                        onChange={e => {
+                          const gb = e.target.value;
+                          set(storageKey, gb === "" ? "" : String(Math.round(parseFloat(gb) * 1073741824)));
+                        }}
                         placeholder={storageSetting ? undefined : "Not configured"}
                         className={`w-full px-3 py-2 text-sm rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 font-mono ${
                           get(storageKey) !== (storageSetting?.value ?? "") ? "border-amber-300 bg-amber-50/30" : "border-border"
@@ -726,8 +732,8 @@ export default function MasterSettingsPage() {
                         </div>
                       )}
                       {get(storageKey) && (
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          ≈ {(parseInt(get(storageKey) || "0") / (1024 * 1024 * 1024)).toFixed(2)} GB
+                        <p className="text-[10px] text-muted-foreground mt-1 font-mono">
+                          = {parseInt(get(storageKey), 10).toLocaleString()} bytes
                         </p>
                       )}
                     </div>
