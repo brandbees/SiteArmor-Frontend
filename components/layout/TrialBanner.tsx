@@ -41,7 +41,7 @@ export function TrialBanner() {
           Your trial has ended. Add a payment method to continue using SnapshotAI.
         </span>
         <Link
-          href="/billing"
+          href="/settings?tab=billing"
           className="underline underline-offset-2 font-semibold hover:no-underline shrink-0"
         >
           Add payment method
@@ -64,7 +64,7 @@ export function TrialBanner() {
       </span>
       <div className="flex items-center gap-3 shrink-0">
         <Link
-          href="/billing"
+          href="/settings?tab=billing"
           className="font-semibold underline underline-offset-2 hover:no-underline"
         >
           Upgrade Now

@@ -13,7 +13,7 @@ export function UpgradeBanner({ message, compact = false }: UpgradeBannerProps) 
         <Lock size={13} className="text-amber-600 shrink-0" />
         <span className="text-amber-800 flex-1">{message}</span>
         <Link
-          href="/billing"
+          href="/settings?tab=billing"
           className="flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-900 shrink-0"
         >
           Upgrade <ArrowRight size={11} />
@@ -29,7 +29,7 @@ export function UpgradeBanner({ message, compact = false }: UpgradeBannerProps) 
         <span className="text-sm text-amber-800">{message}</span>
       </div>
       <Link
-        href="/billing"
+        href="/settings?tab=billing"
         className="flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-900"
       >
         Upgrade plan <ArrowRight size={13} />

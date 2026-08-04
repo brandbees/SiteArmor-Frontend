@@ -149,7 +149,7 @@ export default function TeamPage() {
           <p className="text-sm text-amber-700 max-w-sm">
             You&apos;re on the <strong>{planLabel}</strong> plan. Upgrade to Starter or above to invite team members.
           </p>
-          <Link href="/billing" className="mt-2 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors" style={{ background: "var(--accent)" }}>View Plans</Link>
+          <Link href="/settings?tab=billing" className="mt-2 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors" style={{ background: "var(--accent)" }}>View Plans</Link>
         </div>
       </div>
     );
@@ -194,7 +194,7 @@ export default function TeamPage() {
         <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
           <AlertCircle size={15} className="shrink-0 text-amber-600" />
           Seat limit reached.{" "}
-          <Link href="/billing" className="underline font-semibold">Upgrade your plan</Link> to invite more members.
+          <Link href="/settings?tab=billing" className="underline font-semibold">Upgrade your plan</Link> to invite more members.
         </div>
       )}
 
