@@ -28,6 +28,7 @@ import { LoadingPage } from "@/components/shared/LoadingSpinner";
 import { UpgradeBanner } from "@/components/shared/UpgradeBanner";
 import { Button } from "@/components/ui/Button";
 import { MalwareScanPanel } from "@/components/sites/MalwareScanPanel";
+import { SeoAuditPanel } from "@/components/sites/SeoAuditPanel";
 import { SSHSettingsPanel } from "@/components/sites/SSHSettingsPanel";
 import { useSSHSettings } from "@/hooks/useSSHSettings";
 import api from "@/lib/api";
@@ -1701,6 +1702,22 @@ function SeoTab({ site, audits, brandColor }: { site: Site; audits: Audit[]; bra
 
   return (
     <div className="space-y-5">
+      {/* ── Site-wide crawl (SaaS-managed) ── */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Site-wide SEO audit</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Crawls every page, finds issues with named pages attached, and applies the safe fixes for you.
+        </p>
+        <SeoAuditPanel siteId={site.id} />
+      </div>
+
+      <div className="pt-2 border-t border-border">
+        <h3 className="text-sm font-semibold text-foreground mb-1 mt-3">Homepage audit</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          The single-page check that runs with every scheduled audit.
+        </p>
+      </div>
+
       {/* ── Top 3 stat cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Score gauge */}

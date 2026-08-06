@@ -14,6 +14,7 @@ import { useSites } from "@/hooks/useSites";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { CrawlOverviewCard } from "@/components/seo/CrawlOverviewCard";
 import { scoreHex, scoreBgTailwind } from "@/lib/utils";
 import type { Site } from "@/types";
 
@@ -253,6 +254,9 @@ export default function SeoPage() {
           </span>
         </div>
       </div>
+
+      {/* ── Crawl-based findings (SaaS-managed, per page) ── */}
+      <CrawlOverviewCard />
 
       {/* ── Hero overview card ── */}
       <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base overflow-hidden">
