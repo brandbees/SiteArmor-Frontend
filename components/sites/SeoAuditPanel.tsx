@@ -416,16 +416,28 @@ function GroupRow({ group, siteId, onChange }: {
     setBusy(true);
     try {
       const { data } = await api.post(`/seo/${siteId}/apply-group`, { rule_id: group.rule_id });
+
       if (data.applied > 0) {
         toast.success(
           `Fixed ${data.applied} page${data.applied === 1 ? "" : "s"}` +
           (data.failed > 0 ? ` · ${data.failed} failed` : "")
         );
+      } else if (data.skipped > 0 && data.failed === 0) {
+        // Not a failure: these pages structurally cannot take this fix.
+        toast.info(
+          `Nothing to apply — ${data.skipped} page${data.skipped === 1 ? " is an archive" : "s are archives"} ` +
+          `with no post to attach this to.`
+        );
       } else {
         toast.error(data.details?.failed?.[0]?.detail ?? "Nothing could be applied.");
       }
+
+      if (data.skipped > 0 && data.applied > 0) {
+        toast.info(`${data.skipped} archive page${data.skipped === 1 ? "" : "s"} skipped — no post to write to.`);
+      }
+      // Report the real reason rather than assuming SSH, which is usually not the problem.
       if (data.stopped_early) {
-        toast.error("Stopped after repeated failures — check the SSH connection before retrying.");
+        toast.error(`Stopped after repeated failures: ${data.stopped_reason ?? "unknown error"}`);
       }
       onChange();
     } catch (err: unknown) {
