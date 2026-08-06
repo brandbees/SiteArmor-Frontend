@@ -417,27 +417,27 @@ function GroupRow({ group, siteId, onChange }: {
     try {
       const { data } = await api.post(`/seo/${siteId}/apply-group`, { rule_id: group.rule_id });
 
+      // Exactly ONE toast per run. Previously a failed run fired the failure detail and
+      // then the stop reason — which are the same sentence — so the user got the same
+      // long message stacked twice.
+      const skippedNote = data.skipped > 0
+        ? ` ${data.skipped} page${data.skipped === 1 ? "" : "s"} skipped (nothing to attach to).`
+        : "";
+
       if (data.applied > 0) {
         toast.success(
-          `Fixed ${data.applied} page${data.applied === 1 ? "" : "s"}` +
-          (data.failed > 0 ? ` · ${data.failed} failed` : "")
+          `Fixed ${data.applied} page${data.applied === 1 ? "" : "s"}.` +
+          (data.failed > 0 ? ` ${data.failed} failed.` : "") + skippedNote
         );
+      } else if (data.site_wide) {
+        // A property of the site, not a transient error — say so, and only once.
+        toast.error(data.stopped_reason, { duration: 8000 });
       } else if (data.skipped > 0 && data.failed === 0) {
-        // Not a failure: these pages structurally cannot take this fix.
-        toast.info(
-          `Nothing to apply — ${data.skipped} page${data.skipped === 1 ? " is an archive" : "s are archives"} ` +
-          `with no post to attach this to.`
-        );
+        toast.info(`Nothing to apply here.${skippedNote}`);
       } else {
-        toast.error(data.details?.failed?.[0]?.detail ?? "Nothing could be applied.");
-      }
-
-      if (data.skipped > 0 && data.applied > 0) {
-        toast.info(`${data.skipped} archive page${data.skipped === 1 ? "" : "s"} skipped — no post to write to.`);
-      }
-      // Report the real reason rather than assuming SSH, which is usually not the problem.
-      if (data.stopped_early) {
-        toast.error(`Stopped after repeated failures: ${data.stopped_reason ?? "unknown error"}`);
+        toast.error(
+          data.stopped_reason ?? data.details?.failed?.[0]?.detail ?? "Nothing could be applied."
+        );
       }
       onChange();
     } catch (err: unknown) {
