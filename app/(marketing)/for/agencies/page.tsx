@@ -4,15 +4,15 @@ import { buildSimplePage } from "@/components/marketing/SimpleMarketingPage";
 const built = buildSimplePage({
   pageKey: "for-agencies",
   path: "/for/agencies",
-  defaultTitle: "WordPress management for agencies — SnapshotAI",
+  defaultTitle: "WordPress management for agencies — Site Armor",
   defaultDescription:
     "Portfolio health, AI remediation, and white-label reports built for agencies managing 5–200 client WordPress sites.",
   eyebrow: "For agencies",
   title: "Margin per retained client starts with knowing first.",
   description:
-    "Stop burning billable hours on manual audits. SnapshotAI monitors the portfolio, helps you fix issues with AI, and proves the retainer every month — under your brand.",
+    "Stop burning billable hours on manual audits. Site Armor monitors the portfolio, helps you fix issues with AI, and proves the retainer every month — under your brand.",
   heroDetail:
-    "An agency's nightmare is the client calling about a problem first. SnapshotAI flips that: you know first, the AI agent often has already fixed it with your confirmation, and the monthly white-label report proves the retainer is earning its keep. Built for portfolios of 5 to 500 WordPress sites.",
+    "An agency's nightmare is the client calling about a problem first. Site Armor flips that: you know first, the AI agent often has already fixed it with your confirmation, and the monthly white-label report proves the retainer is earning its keep. Built for portfolios of 5 to 500 WordPress sites.",
   stats: [
     { value: "5–500", label: "Client sites per agency" },
     { value: "5", label: "Health pillars scored" },

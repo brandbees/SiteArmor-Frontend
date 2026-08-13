@@ -991,7 +991,7 @@ function IntegrationsTab() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brandbees-snapshot.zip";
+      a.download = "site-armor.zip";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1014,7 +1014,7 @@ function IntegrationsTab() {
             </IconChip>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-semibold text-foreground">BrandBees Snapshot Plugin</p>
+                <p className="text-sm font-semibold text-foreground">Site Armor Plugin</p>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-light)] text-[var(--accent)]">WordPress</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">

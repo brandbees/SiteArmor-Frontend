@@ -126,7 +126,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         applyAccentTokens(patch.accentColor);
       }
       if (patch.brandName !== undefined) {
-        document.title = patch.brandName || "SnapshotAI";
+        document.title = patch.brandName || "Site Armor";
       }
       if (patch.faviconUrl) {
         applyFavicon(patch.faviconUrl);

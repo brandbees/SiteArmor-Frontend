@@ -14,7 +14,7 @@ function PluginMockup() {
             <Plug size={12} className="text-sky-200" />
           </div>
           <div>
-            <p className="text-[11px] font-bold text-white">SnapshotAI Monitor</p>
+            <p className="text-[11px] font-bold text-white">Site Armor Monitor</p>
             <p className="text-[9px] text-white/40">WordPress Plugin · v1.2</p>
           </div>
         </div>
@@ -25,7 +25,7 @@ function PluginMockup() {
       <div className="h-px bg-white/10 mb-3" />
       <div className="flex items-center gap-1.5">
         <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-        <span className="text-[10px] text-white/50">Connected to SnapshotAI · 2s ago</span>
+        <span className="text-[10px] text-white/50">Connected to Site Armor · 2s ago</span>
       </div>
     </div>
   );
@@ -133,7 +133,7 @@ function SystemFlowDiagram({ inView }: { inView: boolean }) {
       style={{ transitionDelay: "700ms" }}
     >
       <p className="text-center text-xs font-semibold uppercase tracking-widest text-white/40 mb-6">
-        How data flows through SnapshotAI
+        How data flows through Site Armor
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-0">
         {FLOW_NODES.map((node, i) => {

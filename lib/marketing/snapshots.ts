@@ -45,7 +45,7 @@ export const SNAPSHOTS: Record<SnapshotId, SnapshotMeta> = {
   dash: {
     id: "dash",
     src: srcFor("dash"),
-    alt: "SnapshotAI agency portfolio dashboard with health scores",
+    alt: "Site Armor agency portfolio dashboard with health scores",
     label: "Portfolio dashboard",
     caption: "One score across every client site",
     aspect: aspectFor("dash"),
@@ -153,7 +153,7 @@ export const SNAPSHOTS: Record<SnapshotId, SnapshotMeta> = {
   plugin: {
     id: "plugin",
     src: srcFor("plugin"),
-    alt: "BrandBees SnapshotAI WordPress plugin settings — connected and syncing",
+    alt: "Site Armor WordPress plugin settings — connected and syncing",
     label: "WordPress plugin",
     caption: "Connect a site in about two minutes",
     aspect: aspectFor("plugin"),

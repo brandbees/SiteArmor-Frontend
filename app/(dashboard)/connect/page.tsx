@@ -186,12 +186,12 @@ export default function ConnectPage() {
               <div>
                 <p className="text-sm font-semibold text-foreground">Step 1 — Download the plugin</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Download the BrandBees SnapshotAI WordPress plugin zip file.
+                  Download the Site Armor WordPress plugin zip file.
                 </p>
               </div>
               <a
                 href={`${API_BASE_URL}/plugin/download`}
-                download="brandbees-snapshot.zip"
+                download="site-armor.zip"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shrink-0 hover:opacity-90 transition-opacity"
                 style={{ background: "var(--accent)" }}
               >
@@ -207,7 +207,7 @@ export default function ConnectPage() {
               {[
                 "In WordPress admin, go to Plugins → Add New → Upload Plugin",
                 "Upload the downloaded zip file and click Install Now",
-                "Activate the plugin, then open Settings → BrandBees Snapshot",
+                "Activate the plugin, then open Settings → Site Armor",
                 "Paste your site token (Step 3 below) into the API Key field and click Save & Connect",
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3 text-sm">

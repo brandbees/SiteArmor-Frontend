@@ -38,7 +38,7 @@ export function TrialBanner() {
     return (
       <div className="flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium text-white bg-red-600">
         <span>
-          Your trial has ended. Add a payment method to continue using SnapshotAI.
+          Your trial has ended. Add a payment method to continue using Site Armor.
         </span>
         <Link
           href="/settings?tab=billing"

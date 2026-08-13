@@ -30,7 +30,7 @@ export function HeroSection({ cms = {} }: { cms?: Record<string, string> }) {
           <div>
             <Reveal>
               <p className="mb-5 font-[family-name:var(--font-marketing-display)] text-sm font-semibold tracking-wide text-accent sm:text-base">
-                {c("brand_line", "SnapshotAI by BrandBees")}
+                {c("brand_line", "Site Armor by BrandBees")}
               </p>
             </Reveal>
 

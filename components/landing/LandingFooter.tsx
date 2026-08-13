@@ -38,7 +38,7 @@ const SOCIALS = [
 
 export function LandingFooter({ cms = {} }: { cms?: Record<string, string> }) {
   const tagline   = cms.tagline   || "AI-powered WordPress site monitoring and reporting for modern digital agencies.";
-  const copyright = cms.copyright || `© ${new Date().getFullYear()} BrandBees Snapshot AI. All rights reserved.`;
+  const copyright = cms.copyright || `© ${new Date().getFullYear()} Site Armor. All rights reserved.`;
   return (
     <footer className="bg-slate-900">
       {/* Main footer body */}

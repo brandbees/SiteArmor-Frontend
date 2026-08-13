@@ -29,7 +29,7 @@ export function CTASection({ cms = {} }: { cms?: Record<string, string> }) {
               {c("heading", "Ready to make site monitoring a competitive advantage?")}
             </h2>
             <p className="text-sky-100 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-              {c("subtitle", "Join 240+ agencies using Snapshot AI to automate audits, impress clients, and protect every WordPress site they manage.")}
+              {c("subtitle", "Join 240+ agencies using Site Armor to automate audits, impress clients, and protect every WordPress site they manage.")}
             </p>
 
             {/* CTAs */}

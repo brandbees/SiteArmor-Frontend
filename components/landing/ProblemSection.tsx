@@ -53,7 +53,7 @@ export function ProblemSection() {
             }`}
             style={{ transitionDelay: "200ms" }}
           >
-            Here&apos;s what managing WordPress sites looks like before and after SnapshotAI.
+            Here&apos;s what managing WordPress sites looks like before and after Site Armor.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export function ProblemSection() {
                 <X size={15} className="text-red-500" strokeWidth={3} />
               </div>
               <div>
-                <h3 className="text-base font-black text-gray-900 leading-none">Without SnapshotAI</h3>
+                <h3 className="text-base font-black text-gray-900 leading-none">Without Site Armor</h3>
                 <p className="text-xs text-gray-400 mt-0.5">The old way</p>
               </div>
             </div>
@@ -94,7 +94,7 @@ export function ProblemSection() {
                 <CheckCircle size={15} className="text-green-500" />
               </div>
               <div>
-                <h3 className="text-base font-black text-gray-900 leading-none">With SnapshotAI</h3>
+                <h3 className="text-base font-black text-gray-900 leading-none">With Site Armor</h3>
                 <p className="text-xs text-gray-400 mt-0.5">The new way</p>
               </div>
             </div>

@@ -111,7 +111,7 @@ export const FEATURE_PAGES: FeaturePageMeta[] = [
     title: "White-label branding",
     shortTitle: "White-label",
     description:
-      "Your logo, colours, and name on every report and portal. SnapshotAI stays invisible.",
+      "Your logo, colours, and name on every report and portal. Site Armor stays invisible.",
     pillar: "reporting",
     icon: Palette,
   },
@@ -219,7 +219,7 @@ export const CONNECTION_TIERS = [
     step: "02",
     title: "WordPress plugin",
     time: "2 minutes",
-    desc: "Install brandbees-snapshot to unlock plugin/theme inventory, file integrity, malware scans, WooCommerce metrics, backups, and safe updates.",
+    desc: "Install Site Armor to unlock plugin/theme inventory, file integrity, malware scans, WooCommerce metrics, backups, and safe updates.",
     icon: Package,
   },
   {

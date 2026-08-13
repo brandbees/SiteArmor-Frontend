@@ -35,7 +35,7 @@ export function ProblemSection({ cms = {} }: { cms?: Record<string, string> }) {
             title={c("title", "You shouldn't hear about issues from your clients.")}
             description={c(
               "description",
-              "SnapshotAI flips the script: you know first, often have already fixed it, and the monthly report proves the retainer is working."
+              "Site Armor flips the script: you know first, often have already fixed it, and the monthly report proves the retainer is working."
             )}
           />
         </Reveal>

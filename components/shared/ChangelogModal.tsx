@@ -54,7 +54,7 @@ const FALLBACK_ENTRIES: ChangelogEntry[] = [
     version: "1.0.0",
     date: "2026-03-15",
     highlights: [
-      "BrandBees SnapshotAI is live — connect your first site",
+      "Site Armor is live — connect your first site",
       "WordPress plugin — hourly push of 53 data points",
       "Audit pipeline — scanner + uptime + score normalisation",
       "Alert system — threshold-based email alerts",

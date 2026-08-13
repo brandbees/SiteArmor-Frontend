@@ -19,7 +19,7 @@ import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection
 import { NewsletterSection } from "@/components/marketing/sections/NewsletterSection";
 
 const DEFAULT_TITLE =
-  "SnapshotAI by BrandBees — WordPress monitoring & remediation for agencies";
+  "Site Armor by BrandBees — WordPress monitoring & remediation for agencies";
 const DEFAULT_DESC =
   "Monitor, fix, and report on every client WordPress site — automatically. Five health pillars, an AI agent that remediates with confirmation, and white-label client reports.";
 
@@ -52,7 +52,7 @@ function HomeJsonLd() {
       },
       {
         "@type": "SoftwareApplication",
-        name: "SnapshotAI",
+        name: "Site Armor",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description: DEFAULT_DESC,

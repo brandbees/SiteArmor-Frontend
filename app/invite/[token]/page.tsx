@@ -131,7 +131,7 @@ export default function InvitePage() {
           </div>
           <h1 className="text-xl font-bold text-foreground">You&apos;ve been invited</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Join <strong className="text-foreground">{info.agency_name}</strong> on BrandBees SnapshotAI
+            Join <strong className="text-foreground">{info.agency_name}</strong> on Site Armor
           </p>
         </div>
 

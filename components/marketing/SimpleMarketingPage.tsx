@@ -218,7 +218,7 @@ export function buildSimplePage({
               <Reveal>
                 <SectionHeading
                   eyebrow="Inside the product"
-                  title="See it in SnapshotAI."
+                  title="See it in Site Armor."
                 />
               </Reveal>
               <div

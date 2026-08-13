@@ -4,7 +4,7 @@ import { useInView } from "./hooks";
 const TESTIMONIALS = [
   {
     quote:
-      "BrandBeesAI completely changed how we handle client reporting. What took us hours now happens automatically, and our clients are blown away by the professional PDF reports.",
+      "Site Armor completely changed how we handle client reporting. What took us hours now happens automatically, and our clients are blown away by the professional PDF reports.",
     name:     "Sarah Mitchell",
     role:     "Founder, PixelCraft Agency",
     initials: "SM",
@@ -74,7 +74,7 @@ export function TestimonialsSection({ cms = {} }: { cms?: Record<string, string>
             }`}
             style={{ transitionDelay: "100ms" }}
           >
-            {c("heading", "Agencies love BrandBeesAI.")}
+            {c("heading", "Agencies love Site Armor.")}
           </h2>
           <p
             className={`text-gray-500 text-lg transition-all duration-500 ${

@@ -5,12 +5,12 @@ import { useInView } from "./hooks";
 
 const FAQS = [
   {
-    q: "Do I need to be a developer to use Snapshot AI?",
-    a: "Not at all. Snapshot AI is built for agency owners, account managers, and client success teams. The WordPress plugin installs in 2 clicks, and the dashboard is fully visual — no code required.",
+    q: "Do I need to be a developer to use Site Armor?",
+    a: "Not at all. Site Armor is built for agency owners, account managers, and client success teams. The WordPress plugin installs in 2 clicks, and the dashboard is fully visual — no code required.",
   },
   {
     q: "Does it work with any WordPress site?",
-    a: "Yes. Any WordPress site can run our lightweight plugin, regardless of theme, page builder, or hosting provider. If it runs WordPress, it works with Snapshot AI.",
+    a: "Yes. Any WordPress site can run our lightweight plugin, regardless of theme, page builder, or hosting provider. If it runs WordPress, it works with Site Armor.",
   },
   {
     q: "How often are audits run automatically?",
@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     q: "Can I put my agency logo and brand on the reports?",
-    a: "Yes, on Growth and above you can add your logo, brand colors, and a custom domain for the client portal. Clients see your agency brand throughout — Snapshot AI stays behind the scenes.",
+    a: "Yes, on Growth and above you can add your logo, brand colors, and a custom domain for the client portal. Clients see your agency brand throughout — Site Armor stays behind the scenes.",
   },
   {
     q: "What happens when a threat or issue is detected?",
@@ -88,7 +88,7 @@ const SUPPORT_CARDS = [
     iconBg: "#f5f3ff",
     iconColor: "#7c3aed",
     title: "Visit our Help Center",
-    desc: "How-to guides and tutorials to get the most from SnapshotAI.",
+    desc: "How-to guides and tutorials to get the most from Site Armor.",
     href: "#",
   },
   {

@@ -37,7 +37,7 @@ export const SECTION_LIBRARY: Record<string, SectionLibraryEntry> = {
   meta: {
     label: "SEO / Meta", category: "SEO", pinned: true,
     fields: {
-      title:       { label: "Meta Title",       type: "text",     default: "BBSnapshotAI — WordPress Monitoring" },
+      title:       { label: "Meta Title",       type: "text",     default: "BBSite Armor — WordPress Monitoring" },
       description: { label: "Meta Description", type: "textarea", default: "Monitor every WordPress site from one dashboard." },
       og_image:    { label: "OG Image URL",     type: "url",      default: "/og/home.png" },
     },
@@ -63,7 +63,7 @@ export const SECTION_LIBRARY: Record<string, SectionLibraryEntry> = {
     fields: {
       eyebrow:  { label: "Eyebrow",         type: "text",     default: "Everything you need" },
       heading:  { label: "Section Heading", type: "text",     default: "One platform. Full coverage." },
-      subtitle: { label: "Subtitle",        type: "textarea", default: "Stop juggling tools. SnapshotAI covers every dimension of WordPress site management so you can focus on growing your agency." },
+      subtitle: { label: "Subtitle",        type: "textarea", default: "Stop juggling tools. Site Armor covers every dimension of WordPress site management so you can focus on growing your agency." },
     },
   },
   how_it_works: {
@@ -84,7 +84,7 @@ export const SECTION_LIBRARY: Record<string, SectionLibraryEntry> = {
     fields: {
       eyebrow:    { label: "Eyebrow",           type: "text",     default: "Start today — it's free" },
       heading:    { label: "Heading",           type: "textarea", default: "Ready to make site monitoring a competitive advantage?" },
-      subtitle:   { label: "Subtitle",          type: "textarea", default: "Join 240+ agencies using Snapshot AI to automate audits, impress clients, and protect every WordPress site they manage." },
+      subtitle:   { label: "Subtitle",          type: "textarea", default: "Join 240+ agencies using Site Armor to automate audits, impress clients, and protect every WordPress site they manage." },
       cta_label:  { label: "Primary CTA Label", type: "text",     default: "Start Free — No Card Needed" },
       cta_url:    { label: "Primary CTA URL",   type: "url",      default: "/register" },
       cta2_label: { label: "Secondary CTA",     type: "text",     default: "Compare Plans" },
@@ -118,13 +118,13 @@ export const SECTION_LIBRARY: Record<string, SectionLibraryEntry> = {
     label: "Testimonials", category: "Social proof",
     fields: {
       eyebrow:  { label: "Eyebrow",          type: "text",     default: "What agencies say" },
-      heading:  { label: "Section Heading",  type: "text",     default: "Agencies love BrandBeesAI." },
+      heading:  { label: "Section Heading",  type: "text",     default: "Agencies love Site Armor." },
       subtitle: { label: "Subtitle",         type: "textarea", default: "Real teams. Real results. See what our customers have to say." },
       items: {
         label:   "Testimonials",
         type:    "repeater",
         default: JSON.stringify([
-          { quote: "BrandBeesAI completely changed how we handle client reporting. What took us hours now happens automatically, and our clients are blown away by the professional PDF reports.", name: "Sarah Mitchell",  role: "Founder, PixelCraft Agency"   },
+          { quote: "Site Armor completely changed how we handle client reporting. What took us hours now happens automatically, and our clients are blown away by the professional PDF reports.", name: "Sarah Mitchell",  role: "Founder, PixelCraft Agency"   },
           { quote: "The malware detection caught a serious infection on one of our client's e-commerce sites before it caused any damage. That single alert paid for a full year of the subscription.", name: "James Thornton", role: "Lead Developer, ThornDigital" },
           { quote: "Managing 40+ WordPress sites used to be chaos. Now we have a single dashboard that shows everything at a glance. The AI score breakdowns are genuinely insightful.", name: "Priya Nair",      role: "Director, Nair Web Studio"    },
         ]),
@@ -168,7 +168,7 @@ export const GLOBAL_SECTIONS: Record<string, SectionDef> = {
   header: {
     label: "Header", pinned: true,
     fields: {
-      logo_alt: { label: "Logo Alt Text", type: "text", default: "BBSnapshotAI" },
+      logo_alt: { label: "Logo Alt Text", type: "text", default: "BBSite Armor" },
       nav_links: {
         label:   "Navigation Links",
         type:    "repeater",
@@ -191,7 +191,7 @@ export const GLOBAL_SECTIONS: Record<string, SectionDef> = {
     label: "Footer", pinned: true,
     fields: {
       tagline:   { label: "Footer Tagline", type: "textarea", default: "WordPress monitoring for agencies." },
-      copyright: { label: "Copyright Line", type: "text",     default: `© ${new Date().getFullYear()} BBSnapshotAI` },
+      copyright: { label: "Copyright Line", type: "text",     default: `© ${new Date().getFullYear()} BBSite Armor` },
     },
   },
   branding: {

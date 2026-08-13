@@ -4,19 +4,19 @@ import { Container, Section } from "@/components/marketing/ui/Section";
 const PAGES = {
   privacy: {
     title: "Privacy Policy",
-    body: "This privacy policy describes how BrandBees SnapshotAI collects, uses, and protects personal data. For the current legal text, contact hello@brandbees.net. This page is a compliance placeholder pending final counsel review.",
+    body: "This privacy policy describes how Site Armor collects, uses, and protects personal data. For the current legal text, contact hello@brandbees.net. This page is a compliance placeholder pending final counsel review.",
   },
   terms: {
     title: "Terms of Service",
-    body: "These terms govern use of SnapshotAI. For the current legal text, contact hello@brandbees.net. This page is a compliance placeholder pending final counsel review.",
+    body: "These terms govern use of Site Armor. For the current legal text, contact hello@brandbees.net. This page is a compliance placeholder pending final counsel review.",
   },
   cookies: {
     title: "Cookie Policy",
-    body: "SnapshotAI uses essential cookies for authentication and preferences, and may use analytics cookies where consented. For the current legal text, contact hello@brandbees.net.",
+    body: "Site Armor uses essential cookies for authentication and preferences, and may use analytics cookies where consented. For the current legal text, contact hello@brandbees.net.",
   },
   gdpr: {
     title: "GDPR",
-    body: "BrandBees is committed to GDPR-aligned processing for SnapshotAI customers and their end clients' portal access. For DPA requests or data subject inquiries, contact hello@brandbees.net.",
+    body: "BrandBees is committed to GDPR-aligned processing for Site Armor customers and their end clients' portal access. For DPA requests or data subject inquiries, contact hello@brandbees.net.",
   },
 } as const;
 
@@ -35,7 +35,7 @@ export async function generateMetadata({
   const page = PAGES[slug as LegalSlug];
   if (!page) return {};
   return {
-    title: `${page.title} — SnapshotAI`,
+    title: `${page.title} — Site Armor`,
     description: page.body.slice(0, 155),
     alternates: { canonical: `/legal/${slug}` },
   };

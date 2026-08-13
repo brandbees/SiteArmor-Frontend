@@ -93,7 +93,7 @@ export function MarketingFooter({
           <p className="text-xs text-white/35">
             {c(
               "copyright",
-              `© ${year} BrandBees SnapshotAI. All rights reserved.`
+              `© ${year} Site Armor. All rights reserved.`
             )}
           </p>
           <p className="text-xs text-white/35">

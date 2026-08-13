@@ -172,9 +172,9 @@ export function Sidebar() {
                 {!collapsed && (
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-foreground leading-none truncate">
-                      {agency?.brand_name || "BrandBees"}
+                      {agency?.brand_name || "Site Armor"}
                     </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">SnapshotAI</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Site Armor</p>
                   </div>
                 )}
               </>

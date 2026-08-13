@@ -17,10 +17,10 @@ function StepWelcome({ onNext, isIndividual }: { onNext: () => void; isIndividua
   return (
     <div className="flex flex-col items-center text-center gap-6 max-w-md mx-auto">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/Brandbees-sas-x512.png" alt="BrandBees" className="w-16 h-16 object-contain" />
+      <img src="/Brandbees-sas-x512.png" alt="Site Armor" className="w-16 h-16 object-contain" />
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">
-          Welcome to BrandBees SnapshotAI
+          Welcome to Site Armor
         </h1>
         {isIndividual ? (
           <>
@@ -226,8 +226,8 @@ function StepInstallPlugin({
         <h2 className="text-xl font-bold text-foreground">Install the plugin</h2>
         <p className="text-sm text-muted-foreground mt-1">
           {isIndividual
-            ? <>Install the BrandBees plugin on your site <span className="font-medium text-foreground">{site.name}</span> — no coding required.</>
-            : <>Install and activate the BrandBees plugin on <span className="font-medium text-foreground">{site.name}</span>, then paste your token.</>
+            ? <>Install the Site Armor plugin on your site <span className="font-medium text-foreground">{site.name}</span> — no coding required.</>
+            : <>Install and activate the Site Armor plugin on <span className="font-medium text-foreground">{site.name}</span>, then paste your token.</>
           }
         </p>
       </div>
@@ -236,11 +236,11 @@ function StepInstallPlugin({
         {/* Plugin download */}
         <a
           href={`${API_BASE_URL}/plugin/download`}
-          download="brandbees-snapshot.zip"
+          download="site-armor.zip"
           className="flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border-2 text-sm font-semibold hover:opacity-90 transition-opacity"
           style={{ borderColor: "var(--accent)", color: "var(--accent)", background: "color-mix(in srgb, var(--accent) 6%, transparent)" }}
         >
-          <span>Download BrandBees Plugin (.zip)</span>
+          <span>Download Site Armor Plugin (.zip)</span>
           <Download size={16} />
         </a>
 
@@ -250,12 +250,12 @@ function StepInstallPlugin({
             "Log in to your WordPress dashboard (yoursite.com/wp-admin)",
             "Go to Plugins → Add New → Upload Plugin",
             "Upload the downloaded zip file and click Install Now",
-            "Activate the plugin, then go to Settings → BrandBees Snapshot",
+            "Activate the plugin, then go to Settings → Site Armor",
             "Paste your site token and click Save & Connect — that's it!",
           ] : [
             "In WordPress admin go to Plugins → Add New → Upload Plugin",
             "Upload the downloaded zip file and click Install Now",
-            "Activate the plugin, then go to Settings → BrandBees Snapshot",
+            "Activate the plugin, then go to Settings → Site Armor",
             "Paste your site token below and click Save & Connect",
           ]).map((step, i) => (
             <div key={i} className="flex items-start gap-3 text-sm">
@@ -506,8 +506,8 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="h-14 border-b border-border bg-surface/80 backdrop-blur-sm flex items-center px-6 gap-3 shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Brandbees-sas-x512.png" alt="BrandBees" className="w-7 h-7 object-contain" />
-        <span className="text-sm font-semibold text-foreground">BrandBees SnapshotAI</span>
+        <img src="/Brandbees-sas-x512.png" alt="Site Armor" className="w-7 h-7 object-contain" />
+        <span className="text-sm font-semibold text-foreground">Site Armor</span>
       </header>
 
       {/* Progress bar */}

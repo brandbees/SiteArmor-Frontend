@@ -123,7 +123,7 @@ export default function EmailBlastPage() {
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Subject</label>
               <input value={subject} onChange={e => setSubject(e.target.value)}
-                placeholder="e.g. Important update from BrandBees SnapshotAI"
+                placeholder="e.g. Important update from Site Armor"
                 className="w-full mt-1.5 px-3.5 py-2.5 text-sm border border-border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200" />
             </div>
             <div>

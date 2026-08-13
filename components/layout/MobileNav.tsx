@@ -85,9 +85,9 @@ export function MobileNav() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-foreground leading-none">
-                    {agency?.brand_name || "BrandBees"}
+                    {agency?.brand_name || "Site Armor"}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">SnapshotAI</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Site Armor</p>
                 </div>
               </div>
               <button

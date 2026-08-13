@@ -118,7 +118,7 @@ export function AddSiteModal({ onClose, onSuccess }: AddSiteModalProps) {
           ) : (
             <div className="space-y-5">
               <p className="text-sm text-muted-foreground">
-                Copy your site token and paste it into the BrandBees SnapshotAI
+                Copy your site token and paste it into the Site Armor
                 WordPress plugin settings.
               </p>
 
@@ -138,10 +138,10 @@ export function AddSiteModal({ onClose, onSuccess }: AddSiteModalProps) {
               {/* Steps */}
               <ol className="space-y-2">
                 {[
-                  "Download the BrandBees SnapshotAI plugin (.zip)",
+                  "Download the Site Armor plugin (.zip)",
                   "Go to WordPress Admin → Plugins → Add New → Upload",
                   "Install and activate the plugin",
-                  "Go to Settings → BrandBees SnapshotAI",
+                  "Go to Settings → Site Armor",
                   "Paste your site token and save",
                 ].map((step, i) => (
                   <li key={i} className="flex gap-3 text-sm text-muted-foreground">

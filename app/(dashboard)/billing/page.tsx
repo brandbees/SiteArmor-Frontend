@@ -255,7 +255,7 @@ function BillingPage() {
             </p>
             <p className={`text-xs mt-0.5 ${trialDays === 0 ? "text-red-700" : "text-amber-700"}`}>
               {trialDays === 0
-                ? "Add a payment method to continue using SnapshotAI."
+                ? "Add a payment method to continue using Site Armor."
                 : "Upgrade now to keep your data and settings after the trial ends."}
             </p>
           </div>

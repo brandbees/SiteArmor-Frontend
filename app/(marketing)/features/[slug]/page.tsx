@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const meta = FEATURE_PAGES.find((f) => f.slug === slug);
   if (!meta) return {};
   const content = await getPageContent(pageKey(slug));
-  const title = field(content.sections, "meta", "title", `${meta.title} — SnapshotAI`);
+  const title = field(content.sections, "meta", "title", `${meta.title} — Site Armor`);
   const description = field(content.sections, "meta", "description", meta.description);
   return {
     title,
@@ -91,7 +91,7 @@ function getDetail(slug: string, meta: (typeof FEATURE_PAGES)[number]) {
     faqs: [
       { q: `Does ${meta.shortTitle} require the WordPress plugin?`, a: "URL-only connection unlocks external checks immediately. The plugin and SSH tiers unlock deeper inside-the-site and server-level capabilities." },
       { q: "Which plans include this?", a: "Core monitoring pillars are available from Free upward with site limits by plan. Advanced remediation and white-label unlock on higher tiers." },
-      { q: "Can I white-label the results for clients?", a: "Yes. Reports and the client portal carry your agency brand. SnapshotAI stays invisible to the end client." },
+      { q: "Can I white-label the results for clients?", a: "Yes. Reports and the client portal carry your agency brand. Site Armor stays invisible to the end client." },
     ],
   };
 }
@@ -222,7 +222,7 @@ export default async function FeatureDetailPage({ params }: Props) {
             </Reveal>
             <Reveal delay={0.08}>
               <div className="rounded-2xl border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-6 shadow-elevated-sm sm:p-8">
-                <h3 className="mb-5 text-lg font-semibold text-[var(--mkt-fg)]">How SnapshotAI handles it</h3>
+                <h3 className="mb-5 text-lg font-semibold text-[var(--mkt-fg)]">How Site Armor handles it</h3>
                 <div className="space-y-5">
                   {detail.mechanisms.map((m) => {
                     const MIcon = m.icon;

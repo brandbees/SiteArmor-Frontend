@@ -17,7 +17,7 @@ export const HOME_FAQS = [
     a: "No. Every destructive operation shows a preview of the write, and you confirm before anything is applied. Snapshots are taken before changes so you can roll back. That's a selling point, not a limitation.",
   },
   {
-    q: "Can clients see that we use SnapshotAI?",
+    q: "Can clients see that we use Site Armor?",
     a: "Not if you don't want them to. Full white-label covers logo, favicon, display name, cover tagline, and brand colours. Reports and the client portal carry your agency brand.",
   },
   {
@@ -38,7 +38,7 @@ export const HOME_FAQS = [
   },
   {
     q: "What happens if an optimization makes things worse?",
-    a: "Optimize mode re-measures after every change. If the score regresses or the site breaks, SnapshotAI rolls back automatically and remembers not to retry that fix on that site.",
+    a: "Optimize mode re-measures after every change. If the score regresses or the site breaks, Site Armor rolls back automatically and remembers not to retry that fix on that site.",
   },
 ];
 

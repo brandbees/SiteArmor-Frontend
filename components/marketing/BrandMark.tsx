@@ -15,7 +15,7 @@ export function BrandMark({
     <Link
       href="/"
       className={cn("group inline-flex items-center gap-2.5", className)}
-      aria-label="SnapshotAI by BrandBees — home"
+      aria-label="Site Armor by BrandBees — home"
     >
       <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-brand shadow-elevated-sm transition-transform duration-200 group-hover:scale-[1.03]">
         <Image

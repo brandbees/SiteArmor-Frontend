@@ -44,7 +44,7 @@ export function WhiteLabelSection({
             <p className="mt-4 text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
               {c(
                 "description",
-                "AI drafts the narrative. Your brand owns the cover. SnapshotAI stays invisible to the end client — exactly how agencies want it."
+                "AI drafts the narrative. Your brand owns the cover. Site Armor stays invisible to the end client — exactly how agencies want it."
               )}
             </p>
             <ul className="mt-6 space-y-3">

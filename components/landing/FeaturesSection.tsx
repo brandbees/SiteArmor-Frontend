@@ -118,7 +118,7 @@ const FEATURES: Feature[] = [
     icon: Layers,
     color: "#0891b2", bg: "#ecfeff",
     title: "White-label Client Portal",
-    desc: "Give each client a branded portal to review their site health. Your logo, your domain — SnapshotAI stays completely invisible.",
+    desc: "Give each client a branded portal to review their site health. Your logo, your domain — Site Armor stays completely invisible.",
   },
   {
     icon: UserCheck,
@@ -211,7 +211,7 @@ export function FeaturesSection({ cms = {} }: { cms?: Record<string, string> }) 
             }`}
             style={{ transitionDelay: "200ms" }}
           >
-            {c("subtitle", "Stop juggling tools. SnapshotAI covers every dimension of WordPress site management so you can focus on growing your agency.")}
+            {c("subtitle", "Stop juggling tools. Site Armor covers every dimension of WordPress site management so you can focus on growing your agency.")}
           </p>
         </div>
 

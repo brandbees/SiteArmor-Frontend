@@ -11,7 +11,7 @@ import { PricingPreviewSection } from "@/components/marketing/sections/PricingPr
 import { FAQSection, FaqJsonLd } from "@/components/marketing/sections/FAQSection";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
 
-const DEFAULT_TITLE = "Pricing — SnapshotAI WordPress maintenance software";
+const DEFAULT_TITLE = "Pricing — Site Armor WordPress maintenance software";
 const DEFAULT_DESC = "Four plans with real site limits, AI token allowances, storage, and backup retention. 14-day trial on paid plans — no card required.";
 
 const PRICING_FAQS = [
@@ -66,9 +66,9 @@ export default async function PricingPage() {
   const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "SnapshotAI",
+    name: "Site Armor",
     description: DEFAULT_DESC,
-    brand: { "@type": "Brand", name: "BrandBees" },
+    brand: { "@type": "Brand", name: "Site Armor" },
     offers: PLANS.map((p) => ({
       "@type": "Offer",
       name: p.name,

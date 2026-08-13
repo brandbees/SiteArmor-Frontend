@@ -10,9 +10,9 @@ import { Reveal } from "@/components/marketing/ui/Reveal";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
 
-const DEFAULT_TITLE = "Features — SnapshotAI WordPress operations platform";
+const DEFAULT_TITLE = "Features — Site Armor WordPress operations platform";
 const DEFAULT_DESC =
-  "Explore SnapshotAI capabilities: performance & AI Optimize, SEO, security, malware, uptime, white-label reports, backups, and more.";
+  "Explore Site Armor capabilities: performance & AI Optimize, SEO, security, malware, uptime, white-label reports, backups, and more.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getPageContent("features");
@@ -36,7 +36,7 @@ const GROUPS: { key: string; label: string; description: string; pillars: string
   {
     key: "reporting",
     label: "Reporting & clients",
-    description: "White-label PDFs, portals, and branding that keep SnapshotAI invisible.",
+    description: "White-label PDFs, portals, and branding that keep Site Armor invisible.",
     pillars: ["reporting"],
   },
   {

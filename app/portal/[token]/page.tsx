@@ -76,7 +76,7 @@ export default function PortalPage() {
     );
   }
 
-  const agencyName = data.agency_brand_name || "BrandBees SnapshotAI";
+  const agencyName = data.agency_brand_name || "Site Armor";
   const isPaid = data.agency_plan !== "free";
   const isClean = data.malware_score != null ? data.malware_score >= 80 : data.is_clean !== false;
 
@@ -232,7 +232,7 @@ export default function PortalPage() {
       {/* Footer */}
       <footer className="border-t border-border bg-white py-4">
         <p className="text-center text-xs text-muted-foreground">
-          {isPaid ? `Powered by ${agencyName}` : "Powered by BrandBees SnapshotAI"}
+          {isPaid ? `Powered by ${agencyName}` : "Powered by Site Armor"}
         </p>
       </footer>
     </div>

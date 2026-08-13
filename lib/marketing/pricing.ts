@@ -43,7 +43,7 @@ export const PLANS: PlanDefinition[] = [
   {
     code: "free",
     name: "Free",
-    tagline: "Try SnapshotAI on a single site.",
+    tagline: "Try Site Armor on a single site.",
     siteLimit: 1,
     siteLimitLabel: "1 site",
     aiTokens: 1_000,

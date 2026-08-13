@@ -12,7 +12,7 @@ import { ProductFrame } from "@/components/marketing/ProductFrame";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
 import { FAQSection, FaqJsonLd } from "@/components/marketing/sections/FAQSection";
 
-const DEFAULT_TITLE = "How it works — Monitor client WordPress sites with SnapshotAI";
+const DEFAULT_TITLE = "How it works — Monitor client WordPress sites with Site Armor";
 const DEFAULT_DESC = "Three connection tiers: URL-only in 30 seconds, WordPress plugin in 2 minutes, SSH when you're ready for autonomous remediation.";
 
 const TIER_SNAPSHOTS: SnapshotId[] = ["sites", "site-dash", "agent"];
@@ -36,7 +36,7 @@ const FAQS = [
   { q: "Do I have to give SSH access?", a: "No. URL-only and plugin tiers deliver substantial monitoring and maintenance value. SSH unlocks the autonomous agent for server-level fixes — when you're ready." },
   { q: "Where are SSH credentials stored?", a: "In an encrypted vault — never plaintext, never exposed to the AI model. Every operation is logged with actor, command, and result." },
   { q: "Can I start without booking a demo?", a: "Yes. Tier 1 works immediately after you add a URL. Nothing is gated behind a sales call." },
-  { q: "How long does the plugin take to install?", a: "About 2 minutes — install from WordPress admin, then connect from the SnapshotAI dashboard." },
+  { q: "How long does the plugin take to install?", a: "About 2 minutes — install from WordPress admin, then connect from the Site Armor dashboard." },
   { q: "Does the agent modify sites without asking?", a: "No. Every destructive operation shows a preview. You confirm before anything is written. Snapshots enable rollback." },
 ];
 

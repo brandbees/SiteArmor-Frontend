@@ -58,7 +58,7 @@ export default function MasterLoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Master Panel</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            BrandBees super admin access
+            Site Armor super admin access
           </p>
         </div>
 

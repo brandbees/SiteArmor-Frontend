@@ -4,7 +4,7 @@ import { buildSimplePage } from "@/components/marketing/SimpleMarketingPage";
 const built = buildSimplePage({
   pageKey: "security",
   path: "/trust",
-  defaultTitle: "Security & trust — SnapshotAI credential vault",
+  defaultTitle: "Security & trust — Site Armor credential vault",
   defaultDescription:
     "Encrypted SSH vault, confirmation-before-write, audit logging, backup-before-change, RBAC, and GDPR posture.",
   eyebrow: "Security & trust",
@@ -12,7 +12,7 @@ const built = buildSimplePage({
   description:
     "Agencies close deals when they trust how we handle SSH and client data. This page is for that conversation.",
   heroDetail:
-    "SnapshotAI stores SSH credentials in an encrypted vault — never in plaintext, never exposed to the AI model. Master-key rotation, vault anomaly detection, and a dedicated vault audit log run behind every connection. Every destructive AI agent operation shows a preview and waits for your confirmation before writing.",
+    "Site Armor stores SSH credentials in an encrypted vault — never in plaintext, never exposed to the AI model. Master-key rotation, vault anomaly detection, and a dedicated vault audit log run behind every connection. Every destructive AI agent operation shows a preview and waits for your confirmation before writing.",
   stats: [
     { value: "AES-256", label: "Vault encryption" },
     { value: "100%", label: "Ops audit-logged" },

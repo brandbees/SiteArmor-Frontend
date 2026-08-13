@@ -3027,7 +3027,7 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
         <HardDrive size={40} strokeWidth={1} />
-        <p className="text-sm">Plugin not connected — backups require the BrandBees plugin.</p>
+        <p className="text-sm">Plugin not connected — backups require the Site Armor plugin.</p>
       </div>
     );
   }
@@ -4033,7 +4033,7 @@ function WooCommerceTab({ site, audits, brandColor }: { site: Site; audits: Audi
             <div className="px-5 pb-5">
               <div className="rounded-xl border border-dashed border-border bg-gray-50/60 p-4 text-center">
                 <p className="text-xs text-muted-foreground">
-                  Update the BrandBees plugin to the latest version to start sending windowed order and revenue metrics.
+                  Update the Site Armor plugin to the latest version to start sending windowed order and revenue metrics.
                 </p>
               </div>
             </div>

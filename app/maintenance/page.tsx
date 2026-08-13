@@ -55,7 +55,7 @@ export default function MaintenancePage() {
           Down for Maintenance
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-          BrandBees SnapshotAI is currently undergoing scheduled maintenance.
+          Site Armor is currently undergoing scheduled maintenance.
           We&apos;ll be back online shortly — no action is needed on your end.
         </p>
 

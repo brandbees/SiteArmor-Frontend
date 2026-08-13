@@ -4,15 +4,15 @@ import { buildSimplePage } from "@/components/marketing/SimpleMarketingPage";
 const built = buildSimplePage({
   pageKey: "about",
   path: "/about",
-  defaultTitle: "About SnapshotAI by BrandBees",
+  defaultTitle: "About Site Armor by BrandBees",
   defaultDescription:
-    "SnapshotAI is BrandBees' AI-powered WordPress operations platform for agencies — monitor, fix, and report under your brand.",
+    "Site Armor is BrandBees' AI-powered WordPress operations platform for agencies — monitor, fix, and report under your brand.",
   eyebrow: "About BrandBees",
   title: "Built by an agency, for agencies.",
   description:
-    "SnapshotAI exists because monitoring alone isn't enough. Agencies need remediation, proof, and white-label delivery — in one operations layer that scales.",
+    "Site Armor exists because monitoring alone isn't enough. Agencies need remediation, proof, and white-label delivery — in one operations layer that scales.",
   heroDetail:
-    "BrandBees is a digital agency and product team that lives in the same retainers and care plans our customers run. We built SnapshotAI because we needed it ourselves — a single platform that monitors five health pillars, uses AI to remediate with confirmation, and delivers branded reports that prove the retainer.",
+    "BrandBees is a digital agency and product team that lives in the same retainers and care plans our customers run. We built Site Armor because we needed it ourselves — a single platform that monitors five health pillars, uses AI to remediate with confirmation, and delivers branded reports that prove the retainer.",
   stats: [
     { value: "5", label: "Health pillars" },
     { value: "35+", label: "AI agent tools" },
@@ -32,7 +32,7 @@ const built = buildSimplePage({
     },
     {
       title: "White-label delivery",
-      body: "Reports, portals, and dashboards carry your agency brand. SnapshotAI stays invisible to the end client.",
+      body: "Reports, portals, and dashboards carry your agency brand. Site Armor stays invisible to the end client.",
       icon: Palette,
     },
     {

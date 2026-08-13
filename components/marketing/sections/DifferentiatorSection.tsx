@@ -43,7 +43,7 @@ export function DifferentiatorSection({
             <p className="mt-4 text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
               {c(
                 "description",
-                "Most tools dump recommendations. SnapshotAI’s AI Agent answers in plain English, then remediates with your confirmation — so you know first and fix it before the client calls."
+                "Most tools dump recommendations. Site Armor’s AI Agent answers in plain English, then remediates with your confirmation — so you know first and fix it before the client calls."
               )}
             </p>
 

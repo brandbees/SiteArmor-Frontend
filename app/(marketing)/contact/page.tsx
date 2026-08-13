@@ -10,8 +10,8 @@ import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getPageContent("contact");
-  const title = field(content.sections, "meta", "title", "Contact — SnapshotAI by BrandBees");
-  const description = field(content.sections, "meta", "description", "Contact BrandBees about SnapshotAI — product questions, security reviews, or agency rollout.");
+  const title = field(content.sections, "meta", "title", "Contact — Site Armor by BrandBees");
+  const description = field(content.sections, "meta", "description", "Contact BrandBees about Site Armor — product questions, security reviews, or agency rollout.");
   return { title, description, alternates: { canonical: "/contact" }, openGraph: { title, description, url: "/contact", type: "website" } };
 }
 
