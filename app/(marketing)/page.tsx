@@ -48,7 +48,7 @@ function HomeJsonLd() {
         "@type": "Organization",
         name: "BrandBees",
         url: "https://brandbees.net",
-        logo: "/Brandbees-sas-x512.png",
+        logo: "/site-armor-icon.png",
       },
       {
         "@type": "SoftwareApplication",

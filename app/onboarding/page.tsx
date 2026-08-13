@@ -17,7 +17,7 @@ function StepWelcome({ onNext, isIndividual }: { onNext: () => void; isIndividua
   return (
     <div className="flex flex-col items-center text-center gap-6 max-w-md mx-auto">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/Brandbees-sas-x512.png" alt="Site Armor" className="w-16 h-16 object-contain" />
+      <img src="/site-armor-icon.png" alt="Site Armor" className="w-16 h-16 object-contain" />
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">
           Welcome to Site Armor
@@ -506,7 +506,7 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="h-14 border-b border-border bg-surface/80 backdrop-blur-sm flex items-center px-6 gap-3 shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Brandbees-sas-x512.png" alt="Site Armor" className="w-7 h-7 object-contain" />
+        <img src="/site-armor-icon.png" alt="Site Armor" className="w-7 h-7 object-contain" />
         <span className="text-sm font-semibold text-foreground">Site Armor</span>
       </header>
 

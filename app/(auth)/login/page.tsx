@@ -104,7 +104,7 @@ function LoginContent() {
             <img src={logoUrl} alt={brandName} className="h-12 w-auto object-contain mb-4" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src="/Brandbees-sas-x512.png" alt="Site Armor" className="w-14 h-14 object-contain mb-4" />
+            <img src="/site-armor-icon.png" alt="Site Armor" className="w-14 h-14 object-contain mb-4" />
           )}
           <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
           <p className="text-sm text-muted-foreground mt-1">to {brandName}</p>

@@ -446,7 +446,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/Brandbees-sas-x512.png" alt="Site Armor" className="w-14 h-14 object-contain mb-4" />
+          <img src="/site-armor-icon.png" alt="Site Armor" className="w-14 h-14 object-contain mb-4" />
           <h1 className="text-2xl font-bold text-foreground">{headings[phase].title}</h1>
           <p className="text-sm text-muted-foreground mt-1 text-center">{headings[phase].sub}</p>
         </div>

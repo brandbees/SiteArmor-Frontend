@@ -19,7 +19,7 @@ export function BrandMark({
     >
       <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-brand shadow-elevated-sm transition-transform duration-200 group-hover:scale-[1.03]">
         <Image
-          src="/Brandbees-sas-x512.png"
+          src="/site-armor-icon.png"
           alt=""
           width={28}
           height={28}
