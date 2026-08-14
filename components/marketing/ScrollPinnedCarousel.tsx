@@ -174,7 +174,7 @@ function SlideCard({ id, active }: { id: SnapshotId; active: boolean }) {
           <span className="h-2 w-2 rounded-full bg-[#febc2e]" />
           <span className="h-2 w-2 rounded-full bg-[#28c840]" />
           <span className="ml-1.5 truncate text-[10px] font-medium text-[var(--mkt-muted)]">
-            app.snapshotai · {snap.label}
+            app.sitearmor · {snap.label}
           </span>
         </div>
         <div

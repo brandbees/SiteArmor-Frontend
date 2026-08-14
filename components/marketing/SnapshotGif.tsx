@@ -74,7 +74,7 @@ export function SnapshotGif({
             </div>
             <div className="ml-1.5 flex h-5 min-w-0 flex-1 items-center rounded-md bg-[var(--mkt-bg-muted)] px-2.5">
               <span className="truncate text-[10px] font-medium text-[var(--mkt-muted)]">
-                app.snapshotai · {active.label}
+                app.sitearmor · {active.label}
               </span>
             </div>
           </div>

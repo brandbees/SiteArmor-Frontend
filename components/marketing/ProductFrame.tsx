@@ -55,7 +55,7 @@ export function ProductFrame({
             </div>
             <div className="ml-2 flex h-5 flex-1 items-center rounded-md bg-[var(--mkt-bg-muted)] px-2.5">
               <span className="truncate text-[10px] font-medium text-[var(--mkt-muted)]">
-                app.snapshotai · {snapshot.label}
+                app.sitearmor · {snapshot.label}
               </span>
             </div>
           </div>

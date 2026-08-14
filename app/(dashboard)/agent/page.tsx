@@ -1559,7 +1559,7 @@ function AgentInner() {
                 </div>
 
                 <p className="text-[11px] mt-10 tracking-wide text-muted-foreground">
-                  SNAPSHOT AI · Actions require your confirmation
+                  SITE ARMOR · Actions require your confirmation
                 </p>
               </div>
             ) : (

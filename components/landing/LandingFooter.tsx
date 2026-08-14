@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Zap, MapPin, Mail } from "lucide-react";
+import { MapPin, Mail } from "lucide-react";
 
 const LINKS = {
   Product: [
@@ -48,15 +49,16 @@ export function LandingFooter({ cms = {} }: { cms?: Record<string, string> }) {
           {/* Brand column — spans 2 cols */}
           <div className="col-span-2">
             <Link href="/" className="inline-flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-md">
-                <Zap size={16} className="text-white" fill="white" />
-              </div>
+              <Image
+                src="/site-armor-icon.png"
+                alt=""
+                width={36}
+                height={36}
+                className="w-9 h-9 object-contain shrink-0"
+              />
               <div className="leading-none">
                 <span className="font-black text-[16px] text-white tracking-tight">
-                  Snapshot<span className="text-sky-400">AI</span>
-                </span>
-                <span className="block text-[9px] text-slate-500 font-medium tracking-widest uppercase mt-0.5">
-                  by BrandBees
+                  Site<span className="text-sky-400">Armor</span>
                 </span>
               </div>
             </Link>

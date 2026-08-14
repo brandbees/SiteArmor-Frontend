@@ -83,7 +83,7 @@ export function DifferentiatorSection({
                   <span className="h-2 w-2 rounded-full bg-[#febc2e]" />
                   <span className="h-2 w-2 rounded-full bg-[#28c840]" />
                   <span className="ml-1.5 text-[10px] font-medium text-[var(--mkt-muted)]">
-                    app.snapshotai · AI Agent
+                    app.sitearmor · AI Agent
                   </span>
                 </div>
                 <div

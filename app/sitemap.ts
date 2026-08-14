@@ -3,7 +3,7 @@ import { FEATURE_PAGES } from "@/lib/marketing/features";
 
 const SITE =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
-  "https://snapshotai.brandbees.net";
+  "https://www.sitearmor.io";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

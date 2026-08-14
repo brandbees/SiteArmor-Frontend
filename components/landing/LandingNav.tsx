@@ -1,7 +1,8 @@
 "use client";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Zap, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { isLoggedIn } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
 
@@ -108,15 +109,17 @@ export function LandingNav({ cms = {}, initialDark = false }: { cms?: Record<str
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-sm">
-              <Zap size={15} className="text-white" fill="white" />
-            </div>
+            <Image
+              src="/site-armor-icon.png"
+              alt=""
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain shrink-0"
+              priority
+            />
             <div className="leading-none">
               <span className="font-black text-[15px] tracking-tight text-gray-900">
-                Snapshot<span className="text-sky-500">AI</span>
-              </span>
-              <span className="block text-[9px] text-gray-400 font-medium tracking-widest uppercase mt-0.5">
-                by BrandBees
+                Site<span className="text-sky-500">Armor</span>
               </span>
             </div>
           </Link>
