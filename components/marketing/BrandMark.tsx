@@ -15,27 +15,19 @@ export function BrandMark({
       className={cn("group inline-flex items-center gap-2.5", className)}
       aria-label="Site Armor — home"
     >
-      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-brand shadow-elevated-sm transition-transform duration-200 group-hover:scale-[1.03]">
-        <Image
-          src="/site-armor-icon.png"
-          alt=""
-          width={28}
-          height={28}
-          className="object-contain"
-          priority
-        />
-      </span>
-      <span className="leading-none">
-        <span
-          className={cn(
-            "block text-[15px] font-bold tracking-tight",
-            inverse ? "text-white" : "text-[var(--mkt-fg)]"
-          )}
-        >
-          Site
-          <span className={inverse ? "text-white/80" : "text-accent"}>Armor</span>
-        </span>
-      </span>
+      {/* Two artworks rather than a CSS filter: brightness-0/invert flattens the mark
+          to a silhouette and loses the blue shield. The white file is authored for dark
+          backgrounds and keeps the design intact. */}
+      {/* The two files are cropped separately, so their intrinsic sizes differ. Passing the
+          right pair keeps the reserved box the same shape as the artwork under h-14 w-auto. */}
+      <Image
+        src={inverse ? "/site-armor-logo-white-h.png" : "/site-armor-logo-h.png"}
+        alt="Site Armor"
+        width={inverse ? 2215 : 1785}
+        height={inverse ? 595 : 495}
+        priority
+        className="h-14 w-auto object-contain"
+      />
     </Link>
   );
 }

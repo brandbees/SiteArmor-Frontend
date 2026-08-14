@@ -50,17 +50,12 @@ export function LandingFooter({ cms = {} }: { cms?: Record<string, string> }) {
           <div className="col-span-2">
             <Link href="/" className="inline-flex items-center gap-2.5 mb-4">
               <Image
-                src="/site-armor-icon.png"
-                alt=""
-                width={36}
-                height={36}
-                className="w-9 h-9 object-contain shrink-0"
+                src="/site-armor-logo-white-h.png"
+                alt="Site Armor"
+                width={2215}
+                height={595}
+                className="h-14 w-auto object-contain"
               />
-              <div className="leading-none">
-                <span className="font-black text-[16px] text-white tracking-tight">
-                  Site<span className="text-sky-400">Armor</span>
-                </span>
-              </div>
             </Link>
 
             <p className="text-sm text-slate-400 leading-relaxed mb-5 max-w-[220px]">

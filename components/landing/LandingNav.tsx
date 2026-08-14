@@ -110,18 +110,13 @@ export function LandingNav({ cms = {}, initialDark = false }: { cms?: Record<str
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-2">
             <Image
-              src="/site-armor-icon.png"
-              alt=""
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain shrink-0"
+              src="/site-armor-logo-h.png"
+              alt="Site Armor"
+              width={1785}
+              height={495}
               priority
+              className="h-14 w-auto object-contain"
             />
-            <div className="leading-none">
-              <span className="font-black text-[15px] tracking-tight text-gray-900">
-                Site<span className="text-sky-500">Armor</span>
-              </span>
-            </div>
           </Link>
 
           {/* Nav links — desktop */}
