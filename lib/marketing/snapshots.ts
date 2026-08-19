@@ -23,6 +23,7 @@ export type SnapshotId =
 export interface SnapshotMeta {
   id: SnapshotId;
   src: string;
+  darkSrc?: string;
   alt: string;
   label: string;
   caption: string;

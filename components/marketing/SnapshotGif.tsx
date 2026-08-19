@@ -84,6 +84,29 @@ export function SnapshotGif({
           className="relative overflow-hidden rounded-xl bg-[var(--mkt-bg-muted)]"
           style={{ aspectRatio: aspect }}
         >
+          {ids.length > 1 ? (
+            <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex gap-1.5">
+              {ids.map((id, i) => (
+                <span
+                  key={`${id}-bar`}
+                  className={cn(
+                    "relative h-1 flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/15"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute inset-y-0 left-0 rounded-full bg-accent",
+                      i === index && !paused && !reduce && "animate-mkt-story-bar"
+                    )}
+                    style={{
+                      width: i === index ? "100%" : i < index ? "100%" : "0%",
+                      animationDuration: `${intervalMs}ms`,
+                    }}
+                  />
+                </span>
+              ))}
+            </div>
+          ) : null}
           {ids.map((id, i) => {
             const snap = SNAPSHOTS[id];
             const isActive = i === index;
@@ -102,7 +125,10 @@ export function SnapshotGif({
                   fill
                   priority={priority && i === 0}
                   sizes="(max-width: 768px) 100vw, 640px"
-                  className="object-cover object-top"
+                  className={cn(
+                    "object-cover object-top transition-transform duration-[4500ms]",
+                    isActive ? "scale-100" : "scale-[1.03]"
+                  )}
                 />
               </div>
             );

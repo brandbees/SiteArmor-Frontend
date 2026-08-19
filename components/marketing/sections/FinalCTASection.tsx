@@ -10,50 +10,39 @@ export function FinalCTASection({ cms = {} }: { cms?: Record<string, string> }) 
   const c = cmsField(cms);
 
   return (
-    <Section className="!py-16 sm:!py-20">
+    <Section className="!py-20 sm:!py-28 lg:!py-32">
       <Container>
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-brand px-6 py-14 text-center shadow-elevated-lg sm:px-12">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-30"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 20% 20%, white 0%, transparent 40%), radial-gradient(circle at 80% 80%, white 0%, transparent 35%)",
-              }}
-            />
-            <div className="relative">
-              <h2 className="mx-auto max-w-xl font-[family-name:var(--font-marketing-display)] text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                {c(
-                  "title",
-                  "Add your first site in 30 seconds."
-                )}
-              </h2>
-              <p className="mx-auto mt-4 max-w-md text-base text-white/75">
-                {c(
-                  "description",
-                  "Start free. No card required. Deeper access when you're ready."
-                )}
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <ButtonLink
-                  href={c("cta_url", "/register")}
-                  variant="inverse"
-                  size="lg"
-                >
-                  {c("cta_label", "Start Free — No Card Needed")}
-                  <ArrowRight size={16} />
-                </ButtonLink>
-                <ButtonLink
-                  href="/pricing"
-                  variant="ghost"
-                  size="lg"
-                  className="text-white hover:bg-white/10"
-                >
-                  View pricing
-                </ButtonLink>
-              </div>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-[family-name:var(--font-marketing-display)] text-3xl font-bold tracking-tight text-[var(--mkt-fg)] sm:text-4xl lg:text-5xl">
+              Start monitoring your sites{" "}
+              <span className="text-[var(--mkt-muted)]">in minutes.</span>
+            </h2>
+
+            <p className="mt-5 text-lg leading-relaxed text-[var(--mkt-muted)]">
+              {c("description", "Free tier. No credit card. URL-only setup in 30 seconds.")}
+            </p>
+
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <ButtonLink
+                href={c("cta_url", "/register") as string}
+                size="lg"
+              >
+                {c("cta_label", "Start Free Trial")}
+                <ArrowRight size={16} />
+              </ButtonLink>
+              <ButtonLink
+                href="/pricing"
+                variant="secondary"
+                size="lg"
+              >
+                View pricing
+              </ButtonLink>
             </div>
+
+            <p className="mt-8 text-xs text-[var(--mkt-muted)]">
+              Free for 1 site · 14-day trial · No card required · Full white-label
+            </p>
           </div>
         </Reveal>
       </Container>

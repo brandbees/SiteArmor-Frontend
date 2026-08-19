@@ -29,7 +29,7 @@
   --destructive: #dc2626;
   --destructive-light: #fef2f2;
   --ring: #1a56db;
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
   /* Shadows — a hairline "shadow-border" (0 0 0 1px) replaces hard borders on cards,
      layered with real elevation blur so depth reads without a visible line. */
@@ -57,15 +57,15 @@
   --score-bad-bg: #fef2f2;
   --score-bad-border: #fecaca;
 
-  /* Marketing site surface tokens — consume brand accent; do not invent new hues */
-  --mkt-bg: #f7f8fb;
-  --mkt-bg-muted: #eef1f6;
-  --mkt-wash: #eaf1fb;
+  /* Marketing site — bright MalCare-style light shell */
+  --mkt-bg: #ffffff;
+  --mkt-bg-muted: #f4f6f9;
+  --mkt-wash: #eef4fc;
   --mkt-surface: #ffffff;
-  --mkt-fg: #0f172a;
-  --mkt-muted: #5b6577;
-  --mkt-border: rgb(15 23 42 / 0.06);
-  --mkt-border-strong: #c8d0dc;
+  --mkt-fg: #0a0f1a;
+  --mkt-muted: #4b5563;
+  --mkt-border: rgb(15 23 42 / 0.08);
+  --mkt-border-strong: #d1d9e6;
   --mkt-inverse: #0f1d35;
   --mkt-inverse-fg: #f8fafc;
   --mkt-secondary: #1a56db;
@@ -81,8 +81,9 @@ html.dark {
   --mkt-surface: #111a2b;
   --mkt-fg: #f1f5f9;
   --mkt-muted: #94a3b8;
-  --mkt-border: rgb(148 163 184 / 0.12);
-  --mkt-border-strong: #334155;
+  --mkt-border: rgba(255, 255, 255, 0.08);
+  --mkt-border-strong: rgba(255, 255, 255, 0.14);
+  --border: rgba(255, 255, 255, 0.08);
   --mkt-inverse: #060b14;
   --mkt-inverse-fg: #f8fafc;
 }
@@ -300,11 +301,21 @@ button, a, input, select, textarea {
 
 .animate-slide-in-right { animation: slide-in-right 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-/* Marketing shell */
+/* Marketing shell — light-first, MalCare-inspired clarity */
 .marketing-root {
   background: var(--mkt-bg);
   color: var(--mkt-fg);
   min-height: 100vh;
+}
+
+.marketing-light {
+  --mkt-bg: #ffffff;
+  --mkt-bg-muted: #f4f6f9;
+  --mkt-wash: #eef4fc;
+  --mkt-surface: #ffffff;
+  --mkt-fg: #0a0f1a;
+  --mkt-muted: #4b5563;
+  --mkt-border: rgb(15 23 42 / 0.08);
 }
 
 @media (prefers-reduced-motion: reduce) {

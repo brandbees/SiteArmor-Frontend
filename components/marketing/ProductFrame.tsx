@@ -68,14 +68,36 @@ export function ProductFrame({
           )}
           style={{ aspectRatio: aspect }}
         >
-          <Image
-            src={snapshot.src}
-            alt={snapshot.alt}
-            fill
-            priority={priority}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
-            className="object-cover object-top"
-          />
+          {snapshot.darkSrc ? (
+            <>
+              <Image
+                src={snapshot.src}
+                alt={snapshot.alt}
+                fill
+                priority={priority}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
+                className="object-cover object-top dark:hidden"
+              />
+              <Image
+                src={snapshot.darkSrc}
+                alt=""
+                aria-hidden
+                fill
+                priority={priority}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
+                className="hidden object-cover object-top dark:block"
+              />
+            </>
+          ) : (
+            <Image
+              src={snapshot.src}
+              alt={snapshot.alt}
+              fill
+              priority={priority}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
+              className="object-cover object-top"
+            />
+          )}
         </div>
       </div>
 

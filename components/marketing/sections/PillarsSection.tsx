@@ -22,10 +22,11 @@ export function PillarsSection({ cms = {} }: { cms?: Record<string, string> }) {
   const c = cmsField(cms);
 
   return (
-    <Section>
+    <Section tone="muted">
       <Container>
         <Reveal>
           <SectionHeading
+            size="hero"
             eyebrow={c("eyebrow", "Five pillars · one score")}
             title={c(
               "title",
@@ -33,7 +34,7 @@ export function PillarsSection({ cms = {} }: { cms?: Record<string, string> }) {
             )}
             description={c(
               "description",
-              "Every site gets an overall health score (0–100) — a weighted composite of Performance, SEO, Security, Malware, and Uptime. Pillars without data are excluded, not zeroed."
+              "Every site gets an overall health score (0–100) — a weighted composite of Performance, SEO, Security, Malware, and Uptime."
             )}
           />
         </Reveal>

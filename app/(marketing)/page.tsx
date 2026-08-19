@@ -2,21 +2,24 @@ import type { Metadata } from "next";
 import { getPageContent, field } from "@/lib/cms";
 import { sf } from "@/lib/marketing/cms";
 import { HeroSection } from "@/components/marketing/sections/HeroSection";
+import { TrustLogosSection } from "@/components/marketing/sections/TrustLogosSection";
+import { StatsBarSection } from "@/components/marketing/sections/StatsBarSection";
 import { ProblemSection } from "@/components/marketing/sections/ProblemSection";
-import { ProductTourSection } from "@/components/marketing/sections/ProductTourSection";
-import { PillarsSection } from "@/components/marketing/sections/PillarsSection";
+import { PlatformPillarsSection } from "@/components/marketing/sections/PlatformPillarsSection";
 import { DifferentiatorSection } from "@/components/marketing/sections/DifferentiatorSection";
+import { SecurityEdgeSection } from "@/components/marketing/sections/SecurityEdgeSection";
 import { FeatureGridSection } from "@/components/marketing/sections/FeatureGridSection";
-import { HowItWorksSection } from "@/components/marketing/sections/HowItWorksSection";
-import { WhiteLabelSection } from "@/components/marketing/sections/WhiteLabelSection";
-import { PricingPreviewSection } from "@/components/marketing/sections/PricingPreviewSection";
+import { ComparisonSection } from "@/components/marketing/sections/ComparisonSection";
+import { FunFactsSection } from "@/components/marketing/sections/FunFactsSection";
+import { InlineCTASection } from "@/components/marketing/sections/InlineCTASection";
+import { HowItWorksStepsSection } from "@/components/marketing/sections/HowItWorksStepsSection";
+import { TestimonialsSection } from "@/components/marketing/sections/TestimonialsSection";
 import {
   FAQSection,
   FaqJsonLd,
   HOME_FAQS,
 } from "@/components/marketing/sections/FAQSection";
 import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection";
-import { NewsletterSection } from "@/components/marketing/sections/NewsletterSection";
 
 const DEFAULT_TITLE =
   "Site Armor by BrandBees — WordPress monitoring & remediation for agencies";
@@ -81,18 +84,64 @@ export default async function HomePage() {
     <main>
       <HomeJsonLd />
       <FaqJsonLd faqs={HOME_FAQS} />
+
+      {/* Hero + social proof */}
       <HeroSection cms={sf(sections, "hero")} />
-      <ProblemSection cms={sf(sections, "problem")} />
-      <ProductTourSection cms={sf(sections, "product_tour")} />
-      <PillarsSection cms={sf(sections, "pillars")} />
+      <TrustLogosSection />
+      <StatsBarSection />
+
+      {/* The problem */}
+      <ProblemSection />
+
+      {/* Four pillars — how we solve it */}
+      <PlatformPillarsSection cms={sf(sections, "platform")} />
+
+      <InlineCTASection
+        title="See it in action — add your first site in 30 seconds."
+        subtitle="Free tier. No credit card required."
+        cta="Start Free Trial"
+        href="/register"
+        secondaryCta="View Pricing"
+        secondaryHref="/pricing"
+        tone="accent"
+      />
+
+      {/* AI Agent deep-dive */}
       <DifferentiatorSection cms={sf(sections, "differentiator")} />
+
+      {/* Detection edge */}
+      <SecurityEdgeSection />
+
+      {/* All capabilities */}
       <FeatureGridSection cms={sf(sections, "features")} />
-      <HowItWorksSection cms={sf(sections, "how_it_works")} />
-      <WhiteLabelSection cms={sf(sections, "white_label")} />
-      <PricingPreviewSection cms={sf(sections, "pricing")} />
-      <FinalCTASection cms={sf(sections, "cta_banner")} />
+
+      {/* Side-by-side comparison */}
+      <ComparisonSection />
+
+      <InlineCTASection
+        title="Replace your fragmented tool stack today."
+        subtitle="One platform. One bill. Every capability."
+        cta="Protect My Sites"
+        href="/register"
+        secondaryCta="Talk to Us"
+        secondaryHref="/contact"
+        tone="dark"
+      />
+
+      {/* Fun facts / key numbers */}
+      <FunFactsSection />
+
+      {/* Getting started steps */}
+      <HowItWorksStepsSection />
+
+      {/* Testimonials grid */}
+      <TestimonialsSection />
+
+      {/* FAQ */}
       <FAQSection cms={sf(sections, "faq")} />
-      <NewsletterSection cms={sf(sections, "newsletter")} />
+
+      {/* Final CTA */}
+      <FinalCTASection cms={sf(sections, "cta_banner")} />
     </main>
   );
 }

@@ -42,7 +42,7 @@ export function MarketingFooter({
 
   return (
     <footer className="bg-[var(--mkt-inverse)] text-[var(--mkt-inverse-fg)]">
-      <div className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pb-10 pt-16 sm:px-6 lg:px-8">
         <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-6">
           <div className="col-span-2">
             <BrandMark inverse className="mb-4" />

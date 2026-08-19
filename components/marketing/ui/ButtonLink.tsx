@@ -6,19 +6,19 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-accent text-accent-foreground shadow-elevated-sm hover:bg-accent-hover hover:-translate-y-px hover:shadow-elevated-md focus-visible:outline-accent",
+    "bg-accent text-white hover:bg-accent-hover focus-visible:outline-accent",
   secondary:
-    "bg-[var(--mkt-surface)] text-[var(--mkt-fg)] shadow-elevated-xs hover:shadow-elevated-sm hover:-translate-y-px",
+    "bg-[var(--mkt-surface)] text-[var(--mkt-fg)] ring-1 ring-[var(--mkt-border-strong)] hover:ring-accent/30",
   ghost:
     "bg-transparent text-[var(--mkt-fg)] hover:bg-[var(--mkt-bg-muted)]",
   inverse:
-    "bg-white text-accent-deep shadow-elevated-sm hover:-translate-y-px hover:shadow-elevated-md",
+    "bg-white text-accent-deep hover:bg-white/90",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3.5 text-sm",
-  md: "h-11 px-5 text-sm",
-  lg: "h-12 px-6 text-[15px]",
+  sm: "h-9 px-4 text-[11px]",
+  md: "h-11 px-6 text-xs",
+  lg: "h-[52px] px-8 text-[13px]",
 };
 
 export function ButtonLink({
@@ -37,7 +37,7 @@ export function ButtonLink({
   external?: boolean;
 }) {
   const classes = cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200",
+    "inline-flex items-center justify-center gap-2 rounded-[4px] font-bold uppercase tracking-[0.08em] transition-all duration-200",
     variants[variant],
     sizes[size],
     className

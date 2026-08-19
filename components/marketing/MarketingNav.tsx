@@ -9,11 +9,6 @@ import {
   Moon,
   Sun,
   X,
-  Gauge,
-  Shield,
-  Bot,
-  FileText,
-  HardDrive,
 } from "lucide-react";
 import { BrandMark } from "@/components/marketing/BrandMark";
 import { ButtonLink } from "@/components/marketing/ui/ButtonLink";
@@ -42,11 +37,16 @@ function applyBrandVars(bp: string, ba: string) {
 }
 
 const FEATURE_DROPDOWN = [
-  { href: "/features/performance-monitoring", label: "Performance", desc: "Monitor & AI Optimize", icon: Gauge },
-  { href: "/features/ai-agent", label: "AI Agent", desc: "Ask it — then it does the work", icon: Bot },
-  { href: "/features/security-scanning", label: "Security", desc: "Hardening & SSL monitoring", icon: Shield },
-  { href: "/features/client-reports", label: "Client reports", desc: "White-label PDFs", icon: FileText },
-  { href: "/features/backups", label: "Backups", desc: "Schedule & one-click restore", icon: HardDrive },
+  { href: "/features/performance-monitoring", label: "Performance", desc: "Core Web Vitals & AI Optimize" },
+  { href: "/features/ai-agent", label: "AI Agent", desc: "Ask it — then it does the work" },
+  { href: "/features/security-scanning", label: "Security Scanning", desc: "Hardening & SSL monitoring" },
+  { href: "/features/client-reports", label: "Client Reports", desc: "White-label PDF & portal" },
+  { href: "/features/backups", label: "Backups", desc: "Schedule & one-click restore" },
+  { href: "/features/seo-monitoring", label: "SEO Monitoring", desc: "Meta, heading & indexability" },
+  { href: "/features/uptime-monitoring", label: "Uptime Monitoring", desc: "1-minute checks, instant alerts" },
+  { href: "/features/malware-scanning", label: "Malware Scanning", desc: "Behavioral detection, zero load" },
+  { href: "/features/broken-links", label: "Broken Links", desc: "Catch 404s before visitors do" },
+  { href: "/features/plugin-updates", label: "Plugin Updates", desc: "One-click bulk updates" },
 ];
 
 const NAV = [
@@ -69,14 +69,14 @@ export function MarketingNav({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [isDark, setIsDark] = useState(initialDark);
+  const [isDark, setIsDark] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setLoggedIn(isLoggedIn());
     const saved = localStorage.getItem("landingDark");
-    const active = saved !== null ? saved === "true" : initialDark;
+    const active = saved !== null ? saved === "true" : true;
     setIsDark(active);
     document.documentElement.classList.toggle("dark", active);
     document.documentElement.classList.toggle("mkt-dark", active);
@@ -122,8 +122,8 @@ export function MarketingNav({
           : "border-b border-transparent bg-transparent"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <BrandMark />
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <BrandMark inverse={isDark} />
 
         <nav className="ml-4 hidden items-center gap-0.5 lg:flex">
           {NAV.map((item) =>
@@ -156,44 +156,43 @@ export function MarketingNav({
 
                 <div
                   className={cn(
-                    "absolute left-0 top-full pt-2 transition-all duration-200",
+                    "absolute left-1/2 top-full -translate-x-1/2 pt-2 transition-all duration-200",
                     featuresOpen
                       ? "pointer-events-auto translate-y-0 opacity-100"
                       : "pointer-events-none -translate-y-1 opacity-0"
                   )}
                 >
-                  <div className="w-[380px] rounded-2xl bg-[var(--mkt-surface)] p-2 shadow-elevated-lg">
-                    <div className="grid grid-cols-1 gap-0.5">
-                      {FEATURE_DROPDOWN.map((f) => {
-                        const Icon = f.icon;
-                        return (
-                          <Link
-                            key={f.href}
-                            href={f.href}
-                            className="group flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--mkt-bg-muted)]"
-                          >
-                            <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-accent-light text-accent transition-colors group-hover:bg-accent group-hover:text-white">
-                              <Icon size={15} />
+                  <div className="w-[520px] rounded-xl bg-[var(--mkt-surface)] p-3 shadow-elevated-lg ring-1 ring-[var(--mkt-border)]">
+                    <div className="grid grid-cols-2 gap-0.5">
+                      {FEATURE_DROPDOWN.map((f, idx) => (
+                        <Link
+                          key={f.href}
+                          href={f.href}
+                          className="group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--mkt-bg-muted)]"
+                        >
+                          <span className="mt-0.5 shrink-0 font-mono text-[11px] font-bold tabular-nums text-accent/50">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span>
+                            <span className="block text-sm font-semibold text-[var(--mkt-fg)]">
+                              {f.label}
                             </span>
-                            <span>
-                              <span className="block text-sm font-semibold text-[var(--mkt-fg)]">
-                                {f.label}
-                              </span>
-                              <span className="block text-xs text-[var(--mkt-muted)]">
-                                {f.desc}
-                              </span>
+                            <span className="block text-[11px] leading-snug text-[var(--mkt-muted)]">
+                              {f.desc}
                             </span>
-                          </Link>
-                        );
-                      })}
+                          </span>
+                        </Link>
+                      ))}
                     </div>
-                    <Link
-                      href="/features"
-                      className="mt-1 flex items-center justify-between rounded-xl bg-[var(--mkt-bg-muted)] px-3 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent-light"
-                    >
-                      View all features
-                      <span aria-hidden>→</span>
-                    </Link>
+                    <div className="mt-1 border-t border-[var(--mkt-border)] pt-1.5">
+                      <Link
+                        href="/features"
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-accent transition-colors hover:bg-[var(--mkt-bg-muted)]"
+                      >
+                        See plans &amp; pricing
+                        <span aria-hidden>→</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -232,12 +231,12 @@ export function MarketingNav({
             <>
               <Link
                 href="/login"
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--mkt-muted)] transition-colors hover:bg-[var(--mkt-bg-muted)] hover:text-[var(--mkt-fg)]"
+                className="px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--mkt-fg)] transition-colors hover:text-[var(--mkt-muted)]"
               >
-                Log in
+                Login
               </Link>
               <ButtonLink href={c("nav_cta_url", "/register")} size="sm">
-                {c("nav_cta", "Start Free")}
+                {c("nav_cta", "Protect My Sites")}
               </ButtonLink>
             </>
           )}
@@ -269,14 +268,19 @@ export function MarketingNav({
               {item.label}
             </Link>
           ))}
-          <div className="grid grid-cols-2 gap-1 border-t border-[var(--mkt-border)] pt-3">
-            {FEATURE_DROPDOWN.map((f) => (
+          <div className="grid grid-cols-2 gap-0.5 border-t border-[var(--mkt-border)] pt-3">
+            {FEATURE_DROPDOWN.map((f, idx) => (
               <Link
                 key={f.href}
                 href={f.href}
-                className="rounded-lg px-3 py-2 text-xs font-medium text-[var(--mkt-muted)] hover:bg-[var(--mkt-bg-muted)] hover:text-[var(--mkt-fg)]"
+                className="flex items-start gap-2 rounded-lg px-3 py-2 hover:bg-[var(--mkt-bg-muted)]"
               >
-                {f.label}
+                <span className="mt-px font-mono text-[10px] font-bold text-accent/40">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <span className="text-xs font-medium text-[var(--mkt-fg)]">
+                  {f.label}
+                </span>
               </Link>
             ))}
           </div>

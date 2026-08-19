@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Container, Section, SectionHeading } from "@/components/marketing/ui/Section";
 import { Reveal } from "@/components/marketing/ui/Reveal";
 import { cmsField } from "@/lib/marketing/cms";
@@ -54,32 +54,41 @@ function FaqItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="rounded-2xl bg-[var(--mkt-surface)] shadow-elevated-xs transition-shadow duration-200 hover:shadow-elevated-sm">
+    <div
+      className={cn(
+        "rounded-lg border transition-all duration-200",
+        open
+          ? "border-accent/20 bg-[var(--mkt-surface)] shadow-elevated-sm"
+          : "border-[var(--mkt-border)] bg-[var(--mkt-surface)] shadow-elevated-xs hover:shadow-elevated-sm"
+      )}
+    >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
       >
-        <span className="text-[15px] font-semibold text-[var(--mkt-fg)]">{q}</span>
-        <ChevronDown
-          size={18}
+        <span className="text-[15px] font-semibold leading-snug text-[var(--mkt-fg)]">{q}</span>
+        <span
           className={cn(
-            "shrink-0 text-[var(--mkt-muted)] transition-transform duration-200",
-            open && "rotate-180 text-accent"
+            "flex size-7 shrink-0 items-center justify-center rounded-full transition-all duration-300",
+            open
+              ? "bg-accent text-white rotate-45"
+              : "bg-[var(--mkt-bg-muted)] text-[var(--mkt-muted)]"
           )}
-        />
+        >
+          <Plus size={15} strokeWidth={2.5} />
+        </span>
       </button>
+
       <div
         className={cn(
-          "grid transition-all duration-300",
+          "grid transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         )}
       >
         <div className="overflow-hidden">
-          <p className="px-5 pb-5 text-sm leading-relaxed text-[var(--mkt-muted)]">
-            {a}
-          </p>
+          <p className="px-6 pb-6 text-sm leading-relaxed text-[var(--mkt-muted)]">{a}</p>
         </div>
       </div>
     </div>
@@ -102,7 +111,12 @@ export function FAQSection({
         <Reveal>
           <SectionHeading
             eyebrow={c("eyebrow", "FAQ")}
-            title={c("title", "Straight answers.")}
+            title={
+              <>
+                Frequently asked{" "}
+                <span className="text-accent font-bold">questions.</span>
+              </>
+            }
             description={c(
               "description",
               "Built for developers and agency owners who've heard every WordPress tool pitch."
@@ -110,16 +124,14 @@ export function FAQSection({
           />
         </Reveal>
 
-        <div className="mx-auto max-w-2xl space-y-2.5">
+        <div className="mx-auto max-w-2xl space-y-3">
           {faqs.map((faq, i) => (
             <Reveal key={faq.q} delay={Math.min(i * 0.04, 0.24)}>
               <FaqItem
                 q={faq.q}
                 a={faq.a}
                 open={openIndex === i}
-                onToggle={() =>
-                  setOpenIndex((curr) => (curr === i ? null : i))
-                }
+                onToggle={() => setOpenIndex((curr) => (curr === i ? null : i))}
               />
             </Reveal>
           ))}

@@ -1,4 +1,4 @@
-import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
+import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import { getGlobalContent } from "@/lib/cms";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
@@ -11,7 +11,7 @@ const marketingSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const marketingDisplay = Outfit({
+const marketingDisplay = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-marketing-display",
   display: "swap",
@@ -58,14 +58,14 @@ html.mkt-dark, html.dark {
 
   return (
     <div
-      className={`marketing-root ${marketingSans.variable} ${marketingDisplay.variable} ${marketingSans.className}`}
+      className={`marketing-root ${marketingSans.variable} ${marketingDisplay.variable} ${marketingDisplay.className}`}
     >
       <style
         dangerouslySetInnerHTML={{
           __html: `${brandCss}\n:root { ${rgbCss} }`,
         }}
       />
-      <MarketingNav cms={headerCms} initialDark={dark} />
+      <MarketingNav cms={headerCms} initialDark />
       {children}
       <MarketingFooter cms={footerCms} />
       <OfferPopup enabled={popupEnabled} data={popupData} />

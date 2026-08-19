@@ -18,6 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem("landingDark");var d=s!==null?s==="true":true;if(d){document.documentElement.classList.add("dark","mkt-dark")}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <BrandingInit />
         {children}
