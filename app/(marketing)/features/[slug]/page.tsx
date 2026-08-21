@@ -149,17 +149,17 @@ export default async function FeatureDetailPage({ params }: Props) {
           <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-12">
             <div>
               <Reveal delay={0.04}>
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-white shadow-elevated-sm">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-accent text-white shadow-elevated-sm">
                   <Icon size={24} />
                 </div>
               </Reveal>
               <Reveal delay={0.08}>
-                <h1 className="max-w-lg font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)] sm:text-5xl">
+                <h1 className="max-w-lg font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.25rem]">
                   {c("title", meta.title)}
                 </h1>
               </Reveal>
               <Reveal delay={0.12}>
-                <p className="mt-4 max-w-md text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
+                <p className="mt-4 max-w-md text-lg leading-relaxed text-[var(--mkt-muted)]">
                   {c("subtitle", meta.description)}
                 </p>
               </Reveal>
@@ -212,8 +212,8 @@ export default async function FeatureDetailPage({ params }: Props) {
         <Container>
           <div className="grid items-start gap-10 lg:grid-cols-2">
             <Reveal>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">The problem</p>
-              <h2 className="font-[family-name:var(--font-marketing-display)] text-3xl font-semibold tracking-tight text-[var(--mkt-fg)] sm:text-4xl">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-accent">The problem</p>
+              <h2 className="font-[family-name:var(--font-marketing-display)] text-3xl font-bold tracking-tight text-[var(--mkt-fg)] sm:text-4xl lg:text-5xl">
                 {detail.problem}
               </h2>
               <p className="mt-4 text-base leading-relaxed text-[var(--mkt-muted)]">
@@ -222,7 +222,7 @@ export default async function FeatureDetailPage({ params }: Props) {
             </Reveal>
             <Reveal delay={0.08}>
               <div className="rounded-2xl border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-6 shadow-elevated-sm sm:p-8">
-                <h3 className="mb-5 text-lg font-semibold text-[var(--mkt-fg)]">How Site Armor handles it</h3>
+                <h3 className="mb-5 font-[family-name:var(--font-marketing-display)] text-xl font-bold text-[var(--mkt-fg)]">How Site Armor handles it</h3>
                 <div className="space-y-5">
                   {detail.mechanisms.map((m) => {
                     const MIcon = m.icon;
@@ -296,7 +296,7 @@ export default async function FeatureDetailPage({ params }: Props) {
                       </span>
                       <span className="text-xs font-semibold uppercase tracking-wider text-accent">{tier.time}</span>
                     </div>
-                    <h3 className="text-base font-semibold text-[var(--mkt-fg)]">{tier.title}</h3>
+                    <h3 className="font-[family-name:var(--font-marketing-display)] text-lg font-bold text-[var(--mkt-fg)]">{tier.title}</h3>
                     <p className="mt-1.5 text-sm leading-relaxed text-[var(--mkt-muted)]">{tier.desc}</p>
                   </div>
                 </Reveal>

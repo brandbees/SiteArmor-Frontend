@@ -105,17 +105,17 @@ export function buildSimplePage({
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <Reveal>
-                <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                   {c("eyebrow", eyebrow)}
                 </p>
               </Reveal>
               <Reveal delay={0.05}>
-                <h1 className="font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+                <h1 className="font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
                   {c("title", title)}
                 </h1>
               </Reveal>
               <Reveal delay={0.1}>
-                <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
+                <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-[var(--mkt-muted)]">
                   {c("description", description)}
                 </p>
               </Reveal>
@@ -139,13 +139,13 @@ export function buildSimplePage({
           <Section className="!py-0">
             <Container>
               <Reveal>
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-[var(--mkt-border)] shadow-elevated-sm md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-[var(--mkt-border)] shadow-elevated-sm md:grid-cols-4">
                   {stats.map((stat) => (
                     <div
                       key={stat.label}
                       className="bg-[var(--mkt-surface)] px-5 py-6 text-center"
                     >
-                      <p className="font-[family-name:var(--font-marketing-display)] text-3xl font-semibold tracking-tight text-accent">
+                      <p className="font-[family-name:var(--font-marketing-display)] text-3xl font-bold tracking-tight text-accent">
                         {stat.value}
                       </p>
                       <p className="mt-1 text-xs text-[var(--mkt-muted)]">
@@ -164,8 +164,8 @@ export function buildSimplePage({
           <Section className="!py-12">
             <Container>
               <Reveal>
-                <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--mkt-border)] bg-[var(--mkt-surface)] px-8 py-7 shadow-elevated-xs">
-                  <p className="text-base leading-relaxed text-[var(--mkt-muted)]">
+                <div className="mx-auto max-w-3xl rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] px-8 py-7">
+                  <p className="text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
                     {heroDetail}
                   </p>
                 </div>
@@ -188,20 +188,20 @@ export function buildSimplePage({
                 const BeatIcon = beat.icon;
                 return (
                   <Reveal key={beat.title} delay={0.05 * i}>
-                    <div className="group h-full rounded-2xl bg-[var(--mkt-surface)] p-6 shadow-elevated-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated-md">
+                    <div className="group h-full rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated-md">
                       {BeatIcon ? (
-                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-accent transition-colors group-hover:bg-accent group-hover:text-white">
+                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light text-accent transition-colors group-hover:bg-accent group-hover:text-white">
                           <BeatIcon size={18} />
                         </div>
                       ) : (
-                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white shadow-elevated-xs">
+                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-white shadow-elevated-xs">
                           <span className="text-sm font-bold">{String(i + 1).padStart(2, "0")}</span>
                         </div>
                       )}
-                      <h2 className="text-lg font-semibold text-[var(--mkt-fg)]">
+                      <h2 className="font-[family-name:var(--font-marketing-display)] text-xl font-bold text-[var(--mkt-fg)]">
                         {beat.title}
                       </h2>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--mkt-muted)]">
+                      <p className="mt-2 text-base leading-relaxed text-[var(--mkt-muted)]">
                         {beat.body}
                       </p>
                     </div>
@@ -260,7 +260,7 @@ export function buildSimplePage({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="group flex items-center justify-between rounded-2xl bg-[var(--mkt-surface)] px-5 py-4 shadow-elevated-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated-md"
+                    className="group flex items-center justify-between rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated-md"
                   >
                     <div>
                       <span className="text-sm font-semibold text-[var(--mkt-fg)]">

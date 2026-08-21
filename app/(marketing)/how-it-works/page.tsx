@@ -64,17 +64,17 @@ export default async function HowItWorksPage() {
         <Container>
           <div className="mx-auto max-w-3xl text-center">
             <Reveal>
-              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 {c("eyebrow", "How it works")}
               </p>
             </Reveal>
             <Reveal delay={0.05}>
-              <h1 className="font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+              <h1 className="font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
                 {c("title", "Start shallow. Go deep when you're ready.")}
               </h1>
             </Reveal>
             <Reveal delay={0.1}>
-              <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
+              <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-[var(--mkt-muted)]">
                 {c("description", "Three connection tiers, nothing gated behind a demo call. Each deeper tier unlocks more capability — on your timeline.")}
               </p>
             </Reveal>
@@ -92,14 +92,14 @@ export default async function HowItWorksPage() {
       <Section className="!py-0 !-mt-2">
         <Container>
           <Reveal>
-            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-[var(--mkt-border)] shadow-elevated-sm">
+            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-[var(--mkt-border)] shadow-elevated-sm">
               {CONNECTION_TIERS.map((tier) => {
                 const Icon = tier.icon;
                 return (
                   <div key={tier.step} className="bg-[var(--mkt-surface)] px-4 py-5 text-center">
                     <Icon size={20} className="mx-auto mb-2 text-accent" />
-                    <p className="text-sm font-semibold text-[var(--mkt-fg)]">{tier.title}</p>
-                    <p className="mt-0.5 text-xs text-accent font-semibold">{tier.time}</p>
+                    <p className="font-[family-name:var(--font-marketing-display)] text-sm font-bold text-[var(--mkt-fg)]">{tier.title}</p>
+                    <p className="mt-0.5 text-xs font-bold text-accent">{tier.time}</p>
                   </div>
                 );
               })}
@@ -117,21 +117,21 @@ export default async function HowItWorksPage() {
               const unlocks = TIER_UNLOCKS[tier.step];
               return (
                 <Reveal key={tier.step} delay={0.06 * i}>
-                  <div className="overflow-hidden rounded-2xl bg-[var(--mkt-surface)] shadow-elevated-sm transition-all hover:shadow-elevated-md">
+                  <div className="overflow-hidden rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] transition-all hover:shadow-elevated-md">
                     <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
                       <div className="p-6 sm:p-8">
                         <div className="mb-4 flex items-center gap-4">
-                          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-white shadow-elevated-sm">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent text-white shadow-elevated-sm">
                             <Icon size={20} />
                           </span>
                           <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">{tier.time}</p>
-                            <h2 className="text-2xl font-semibold text-[var(--mkt-fg)]">{tier.title}</h2>
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">{tier.time}</p>
+                            <h2 className="font-[family-name:var(--font-marketing-display)] text-2xl font-bold text-[var(--mkt-fg)]">{tier.title}</h2>
                           </div>
                         </div>
-                        <p className="mb-5 max-w-lg text-base leading-relaxed text-[var(--mkt-muted)]">{tier.desc}</p>
-                        <div className="rounded-xl bg-[var(--mkt-bg-muted)] p-4">
-                          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--mkt-muted)]">Unlocks</p>
+                        <p className="mb-5 max-w-lg text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">{tier.desc}</p>
+                        <div className="rounded-lg bg-[var(--mkt-bg-muted)] p-4">
+                          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--mkt-muted)]">Unlocks</p>
                           <ul className="grid gap-2 sm:grid-cols-2">
                             {unlocks.items.map((item) => (
                               <li key={item} className="flex items-center gap-2 text-sm text-[var(--mkt-fg)]">
@@ -173,10 +173,10 @@ export default async function HowItWorksPage() {
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
                       <Shield size={22} className="text-white" />
                     </div>
-                    <h2 className="font-[family-name:var(--font-marketing-display)] text-2xl font-semibold sm:text-3xl">
+                    <h2 className="font-[family-name:var(--font-marketing-display)] text-2xl font-bold sm:text-3xl">
                       Giving SSH access is a big decision.
                     </h2>
-                    <p className="mt-3 max-w-lg text-base text-white/75">
+                    <p className="mt-3 max-w-lg text-base leading-relaxed text-white/75 sm:text-lg">
                       We treat it that way. Encrypted vault, confirmation before every write, backup-before-change, full audit log, and one-click rollback.
                     </p>
                     <div className="mt-6 flex flex-wrap gap-4">

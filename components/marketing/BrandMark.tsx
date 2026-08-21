@@ -21,10 +21,10 @@ export function BrandMark({
       {/* The two files are cropped separately, so their intrinsic sizes differ. Passing the
           right pair keeps the reserved box the same shape as the artwork under h-14 w-auto. */}
       <Image
-        src={inverse ? "/site-armor-logo-white-h.png" : "/site-armor-logo-h.png"}
+        src={inverse ? "/site-armor-logo-white-blue.png" : "/site-armor-logo-h.png"}
         alt="Site Armor"
-        width={inverse ? 2215 : 1785}
-        height={inverse ? 595 : 495}
+        width={inverse ? 1671 : 1785}
+        height={inverse ? 410 : 495}
         priority
         className="h-14 w-auto object-contain"
       />

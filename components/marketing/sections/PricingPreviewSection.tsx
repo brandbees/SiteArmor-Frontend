@@ -39,20 +39,20 @@ export function PricingPreviewSection({
               <Reveal key={plan.code} delay={0.05 * i}>
                 <div
                   className={cn(
-                    "relative flex h-full flex-col rounded-2xl bg-[var(--mkt-surface)] p-6 transition-all duration-300 hover:-translate-y-0.5",
+                    "relative flex h-full flex-col rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-6 transition-all duration-300 hover:-translate-y-0.5",
                     plan.highlight
                       ? "shadow-elevated-md ring-1 ring-accent/30"
-                      : "shadow-elevated-xs hover:shadow-elevated-md"
+                      : "hover:shadow-elevated-md"
                   )}
                 >
                   {plan.badge ? (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-md bg-accent px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                       {plan.badge}
                     </span>
                   ) : null}
 
                   <div className="mb-5">
-                    <h3 className="text-lg font-semibold text-[var(--mkt-fg)]">
+                    <h3 className="font-[family-name:var(--font-marketing-display)] text-xl font-bold text-[var(--mkt-fg)]">
                       {plan.name}
                     </h3>
                     <p className="mt-1 text-sm text-[var(--mkt-muted)]">
@@ -62,7 +62,7 @@ export function PricingPreviewSection({
 
                   <div className="mb-5">
                     <div className="flex items-baseline gap-1">
-                      <span className="font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)]">
+                      <span className="font-[family-name:var(--font-marketing-display)] text-4xl font-bold tracking-tight text-[var(--mkt-fg)]">
                         {price.display}
                       </span>
                       {plan.code !== "free" ? (

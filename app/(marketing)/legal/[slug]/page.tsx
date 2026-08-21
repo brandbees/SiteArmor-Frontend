@@ -63,10 +63,10 @@ export default async function LegalPage({
       <Section className="pt-28 sm:pt-32">
         <Container>
           <article className="mx-auto max-w-2xl">
-            <h1 className="font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)]">
+            <h1 className="font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-4xl">
               {page.title}
             </h1>
-            <p className="mt-6 text-base leading-relaxed text-[var(--mkt-muted)]">
+            <p className="mt-6 text-lg leading-relaxed text-[var(--mkt-muted)]">
               {page.body}
             </p>
             <p className="mt-8 text-sm text-[var(--mkt-muted)]">

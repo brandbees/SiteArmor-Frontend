@@ -35,17 +35,17 @@ export default async function ContactPage() {
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <Reveal>
-              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 {c("eyebrow", "Contact")}
               </p>
             </Reveal>
             <Reveal delay={0.05}>
-              <h1 className="font-[family-name:var(--font-marketing-display)] text-4xl font-semibold tracking-tight text-[var(--mkt-fg)] sm:text-5xl">
+              <h1 className="font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
                 {c("title", "Talk to the BrandBees team.")}
               </h1>
             </Reveal>
             <Reveal delay={0.1}>
-              <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-[var(--mkt-muted)] sm:text-lg">
+              <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-[var(--mkt-muted)]">
                 {c("description", "Product questions, security reviews, or agency rollout — email us directly. Prefer to try first? Start free with no card required.")}
               </p>
             </Reveal>
@@ -58,12 +58,12 @@ export default async function ContactPage() {
         <Container>
           <div className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
             <Reveal>
-              <div className="rounded-2xl border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-8 shadow-elevated-sm sm:p-10">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">Email us</p>
-                <a href="mailto:hello@brandbees.net" className="mt-3 block font-[family-name:var(--font-marketing-display)] text-2xl font-semibold text-[var(--mkt-fg)] transition-colors hover:text-accent sm:text-3xl">
+              <div className="rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-8 sm:p-10">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Email us</p>
+                <a href="mailto:hello@brandbees.net" className="mt-3 block font-[family-name:var(--font-marketing-display)] text-2xl font-bold text-[var(--mkt-fg)] transition-colors hover:text-accent sm:text-3xl">
                   hello@brandbees.net
                 </a>
-                <p className="mt-3 text-sm leading-relaxed text-[var(--mkt-muted)]">
+                <p className="mt-3 text-base leading-relaxed text-[var(--mkt-muted)]">
                   We typically respond within one business day. For security-specific questions (DPA requests, vault architecture, compliance), mention it in the subject line.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -82,12 +82,12 @@ export default async function ContactPage() {
                 const Icon = reason.icon;
                 return (
                   <Reveal key={reason.title} delay={0.05 * i}>
-                    <div className="group rounded-2xl bg-[var(--mkt-surface)] p-5 shadow-elevated-xs transition-all hover:-translate-y-0.5 hover:shadow-elevated-md">
-                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-accent transition-colors group-hover:bg-accent group-hover:text-white">
+                    <div className="group rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-5 transition-all hover:-translate-y-0.5 hover:shadow-elevated-md">
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light text-accent transition-colors group-hover:bg-accent group-hover:text-white">
                         <Icon size={18} />
                       </div>
-                      <h3 className="text-sm font-semibold text-[var(--mkt-fg)]">{reason.title}</h3>
-                      <p className="mt-1 text-sm text-[var(--mkt-muted)]">{reason.desc}</p>
+                      <h3 className="font-[family-name:var(--font-marketing-display)] text-base font-bold text-[var(--mkt-fg)]">{reason.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-[var(--mkt-muted)]">{reason.desc}</p>
                     </div>
                   </Reveal>
                 );
@@ -116,10 +116,10 @@ export default async function ContactPage() {
               <Reveal key={link.href} delay={0.04 * i}>
                 <Link
                   href={link.href}
-                  className="group flex h-full flex-col rounded-2xl bg-[var(--mkt-surface)] p-5 shadow-elevated-xs transition-all hover:-translate-y-0.5 hover:shadow-elevated-md"
+                  className="group flex h-full flex-col rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-5 transition-all hover:-translate-y-0.5 hover:shadow-elevated-md"
                 >
-                  <span className="text-sm font-semibold text-[var(--mkt-fg)] group-hover:text-accent">{link.label}</span>
-                  <span className="mt-1 text-xs text-[var(--mkt-muted)]">{link.desc}</span>
+                  <span className="font-[family-name:var(--font-marketing-display)] text-base font-bold text-[var(--mkt-fg)] group-hover:text-accent">{link.label}</span>
+                  <span className="mt-1 text-sm text-[var(--mkt-muted)]">{link.desc}</span>
                 </Link>
               </Reveal>
             ))}

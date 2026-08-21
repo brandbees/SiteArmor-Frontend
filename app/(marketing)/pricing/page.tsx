@@ -107,7 +107,7 @@ export default async function PricingPage() {
             />
           </Reveal>
           <Reveal delay={0.05}>
-            <div className="overflow-x-auto rounded-2xl bg-[var(--mkt-surface)] shadow-elevated-sm">
+            <div className="overflow-x-auto rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)]">
               <table className="w-full min-w-[640px] text-left">
                 <thead>
                   <tr className="border-b border-[var(--mkt-border)]">
@@ -150,8 +150,8 @@ export default async function PricingPage() {
           </Reveal>
           <div className="grid gap-4 md:grid-cols-2">
             <Reveal>
-              <div className="rounded-2xl bg-[var(--mkt-surface)] p-6 shadow-elevated-xs">
-                <h3 className="mb-1 text-lg font-semibold text-[var(--mkt-fg)]">AI token top-ups</h3>
+              <div className="rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-6">
+                <h3 className="mb-1 font-[family-name:var(--font-marketing-display)] text-xl font-bold text-[var(--mkt-fg)]">AI token top-ups</h3>
                 <p className="mb-4 text-sm text-[var(--mkt-muted)]">Power more agent conversations and report narratives.</p>
                 <div className="space-y-0 overflow-hidden rounded-xl border border-[var(--mkt-border)]">
                   {ADDONS.tokens.map((t, i) => (
@@ -164,8 +164,8 @@ export default async function PricingPage() {
               </div>
             </Reveal>
             <Reveal delay={0.08}>
-              <div className="rounded-2xl bg-[var(--mkt-surface)] p-6 shadow-elevated-xs">
-                <h3 className="mb-1 text-lg font-semibold text-[var(--mkt-fg)]">Extra storage</h3>
+              <div className="rounded-lg border border-[var(--mkt-border)] bg-[var(--mkt-surface)] p-6">
+                <h3 className="mb-1 font-[family-name:var(--font-marketing-display)] text-xl font-bold text-[var(--mkt-fg)]">Extra storage</h3>
                 <p className="mb-4 text-sm text-[var(--mkt-muted)]">More space for backups and site snapshots.</p>
                 <div className="space-y-0 overflow-hidden rounded-xl border border-[var(--mkt-border)]">
                   {ADDONS.storage.map((s, i) => (
@@ -185,7 +185,7 @@ export default async function PricingPage() {
       <Section className="!py-12">
         <Container>
           <Reveal>
-            <div className="relative flex flex-col items-start justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-brand px-8 py-7 shadow-elevated-md sm:flex-row sm:items-center">
+            <div className="relative flex flex-col items-start justify-between gap-5 overflow-hidden rounded-lg bg-accent px-8 py-7 sm:flex-row sm:items-center">
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-25"
@@ -195,7 +195,7 @@ export default async function PricingPage() {
                 }}
               />
               <div className="relative">
-                <p className="text-lg font-semibold text-white">
+                <p className="font-[family-name:var(--font-marketing-display)] text-lg font-bold text-white sm:text-xl">
                   All paid plans: 14-day trial, no card required.
                 </p>
                 <p className="mt-1 text-sm text-white/70">
