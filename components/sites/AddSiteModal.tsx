@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { X, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { Input } from "@/components/ui/Input";
 import type { Site } from "@/types";
 
 interface AddSiteModalProps {
@@ -48,130 +52,104 @@ export function AddSiteModal({ onClose, onSuccess }: AddSiteModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-lg">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">
-            {step === "form" ? "Add a site" : "Install the plugin"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <X size={15} />
-          </button>
-        </div>
-
-        <div className="p-5">
-          {step === "form" ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">
-                  Site name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition"
-                  placeholder="Client Site Name"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">
-                  Site URL
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition"
-                  placeholder="https://clientsite.com"
-                />
-              </div>
-              {error && (
-                <p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                  {error}
-                </p>
+    <Modal
+      open
+      onClose={onClose}
+      title={step === "form" ? "Add a site" : "Install the plugin"}
+      description={
+        step === "form"
+          ? "Connect a WordPress site to start monitoring."
+          : "Paste this token into the Site Armor plugin settings."
+      }
+      footer={
+        step === "form" ? (
+          <>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="add-site-form"
+              loading={loading}
+            >
+              Add site
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={() => onSuccess(site!.id)}>
+              I&apos;ll do this later
+            </Button>
+            <Button onClick={() => onSuccess(site!.id)}>Done</Button>
+          </>
+        )
+      }
+    >
+      {step === "form" ? (
+        <form id="add-site-form" onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              Site name
+            </label>
+            <Input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Client Site Name"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              Site URL
+            </label>
+            <Input
+              type="url"
+              required
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://clientsite.com"
+            />
+          </div>
+          {error ? <Alert variant="error">{error}</Alert> : null}
+        </form>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted p-3">
+            <code className="flex-1 truncate font-mono text-xs text-foreground">
+              {site?.site_token}
+            </code>
+            <button
+              onClick={copyToken}
+              className="shrink-0 rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              type="button"
+            >
+              {copied ? (
+                <Check size={14} className="text-[var(--score-good)]" />
+              ) : (
+                <Copy size={14} />
               )}
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-semibold text-white rounded-md transition-colors disabled:opacity-60"
-                  style={{ background: "var(--accent)" }}
-                >
-                  {loading ? "Adding…" : "Add site"}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="space-y-5">
-              <p className="text-sm text-muted-foreground">
-                Copy your site token and paste it into the Site Armor
-                WordPress plugin settings.
-              </p>
+            </button>
+          </div>
 
-              {/* Token */}
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-md border border-border">
-                <code className="flex-1 text-xs font-mono text-foreground truncate">
-                  {site?.site_token}
-                </code>
-                <button
-                  onClick={copyToken}
-                  className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                >
-                  {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
-                </button>
-              </div>
-
-              {/* Steps */}
-              <ol className="space-y-2">
-                {[
-                  "Download the Site Armor plugin (.zip)",
-                  "Go to WordPress Admin → Plugins → Add New → Upload",
-                  "Install and activate the plugin",
-                  "Go to Settings → Site Armor",
-                  "Paste your site token and save",
-                ].map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-muted-foreground">
-                    <span className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-medium shrink-0 mt-0.5">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  onClick={() => onSuccess(site!.id)}
-                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  I&apos;ll do this later
-                </button>
-                <button
-                  onClick={() => onSuccess(site!.id)}
-                  className="px-4 py-2 text-sm font-semibold text-white rounded-md"
-                  style={{ background: "var(--accent)" }}
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          )}
+          <ol className="space-y-2">
+            {[
+              "Download the Site Armor plugin (.zip)",
+              "Go to WordPress Admin → Plugins → Add New → Upload",
+              "Install and activate the plugin",
+              "Go to Settings → Site Armor",
+              "Paste your site token and save",
+            ].map((item, i) => (
+              <li key={i} className="flex gap-3 text-sm text-muted-foreground">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-[11px] font-bold text-foreground">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                {item}
+              </li>
+            ))}
+          </ol>
         </div>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 }

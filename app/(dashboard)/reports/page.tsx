@@ -44,7 +44,7 @@ function ReportSiteCard({ site }: { site: Site }) {
   return (
     <button
       onClick={() => router.push(`/reports/${site.id}`)}
-      className="w-full text-left bg-white rounded-2xl shadow-elevated-sm hover:shadow-glow hover:-translate-y-1 transition-all duration-base group flex flex-col"
+      className="group flex w-full cursor-pointer flex-col rounded-xl border border-border bg-surface text-left transition-all duration-base hover:border-accent/30"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">

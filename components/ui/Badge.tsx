@@ -19,13 +19,13 @@ interface BadgeProps {
 
 const variants: Record<Variant, string> = {
   default: "bg-foreground text-background",
-  success: "bg-green-50 text-green-700 border border-green-200",
-  warning: "bg-amber-50 text-amber-700 border border-amber-200",
-  danger: "bg-red-50 text-red-700 border border-red-200",
-  info: "bg-blue-50 text-blue-700 border border-blue-200",
+  success: "bg-[var(--score-good-bg)] text-[var(--score-good)] border border-[var(--score-good-border)]",
+  warning: "bg-[var(--score-warn-bg)] text-[var(--score-warn)] border border-[var(--score-warn-border)]",
+  danger: "bg-[var(--score-bad-bg)] text-[var(--score-bad)] border border-[var(--score-bad-border)]",
+  info: "bg-accent-light text-accent border border-accent/20",
   muted: "bg-muted text-muted-foreground border border-border",
   outline: "bg-transparent text-foreground border border-border",
-  accent: "bg-[var(--accent-light)] text-[var(--accent-hover)] border border-[var(--accent)]/20",
+  accent: "bg-accent-light text-accent border border-accent/20",
 };
 
 export function Badge({
@@ -37,7 +37,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide",
         variants[variant],
         className
       )}
@@ -45,12 +45,15 @@ export function Badge({
       {dot && (
         <span
           className={cn(
-            "w-1.5 h-1.5 rounded-full shrink-0",
-            variant === "success" && "bg-green-500",
-            variant === "danger" && "bg-red-500",
-            variant === "warning" && "bg-amber-500",
-            variant === "info" && "bg-blue-500",
-            variant === "muted" && "bg-muted-foreground"
+            "h-1.5 w-1.5 shrink-0 rounded-full",
+            variant === "success" && "bg-score-good",
+            variant === "danger" && "bg-score-bad",
+            variant === "warning" && "bg-score-warn",
+            variant === "info" && "bg-accent",
+            variant === "muted" && "bg-muted-foreground",
+            variant === "accent" && "bg-accent",
+            variant === "default" && "bg-background",
+            variant === "outline" && "bg-foreground"
           )}
         />
       )}

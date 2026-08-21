@@ -37,19 +37,19 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-          <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }} />
+        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-sm">
+          <div className="h-1 w-full bg-accent" />
 
           <div className="px-8 py-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <KeyRound size={18} className="text-indigo-600" />
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light">
+                <KeyRound size={18} className="text-accent" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground tracking-tight">Forgot your password?</h1>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <h1 className="font-portal-display text-xl font-bold tracking-tight text-foreground">Forgot your password?</h1>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   We&apos;ll email you a link to set a new one
                 </p>
               </div>
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
                   <button
                     type="button"
                     onClick={() => { setSent(false); setError(null); }}
-                    className="text-indigo-600 font-medium hover:underline"
+                    className="text-accent font-bold hover:underline"
                   >
                     try another address
                   </button>
@@ -97,15 +97,14 @@ export default function ForgotPasswordPage() {
                     autoComplete="email"
                     autoFocus
                     required
-                    className="w-full mt-1.5 px-3.5 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-60"
-                  style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+                  className="w-full rounded-lg bg-accent py-2.5 text-xs font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
                 >
                   {loading ? "Sending…" : "Send reset link"}
                 </button>

@@ -104,30 +104,30 @@ interface StatCardProps {
   href?: string;
 }
 
-function StatCard({ label, value, sub, subColor = "muted", icon, iconBg = "#1f5fb8", miniGauge, href }: StatCardProps) {
+function StatCard({ label, value, sub, subColor = "muted", icon, iconBg = "#1a56db", miniGauge, href }: StatCardProps) {
   const subCls =
-    subColor === "green" ? "text-green-600" :
-    subColor === "amber" ? "text-amber-500" :
-    subColor === "red"   ? "text-red-500"   : "text-muted-foreground";
+    subColor === "green" ? "text-[var(--score-good)]" :
+    subColor === "amber" ? "text-[var(--score-warn)]" :
+    subColor === "red"   ? "text-[var(--score-bad)]"   : "text-muted-foreground";
 
   const inner = (
-    <div className={`bg-white rounded-2xl shadow-elevated-sm p-5 h-full transition-all duration-150 ${href ? "cursor-pointer hover:shadow-glow hover:-translate-y-1" : "hover:shadow-elevated-md hover:-translate-y-0.5"}`}>
-      <div className="flex items-start justify-between mb-2">
-        <span className="text-xs text-muted-foreground">{label}</span>
+    <div className={`h-full rounded-xl border border-border bg-surface p-4 transition-all duration-150 ${href ? "cursor-pointer hover:border-accent/30 hover:shadow-elevated-sm" : ""}`}>
+      <div className="mb-2 flex items-start justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
           style={{ background: `${iconBg}1a`, color: iconBg }}
         >
           {icon}
         </div>
       </div>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-2xl font-bold text-foreground tabular-nums leading-none mt-1">
+        <p className="font-portal-display mt-1 text-2xl font-bold leading-none tabular-nums text-foreground">
           {value}
         </p>
         {miniGauge !== undefined && <MiniDonut score={miniGauge} />}
       </div>
-      {sub && <p className={`text-xs mt-2 font-medium ${subCls}`}>{sub}</p>}
+      {sub && <p className={`mt-2 text-xs font-semibold ${subCls}`}>{sub}</p>}
     </div>
   );
 
@@ -142,7 +142,7 @@ function AlertRow({ icon, label, sub, severity }: {
 }) {
   const crit = severity === "critical";
   return (
-    <div className="group flex items-center gap-3 p-3 rounded-xl bg-white shadow-elevated-sm hover:shadow-elevated-md transition-all duration-base cursor-pointer hover:-translate-y-0.5">
+    <div className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface p-3 transition-all duration-base hover:border-accent/25">
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${crit ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-500"}`}>
         {icon}
       </div>
@@ -209,7 +209,7 @@ function PortfolioHealthSection({ portfolio, sites }: { portfolio: PortfolioStat
         });
 
         return (
-          <Link href="/sites" className="rounded-2xl overflow-hidden relative block cursor-pointer group bg-gradient-brand transition-all duration-base hover:shadow-glow hover:-translate-y-0.5">
+          <Link href="/sites" className="group relative block cursor-pointer overflow-hidden rounded-xl bg-accent transition-all duration-base hover:bg-accent-hover">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none"
               style={{ background: "radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)" }} />
             <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full pointer-events-none"
@@ -266,7 +266,7 @@ function PortfolioHealthSection({ portfolio, sites }: { portfolio: PortfolioStat
       })()}
 
       {/* ── Card 2: Site status breakdown ── */}
-      <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5">
+      <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5">
         <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-4">Site Status</p>
         <div className="space-y-3.5">
           {statusRows.map(({ label, count, color, numBg, trackBg, filter }) => (
@@ -299,7 +299,7 @@ function PortfolioHealthSection({ portfolio, sites }: { portfolio: PortfolioStat
       </div>
 
       {/* ── Card 3: Active alerts ── */}
-      <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5">
+      <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5">
         <div className="flex items-center justify-between mb-4">
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Active Alerts</p>
           {hasAlerts && (
@@ -405,7 +405,7 @@ function SitesOverviewCard({ sites }: { sites: Site[] }) {
     })
     .slice(0, 6);
   return (
-    <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5 lg:col-span-2">
+    <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5 lg:col-span-2">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-foreground">Sites Overview</h3>
         <Link href="/sites" className="text-xs font-medium text-accent hover:underline">
@@ -506,7 +506,7 @@ function NeedsAttentionCard({ sites }: { sites: Site[] }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5">
+    <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-foreground">Needs Attention</h3>
         {issues.length > 0 && (
@@ -785,8 +785,10 @@ export default function DashboardPage() {
 
       {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <h1 className="font-portal-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
+          Dashboard
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           {isIndividual
             ? "Your site health overview and key metrics"
             : "Overview of all monitored sites and key metrics"}
@@ -869,7 +871,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Health Score Trend */}
-        <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5">
+        <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5">
           <div className="flex items-center justify-between mb-0.5">
             <h3 className="text-sm font-semibold text-foreground">Health Score Trend</h3>
             {scoreDelta !== null && (
@@ -908,7 +910,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Score by Pillar — Radar */}
-        <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5">
+        <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5">
           <h3 className="text-sm font-semibold text-foreground mb-0.5">Score by Pillar</h3>
           <p className="text-xs text-muted-foreground mb-4">Performance, SEO, Security, Malware</p>
           {radarData.length === 0 ? (
@@ -934,7 +936,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Page Load Speed — Scatter */}
-        <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base p-5">
+        <div className="bg-surface rounded-xl border border-border transition-shadow duration-base p-5">
           <div className="flex items-center justify-between mb-0.5">
             <h3 className="text-sm font-semibold text-foreground">Page Load Speed</h3>
             <div className="flex items-center gap-2.5 text-[10px] text-muted-foreground">

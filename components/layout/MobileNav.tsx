@@ -73,33 +73,33 @@ export function MobileNav() {
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 w-72 bg-white border-r border-border z-50 flex flex-col shadow-xl">
+          <div className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-border bg-surface shadow-elevated-lg">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-5 border-b border-border">
+            <div className="flex items-center justify-between border-b border-border px-5 py-5">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg"
                   style={{ background: "var(--accent)" }}
                 >
                   <Wifi size={16} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground leading-none">
+                  <p className="font-portal-display text-sm font-bold leading-none text-foreground">
                     {agency?.brand_name || "Site Armor"}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Site Armor</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">Agency portal</p>
                 </div>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-50"
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <X size={16} />
               </button>
             </div>
 
             {/* Nav */}
-            <nav className="flex-1 px-3 pt-4 space-y-0.5 overflow-y-auto">
+            <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pt-4">
               {navItems.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
@@ -108,12 +108,15 @@ export function MobileNav() {
                     href={href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors",
                       active
                         ? "bg-accent-light text-accent"
-                        : "text-muted-foreground hover:text-foreground hover:bg-gray-50"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
+                    {active ? (
+                      <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
+                    ) : null}
                     <Icon size={16} className={active ? "text-accent" : ""} />
                     {label}
                   </Link>

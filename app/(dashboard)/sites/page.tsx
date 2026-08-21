@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Globe, Search, SlidersHorizontal, RefreshCw, ChevronDown,
-  CheckSquare, Square, X, Tag, Loader2,
+  CheckSquare, Square, X, Tag, Loader2, Plus,
 } from "lucide-react";
 
 import api from "@/lib/api";
@@ -15,6 +15,8 @@ import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteQuickViewDrawer } from "@/components/sites/SiteQuickViewDrawer";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { Button } from "@/components/ui/Button";
 import { AddSiteModal } from "@/components/sites/AddSiteModal";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { Site } from "@/types";
@@ -165,24 +167,33 @@ export default function SitesPage() {
 
   return (
     <div className="space-y-5">
-      {/* Page title */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Sites</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Manage and monitor all your WordPress sites
-        </p>
-      </div>
+      <PageHeader
+        title="Sites"
+        description="Manage and monitor all your WordPress sites"
+        action={
+          canAddSite && !agency?.is_client_portal ? (
+            <Button
+              onClick={() => setShowAdd(true)}
+              disabled={atLimit}
+              className="gap-1.5"
+            >
+              <Plus size={15} />
+              Add Site
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Search + actions row */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[180px]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[180px] flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search sites..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            className="w-full rounded-lg border border-border bg-surface py-2.5 pl-9 pr-4 text-sm focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)]"
           />
         </div>
 
@@ -190,8 +201,8 @@ export default function SitesPage() {
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilter((v) => !v)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-              showFilter ? "border-accent text-accent bg-accent/5" : "border-border bg-white text-foreground hover:bg-gray-50"
+            className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
+              showFilter ? "border-accent bg-accent-light text-accent" : "border-border bg-surface text-foreground hover:bg-muted"
             }`}
           >
             <SlidersHorizontal size={14} />
@@ -199,13 +210,13 @@ export default function SitesPage() {
             <ChevronDown size={13} className={`transition-transform duration-150 ${showFilter ? "rotate-180" : ""}`} />
           </button>
           {showFilter && (
-            <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl border border-border shadow-lg z-30 overflow-hidden">
+            <div className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
               {FILTER_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => { setFilter(opt.value); setShowFilter(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                    filter === opt.value ? "bg-accent/10 text-accent font-medium" : "text-foreground hover:bg-gray-50"
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                    filter === opt.value ? "bg-accent-light font-semibold text-accent" : "text-foreground hover:bg-muted"
                   }`}
                 >
                   {opt.label}
@@ -219,7 +230,7 @@ export default function SitesPage() {
         {!agency?.is_client_portal && filteredSites.length > 0 && (
           <button
             onClick={toggleAll}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border bg-white text-sm font-medium text-foreground hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
             title={allSelected ? "Deselect all" : "Select all"}
           >
             {allSelected
@@ -234,29 +245,28 @@ export default function SitesPage() {
             <button
               onClick={() => setShowBulkMenu((v) => !v)}
               disabled={bulkLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: "var(--accent)" }}
+              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-xs font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
             >
               {bulkLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               Bulk Actions
               <ChevronDown size={13} className={`transition-transform ${showBulkMenu ? "rotate-180" : ""}`} />
             </button>
             {showBulkMenu && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-border shadow-lg z-30 overflow-hidden">
+              <div className="absolute right-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
                 {BULK_ACTIONS.map((action) => (
                   <button
                     key={action.value}
                     onClick={() => executeBulkAction(action.value)}
-                    className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
                   >
                     {action.label}
-                    <span className="text-xs text-muted-foreground ml-1.5">({selected.size})</span>
+                    <span className="ml-1.5 text-xs text-muted-foreground">({selected.size})</span>
                   </button>
                 ))}
                 <div className="border-t border-border">
                   <button
                     onClick={() => setSelected(new Set())}
-                    className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:bg-gray-50 flex items-center gap-2"
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted"
                   >
                     <X size={12} /> Clear selection
                   </button>

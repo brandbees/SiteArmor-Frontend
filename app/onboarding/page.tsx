@@ -19,7 +19,7 @@ function StepWelcome({ onNext, isIndividual }: { onNext: () => void; isIndividua
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/site-armor-icon.png" alt="Site Armor" className="w-16 h-16 object-contain" />
       <div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">
+        <h1 className="font-portal-display mb-2 text-2xl font-bold tracking-tight text-foreground">
           Welcome to Site Armor
         </h1>
         {isIndividual ? (
@@ -499,15 +499,12 @@ export default function OnboardingPage() {
   const progress = ((step + 1) / STEPS.length) * 100;
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8f9fb 100%)" }}
-    >
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="h-14 border-b border-border bg-surface/80 backdrop-blur-sm flex items-center px-6 gap-3 shrink-0">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface px-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/site-armor-icon.png" alt="Site Armor" className="w-7 h-7 object-contain" />
-        <span className="text-sm font-semibold text-foreground">Site Armor</span>
+        <img src="/site-armor-icon.png" alt="Site Armor" className="h-7 w-7 object-contain" />
+        <span className="font-portal-display text-sm font-bold text-foreground">Site Armor</span>
       </header>
 
       {/* Progress bar */}
@@ -519,28 +516,28 @@ export default function OnboardingPage() {
       </div>
 
       {/* Step labels */}
-      <div className="flex justify-center gap-0 pt-6 px-4">
+      <div className="flex justify-center gap-0 px-4 pt-6">
         {STEPS.map((label, i) => (
           <div key={label} className="flex items-center">
             <div className="flex flex-col items-center gap-1.5">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold transition-all ${
                   i < step
-                    ? "bg-green-500 text-white shadow-sm"
+                    ? "bg-[var(--score-good)] text-white"
                     : i === step
-                    ? "text-white shadow-md scale-110"
-                    : "bg-muted text-muted-foreground border border-border"
+                    ? "scale-110 text-white shadow-elevated-sm"
+                    : "border border-border bg-muted text-muted-foreground"
                 }`}
                 style={i === step ? { background: "var(--accent)" } : {}}
               >
-                {i < step ? <Check size={12} /> : i + 1}
+                {i < step ? <Check size={12} /> : String(i + 1).padStart(2, "0")}
               </div>
               <span
-                className={`text-xs leading-tight text-center max-w-[64px] ${
+                className={`max-w-[64px] text-center text-xs leading-tight ${
                   i === step
-                    ? "font-semibold text-foreground"
+                    ? "font-bold text-foreground"
                     : i < step
-                    ? "font-medium text-green-600"
+                    ? "font-semibold text-[var(--score-good)]"
                     : "font-medium text-muted-foreground"
                 }`}
               >
@@ -549,8 +546,8 @@ export default function OnboardingPage() {
             </div>
             {i < STEPS.length - 1 && (
               <div
-                className={`w-10 sm:w-16 h-px mx-2 mb-6 transition-colors ${
-                  i < step ? "bg-green-400" : "bg-border"
+                className={`mx-2 mb-6 h-px w-10 transition-colors sm:w-16 ${
+                  i < step ? "bg-[var(--score-good)]" : "bg-border"
                 }`}
               />
             )}
@@ -559,8 +556,8 @@ export default function OnboardingPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-lg bg-surface border border-border rounded-2xl p-8 shadow-[0_4px_32px_0_rgb(0_0_0/0.08)]">
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="w-full max-w-lg rounded-xl border border-border bg-surface p-8 shadow-elevated-sm">
           {step === 0 && <StepWelcome onNext={() => setStep(1)} isIndividual={isIndividual} />}
           {step === 1 && (
             <StepAddSite

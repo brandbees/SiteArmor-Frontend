@@ -116,7 +116,7 @@ export default function DashboardLayout({
           <TopBar />
           <TrialBanner />
           <AnnouncementBanner />
-          <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-5">{children}</main>
         </div>
       </div>
     </BrandingProvider>

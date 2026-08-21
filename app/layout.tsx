@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
 import { BrandingInit } from "@/components/BrandingInit";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+
+const portalDisplay = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-portal-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Site Armor",
@@ -25,20 +31,24 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${portalDisplay.variable}`}>
         <BrandingInit />
         {children}
         <Toaster
           position="top-center"
-          richColors
+          richColors={false}
           expand={false}
-          duration={4500}
+          duration={4000}
           toastOptions={{
+            className: "portal-toast",
             style: {
               fontFamily: "inherit",
               fontSize: "13px",
-              borderRadius: "12px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+              fontWeight: 500,
+              borderRadius: "8px",
+              border: "1px solid rgb(15 23 42 / 0.08)",
+              boxShadow: "0 0 0 1px rgb(15 23 42 / 0.06), 0 8px 24px -8px rgb(15 23 42 / 0.16)",
+              padding: "12px 14px",
             },
           }}
         />

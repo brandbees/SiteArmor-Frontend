@@ -45,7 +45,7 @@ function getStrength(password: string) {
 // ── Shared input class ────────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full px-3.5 py-2.5 text-sm rounded-xl border border-border bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:bg-surface focus:border-ring transition-all";
+  "w-full px-3.5 py-2.5 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)] transition-shadow";
 
 // ── Phase 0 — Account type selection ─────────────────────────────────────────
 
@@ -438,21 +438,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-8"
-      style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8f9fb 100%)" }}
-    >
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="mb-8 flex flex-col items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/site-armor-icon.png" alt="Site Armor" className="w-14 h-14 object-contain mb-4" />
-          <h1 className="text-2xl font-bold text-foreground">{headings[phase].title}</h1>
-          <p className="text-sm text-muted-foreground mt-1 text-center">{headings[phase].sub}</p>
+          <img src="/site-armor-icon.png" alt="Site Armor" className="mb-4 h-14 w-14 object-contain" />
+          <h1 className="font-portal-display text-2xl font-bold tracking-tight text-foreground">{headings[phase].title}</h1>
+          <p className="mt-1 text-center text-sm text-muted-foreground">{headings[phase].sub}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-surface border border-border rounded-2xl p-7 shadow-[0_4px_24px_0_rgb(0_0_0/0.08)]">
+        <div className="rounded-xl border border-border bg-surface p-7 shadow-elevated-sm">
           {phase === "type" && (
             <TypeSelectionStep
               onSelect={(type) => {

@@ -426,8 +426,8 @@ function BillingPage() {
             return (
               <div
                 key={plan}
-                className={`rounded-2xl p-5 flex flex-col gap-4 transition-all duration-base ${
-                  isCurrent ? "shadow-glow bg-[var(--accent)]/5" : "shadow-elevated-sm hover:shadow-elevated-md hover:-translate-y-0.5 bg-white"
+                className={`flex flex-col gap-4 rounded-xl border p-5 transition-all duration-base ${
+                  isCurrent ? "border-accent bg-accent-light" : "border-border bg-surface hover:border-accent/30"
                 }`}
               >
                 {isCurrent && (

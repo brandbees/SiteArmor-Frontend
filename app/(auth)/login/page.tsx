@@ -93,28 +93,26 @@ function LoginContent() {
   const logoUrl   = branding?.logo_url   ?? null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8f9fb 100%)" }}
-    >
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="mb-8 flex flex-col items-center">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={brandName} className="h-12 w-auto object-contain mb-4" />
+            <img src={logoUrl} alt={brandName} className="mb-4 h-12 w-auto object-contain" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src="/site-armor-icon.png" alt="Site Armor" className="w-14 h-14 object-contain mb-4" />
+            <img src="/site-armor-icon.png" alt="Site Armor" className="mb-4 h-14 w-14 object-contain" />
           )}
-          <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
-          <p className="text-sm text-muted-foreground mt-1">to {brandName}</p>
+          <h1 className="font-portal-display text-2xl font-bold tracking-tight text-foreground">Sign in</h1>
+          <p className="mt-1 text-sm text-muted-foreground">to {brandName}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-surface border border-border rounded-2xl p-7 shadow-[0_4px_24px_0_rgb(0_0_0/0.08)]">
+        <div className="rounded-xl border border-border bg-surface p-7 shadow-elevated-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
+              <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                 Email
               </label>
               <input
@@ -124,14 +122,14 @@ function LoginContent() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (emailError) validateEmail(e.target.value); }}
                 onBlur={(e) => validateEmail(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:bg-surface transition-all ${emailError ? "border-red-400 focus:ring-red-400" : "border-border focus:ring-ring focus:border-ring"}`}
+                className={`w-full rounded-lg border bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)] transition-shadow ${emailError ? "border-red-400" : "border-border"}`}
                 placeholder="you@agency.com"
               />
-              {emailError && <p className="text-xs text-red-600">{emailError}</p>}
+              {emailError && <p className="text-xs text-destructive">{emailError}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
+              <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                 Password
               </label>
               <div className="relative">
@@ -141,21 +139,21 @@ function LoginContent() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl border border-border bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:bg-surface focus:border-transparent transition-all"
+                  className="w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)] transition-shadow"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              <div className="flex justify-end mt-1.5">
+              <div className="mt-1.5 flex justify-end">
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs font-semibold text-muted-foreground transition-colors hover:text-accent"
                 >
                   Forgot password?
                 </Link>
@@ -163,8 +161,8 @@ function LoginContent() {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="rounded-lg border border-[var(--score-bad-border)] bg-[var(--score-bad-bg)] px-3.5 py-2.5">
+                <p className="text-sm text-[var(--score-bad)]">{error}</p>
               </div>
             )}
 
@@ -182,17 +180,18 @@ function LoginContent() {
               type="submit"
               loading={loading}
               disabled={!!emailError || (!!CF_SITE_KEY && !cfToken)}
-              className="w-full h-11 rounded-xl text-sm font-bold mt-1"
+              className="mt-1 w-full"
+              size="lg"
             >
               Sign in
             </Button>
           </form>
 
-          <p className="text-sm text-center text-muted-foreground mt-6">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="font-semibold text-accent hover:underline"
+              className="font-bold text-accent hover:underline"
             >
               Register
             </Link>

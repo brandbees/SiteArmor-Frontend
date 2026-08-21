@@ -245,7 +245,7 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex items-center justify-between h-14 px-5 border-b border-border bg-white shrink-0">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-5">
         {/* Left */}
         <div className="flex items-center gap-3">
           <MobileNav />
@@ -254,51 +254,56 @@ export function TopBar() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => { setShowDropdown(v => !v); setShowNotif(false); }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted"
             >
-              <div className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold text-white"
                 style={{ background: "var(--accent)" }}>
                 {agencyLabel[0]?.toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-foreground hidden sm:block">{agencyLabel}</span>
+              <span className="hidden text-sm font-semibold text-foreground sm:block">{agencyLabel}</span>
               <ChevronDown size={13} className={`text-muted-foreground transition-transform duration-150 ${showDropdown ? "rotate-180" : ""}`} />
             </button>
 
             {showDropdown && (
-              <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl border border-border shadow-lg z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-border">
-                  <p className="text-xs font-semibold text-foreground truncate">{displayName}</p>
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{agency?.email}</p>
+              <div className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
+                <div className="border-b border-border px-4 py-3">
+                  <p className="truncate text-xs font-bold text-foreground">{displayName}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{agency?.email}</p>
                 </div>
                 <div className="py-1.5">
                   {!isClientPortal && (
                     <>
                       <Link href="/settings/profile" onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors">
-                        <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                          <User size={14} className="text-indigo-500" />
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-light">
+                          <User size={14} className="text-accent" />
                         </div>
-                        <span className="font-medium">Profile</span>
+                        <span className="font-semibold">Profile</span>
                       </Link>
                       <div className="mx-3 my-1 border-t border-border" />
                     </>
                   )}
                   <button onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                    <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                      <LogOut size={14} className="text-red-500" />
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-[var(--destructive-light)]">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--destructive-light)]">
+                      <LogOut size={14} className="text-destructive" />
                     </div>
-                    <span className="font-medium">Sign out</span>
+                    <span className="font-semibold">Sign out</span>
                   </button>
                 </div>
               </div>
             )}
           </div>
 
+          <div className="hidden items-center gap-2 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground md:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--score-good)]" />
+            Ready
+          </div>
+
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            className="hidden items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 md:flex"
           >
             <RefreshCw size={11} className={refreshing ? "animate-spin" : ""} />
             <span>{lastUpdated ? `Updated ${tsAgo(lastUpdated)}` : "Refresh"}</span>
@@ -309,8 +314,7 @@ export function TopBar() {
         <div className="flex items-center gap-2">
           {!isClientPortal && !isIndividual && roleCanDo("add_site") && (
             <button onClick={() => setShowAddSite(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-              style={{ background: "var(--accent)" }}>
+              className="flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-xs font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-hover">
               <Plus size={15} />
               <span className="hidden sm:inline">Add Site</span>
             </button>

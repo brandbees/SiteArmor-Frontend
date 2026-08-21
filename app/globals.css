@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  /* Base */
-  --background: #f8f9fb;
+  /* Base — MalCare-clean light portal canvas */
+  --background: #f4f6f9;
   --surface: #ffffff;
-  --foreground: #111827;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
+  --foreground: #0a0f1a;
+  --muted: #eef1f6;
+  --muted-foreground: #64748b;
+  --border: rgb(15 23 42 / 0.08);
+  --border-strong: rgb(15 23 42 / 0.14);
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #0a0f1a;
 
   /* Brand — #1a56db: a saturated royal blue that reads clearly on
      both light and dark backgrounds while staying in the BrandBees
      navy family. Derived tints/shades stay blue, never muddy. */
-  --primary: #111827;
+  --primary: #0a0f1a;
   --primary-foreground: #ffffff;
   --accent: #1a56db;
   --accent-hover: #1347b8;
@@ -31,14 +31,13 @@
   --ring: #1a56db;
   --radius: 0.5rem;
 
-  /* Shadows — a hairline "shadow-border" (0 0 0 1px) replaces hard borders on cards,
-     layered with real elevation blur so depth reads without a visible line. */
-  --shadow-xs: 0 0 0 1px rgb(15 23 42 / 0.04), 0 1px 2px 0 rgb(15 23 42 / 0.04);
-  --shadow-sm: 0 0 0 1px rgb(15 23 42 / 0.05), 0 2px 4px -1px rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
-  --shadow-md: 0 0 0 1px rgb(15 23 42 / 0.05), 0 8px 20px -6px rgb(15 23 42 / 0.14), 0 3px 8px -4px rgb(15 23 42 / 0.08);
-  --shadow-lg: 0 0 0 1px rgb(15 23 42 / 0.06), 0 20px 40px -10px rgb(15 23 42 / 0.20), 0 8px 16px -8px rgb(15 23 42 / 0.10);
-  --shadow-inset: inset 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-glow: 0 0 0 1px rgb(var(--accent-rgb) / 0.3), 0 12px 28px -6px rgb(var(--accent-rgb) / 0.4);
+  /* Shadows — prefer hairline border; keep elevation subtle */
+  --shadow-xs: 0 0 0 1px rgb(15 23 42 / 0.06);
+  --shadow-sm: 0 0 0 1px rgb(15 23 42 / 0.07), 0 1px 3px 0 rgb(15 23 42 / 0.04);
+  --shadow-md: 0 0 0 1px rgb(15 23 42 / 0.08), 0 4px 16px -4px rgb(15 23 42 / 0.1);
+  --shadow-lg: 0 0 0 1px rgb(15 23 42 / 0.08), 0 12px 32px -8px rgb(15 23 42 / 0.14);
+  --shadow-inset: inset 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-glow: 0 0 0 1px rgb(var(--accent-rgb) / 0.25), 0 8px 20px -6px rgb(var(--accent-rgb) / 0.28);
 
   /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -111,6 +110,7 @@ html.dark {
   --color-score-warn: var(--score-warn);
   --color-score-bad: var(--score-bad);
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
   --radius: var(--radius);
   --ease-out: var(--ease-out);
   --duration-fast: var(--duration-fast);
@@ -181,6 +181,11 @@ button, a, input, select, textarea {
 .shadow-elevated-lg { box-shadow: var(--shadow-lg); }
 .shadow-glow        { box-shadow: var(--shadow-glow); }
 .bg-gradient-brand   { background: var(--gradient-brand); }
+
+/* Portal display headings — Space Grotesk via --font-portal-display */
+.font-portal-display {
+  font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
+}
 
 /* Colored status "shadow-borders" — same hairline+glow formula as --shadow-glow,
    for status tiles/banners (malware, uptime, security) that used border-2 border-{color}-200

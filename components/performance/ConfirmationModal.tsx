@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Shield, Clock, CheckCircle } from 'lucide-react';
+import { useState } from "react";
+import { Shield, Clock } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 
 interface ConfirmationModalProps {
   site_url: string;
   psi_mobile_before: number;
   psi_desktop_before: number;
-  tier: 'low' | 'medium' | 'high';
+  tier: "low" | "medium" | "high";
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -24,149 +27,119 @@ export function ConfirmationModal({
 }: ConfirmationModalProps) {
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  const riskLevel = tier === 'low' ? 'Low' : tier === 'medium' ? 'Medium' : 'High';
-  const riskColor = tier === 'low' ? 'text-green-600' : tier === 'medium' ? 'text-yellow-600' : 'text-red-600';
-  const bgColor = tier === 'low' ? 'bg-green-50' : tier === 'medium' ? 'bg-yellow-50' : 'bg-red-50';
+  const riskLevel = tier === "low" ? "Low" : tier === "medium" ? "Medium" : "High";
+  const riskVariant =
+    tier === "low" ? "success" : tier === "medium" ? "warning" : "error";
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-          <h2 className="text-white font-bold text-lg">PSI Autonomous Optimization</h2>
-          <p className="text-blue-100 text-sm mt-1">Review & confirm optimization settings</p>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">Site Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">URL</p>
-                <p className="text-sm font-mono text-gray-900 break-all">{site_url}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Current PSI Score</p>
-                <div className="flex gap-2 mt-1">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-900 rounded text-sm font-semibold">
-                    Mobile: {psi_mobile_before}
-                  </span>
-                  <span className="px-3 py-1 bg-purple-100 text-purple-900 rounded text-sm font-semibold">
-                    Desktop: {psi_desktop_before}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className={`${bgColor} border border-gray-200 rounded-lg p-4`}>
-            <h3 className="font-semibold text-gray-900 mb-3">Risk Tier</h3>
-            <div className="flex items-center gap-3">
-              <Shield className={`w-5 h-5 ${riskColor}`} />
-              <span className={`font-semibold ${riskColor}`}>{riskLevel} Risk</span>
-            </div>
-            <p className="text-sm text-gray-700 mt-2">
-              {tier === 'low' && 'Only CSS-only, no-risk optimizations will be applied.'}
-              {tier === 'medium' && 'Both CSS and isolated PHP changes will be deployed.'}
-              {tier === 'high' && 'All optimizations including functionality changes may be deployed.'}
-            </p>
-          </div>
-
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">How It Works</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
-                  1
-                </span>
-                <span className="text-gray-700">
-                  <strong>Deploy Fix</strong> — A single optimization is deployed to your site
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
-                  2
-                </span>
-                <span className="text-gray-700">
-                  <strong>Verify</strong> — You review 6 quality checks to ensure nothing broke
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
-                  3
-                </span>
-                <span className="text-gray-700">
-                  <strong>Approve or Rollback</strong> — Either approve the change or instantly rollback
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
-                  4
-                </span>
-                <span className="text-gray-700">
-                  <strong>Repeat</strong> — Continue with next fix or stop optimization
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-            <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-700">
-              <p className="font-semibold text-gray-900">Your site is safe</p>
-              <p className="mt-1">
-                If any fix causes issues, we automatically rollback within seconds. You maintain full control at every step.
-              </p>
-            </div>
-          </div>
-
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Estimated Duration
-            </h3>
-            <p className="text-sm text-gray-700">
-              Each optimization iteration typically takes <strong>2-5 minutes</strong> depending on your site size and complexity.
-            </p>
-          </div>
-
-          <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={termsAccepted}
-              onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
-            />
-            <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
-              I understand the optimization process and risks involved. I authorize the agent to deploy fixes iteratively with my approval at each step.
-            </label>
-          </div>
-        </div>
-
-        <div className="border-t px-6 py-4 bg-gray-50 flex gap-3 justify-end">
-          <button
-            onClick={onCancel}
-            disabled={isLoading}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+    <Modal
+      open
+      onClose={() => {
+        if (!isLoading) onCancel();
+      }}
+      size="lg"
+      title="PSI Autonomous Optimization"
+      description="Review & confirm optimization settings"
+      footer={
+        <>
+          <Button variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onConfirm}
             disabled={!termsAccepted || isLoading}
-            className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            loading={isLoading}
           >
-            {isLoading ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                Starting...
-              </>
-            ) : (
-              'Start Optimization'
-            )}
-          </button>
+            Start Optimization
+          </Button>
+        </>
+      }
+    >
+      <div className="max-h-[60vh] space-y-5 overflow-y-auto">
+        <div className="rounded-xl border border-border p-4">
+          <h3 className="mb-3 text-sm font-bold text-foreground">Site Information</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                URL
+              </p>
+              <p className="mt-1 break-all font-mono text-sm text-foreground">{site_url}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Current PSI Score
+              </p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <span className="rounded-md bg-accent-light px-2.5 py-1 text-xs font-bold text-accent">
+                  Mobile: {psi_mobile_before}
+                </span>
+                <span className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-bold text-foreground">
+                  Desktop: {psi_desktop_before}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <Alert variant={riskVariant} title={`${riskLevel} Risk`}>
+          {tier === "low" && "Only CSS-only, no-risk optimizations will be applied."}
+          {tier === "medium" && "Both CSS and isolated PHP changes will be deployed."}
+          {tier === "high" &&
+            "All optimizations including functionality changes may be deployed."}
+        </Alert>
+
+        <div className="rounded-xl border border-border p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
+            <Shield size={15} className="text-accent" />
+            How It Works
+          </h3>
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            {[
+              ["Deploy Fix", "A single optimization is deployed to your site"],
+              ["Verify", "You review 6 quality checks to ensure nothing broke"],
+              ["Approve or Rollback", "Either approve the change or instantly rollback"],
+              ["Repeat", "Continue with next fix or stop optimization"],
+            ].map(([title, body], i) => (
+              <li key={title} className="flex gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-light text-[11px] font-bold text-accent">
+                  {i + 1}
+                </span>
+                <span>
+                  <strong className="text-foreground">{title}</strong> — {body}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <Alert variant="info" title="Your site is safe">
+          If any fix causes issues, we automatically rollback within seconds. You maintain
+          full control at every step.
+        </Alert>
+
+        <div className="rounded-xl border border-border p-4">
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
+            <Clock size={15} />
+            Estimated Duration
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Each optimization iteration typically takes <strong className="text-foreground">2–5 minutes</strong> depending on your site size and complexity.
+          </p>
+        </div>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-muted/40 p-4">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-border accent-[var(--accent)]"
+          />
+          <span className="text-sm text-muted-foreground">
+            I understand the optimization process and risks involved. I authorize the agent
+            to deploy fixes iteratively with my approval at each step.
+          </span>
+        </label>
       </div>
-    </div>
+    </Modal>
   );
 }

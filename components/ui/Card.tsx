@@ -5,7 +5,7 @@ interface CardProps {
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
   hover?: boolean;
-  /** Elevated variant — stronger shadow + brand-tinted border, for featured/highlighted content. */
+  /** Elevated variant — stronger border accent for featured content. */
   featured?: boolean;
 }
 
@@ -26,10 +26,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-card rounded-2xl transition-all duration-base",
-        "shadow-elevated-sm hover:shadow-elevated-md hover:-translate-y-0.5",
-        featured && "shadow-elevated-md",
-        hover && "hover:shadow-glow hover:-translate-y-1 cursor-pointer",
+        "bg-card rounded-xl border border-border transition-all duration-base",
+        featured && "border-accent/25 shadow-elevated-sm",
+        hover && "hover:border-accent/30 hover:shadow-elevated-sm cursor-pointer",
         paddingMap[padding],
         className
       )}
@@ -47,7 +46,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between mb-4", className)}>
+    <div className={cn("mb-4 flex items-center justify-between gap-3", className)}>
       {children}
     </div>
   );
@@ -61,7 +60,12 @@ export function CardTitle({
   className?: string;
 }) {
   return (
-    <h2 className={cn("text-sm font-semibold text-foreground", className)}>
+    <h2
+      className={cn(
+        "font-portal-display text-base font-bold tracking-tight text-foreground",
+        className
+      )}
+    >
       {children}
     </h2>
   );

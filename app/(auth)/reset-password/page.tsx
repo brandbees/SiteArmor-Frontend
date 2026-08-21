@@ -56,19 +56,19 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-          <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }} />
+        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-sm">
+          <div className="h-1 w-full bg-accent" />
 
           <div className="px-8 py-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <Lock size={18} className="text-indigo-600" />
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light">
+                <Lock size={18} className="text-accent" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground tracking-tight">Reset your password</h1>
-                <p className="text-xs text-muted-foreground mt-0.5">Choose a new password for your account</p>
+                <h1 className="font-portal-display text-xl font-bold tracking-tight text-foreground">Reset your password</h1>
+                <p className="mt-0.5 text-xs text-muted-foreground">Choose a new password for your account</p>
               </div>
             </div>
 
@@ -99,7 +99,7 @@ function ResetPasswordForm() {
                       onChange={e => setPassword(e.target.value)}
                       placeholder="Min 8 characters"
                       required
-                      className="w-full pr-10 px-3.5 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                      className="w-full rounded-lg border border-border px-3.5 py-2.5 pr-10 text-sm focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)]"
                     />
                     <button type="button" onClick={() => setShowPw(v => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
@@ -129,7 +129,7 @@ function ResetPasswordForm() {
                     onChange={e => setConfirm(e.target.value)}
                     placeholder="Repeat your new password"
                     required
-                    className="w-full mt-1.5 px-3.5 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                    className="mt-1.5 w-full rounded-lg border border-border px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)]"
                   />
                   {confirm && password !== confirm && (
                     <p className="text-[11px] text-red-500 mt-1">Passwords do not match.</p>
@@ -139,14 +139,13 @@ function ResetPasswordForm() {
                 <button
                   type="submit"
                   disabled={loading || !token}
-                  className="w-full py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 transition-all hover:opacity-90 active:scale-[0.98]"
-                  style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+                  className="w-full rounded-lg bg-accent py-2.5 text-xs font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
                 >
                   {loading ? "Resetting…" : "Set new password"}
                 </button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
+                  <a href="/login" className="font-bold text-accent hover:underline">
                     Back to login
                   </a>
                 </p>
@@ -162,8 +161,8 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md bg-white rounded-2xl border border-border shadow-sm h-80 animate-pulse" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-80 w-full max-w-md animate-pulse rounded-xl border border-border bg-surface shadow-elevated-sm" />
       </div>
     }>
       <ResetPasswordForm />

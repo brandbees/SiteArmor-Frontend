@@ -122,7 +122,7 @@ export function MarketingNav({
           : "border-b border-transparent bg-transparent"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
         <BrandMark inverse={isDark} />
 
         <nav className="ml-4 hidden items-center gap-0.5 lg:flex">
