@@ -1618,10 +1618,8 @@ function SettingsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { agency } = useAuth();
-  const { role }   = useRole();
-
-  const isIndividual = agency?.account_type === "individual";
   const visibleTabs  = TABS.filter(({ id }) => {
+    const isIndividual = agency?.account_type === "individual";
     if (isIndividual && id === "branding") return false;
     if (isIndividual && id === "team")     return false;
     return true;
@@ -1644,65 +1642,59 @@ function SettingsPageInner() {
     router.replace(`/settings?tab=${id}`, { scroll: false });
   }
 
-  const accentColor = agency?.accent_color ?? "#1f5fb8";
-  const displayName = agency?.member_name ?? agency?.name ?? "";
-  const roleColors  = ROLE_COLOR[role ?? "analyst"] ?? ROLE_COLOR.analyst;
-
   return (
     <div className="space-y-5">
-      {/* Profile hero */}
-      <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base overflow-hidden">
-        <div className="h-14 w-full" style={{ background: `linear-gradient(135deg, ${accentColor}28 0%, ${accentColor}08 100%)` }} />
-        <div className="px-6 pb-5">
-          <div className="flex items-end gap-4 -mt-7 mb-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-base font-bold ring-4 ring-white shadow-sm shrink-0" style={{ background: accentColor }}>
-              {initials(displayName || "?")}
-            </div>
-            <div className="pb-0.5 flex-1 min-w-0">
-              <p className="text-base font-bold text-foreground leading-tight truncate">{displayName || "—"}</p>
-              <p className="text-xs text-muted-foreground truncate">{agency?.email}</p>
-            </div>
-            <div className="pb-0.5 shrink-0">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
-                style={{ background: roleColors.bg, color: roleColors.text }}>{role ?? "analyst"}</span>
-            </div>
-          </div>
+      <div className="flex items-center gap-3">
+        <Settings size={22} className="text-accent" strokeWidth={2} />
+        <div>
+          <h1 className="font-portal-display text-[1.75rem] font-bold leading-none tracking-tight text-foreground">
+            Settings
+          </h1>
+          <p className="mt-2 text-sm font-medium text-accent">
+            Customize branding and account settings.
+          </p>
         </div>
       </div>
 
-      {/* Tabbed panel */}
-      <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base">
-        {/* Tab bar */}
-        <div className="flex items-center gap-1 p-1.5 border-b border-border overflow-x-auto">
-          {visibleTabs.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              data-tab={id}
-              onClick={() => handleTabChange(id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                activeTab === id ? "text-white shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-              }`}
-              style={activeTab === id ? { background: accentColor } : undefined}
-            >
-              <Icon size={14} />
-              {label}
-            </button>
-          ))}
+      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface lg:flex-row">
+        {/* Vertical tabs */}
+        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border p-3 lg:w-56 lg:flex-col lg:overflow-x-visible lg:border-b-0 lg:border-r">
+          {visibleTabs.map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                data-tab={id}
+                onClick={() => handleTabChange(id)}
+                className={`flex items-center gap-2.5 whitespace-nowrap rounded-[4px] px-3 py-2.5 text-left text-[13px] font-semibold transition-colors ${
+                  active
+                    ? "bg-accent text-white"
+                    : "text-foreground/80 hover:bg-muted"
+                }`}
+              >
+                <Icon size={15} strokeWidth={active ? 2.25 : 1.75} />
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Content */}
-        {activeTab === "billing" ? (
-          <BillingTab />
-        ) : (
-          <div className="p-6">
-            {activeTab === "general"       && <GeneralTab />}
-            {activeTab === "branding"      && <BrandingTab />}
-            {activeTab === "notifications" && <NotificationsTab />}
-            {activeTab === "activity"      && <ActivityTab />}
-            {activeTab === "team"          && <TeamTab />}
-            {activeTab === "integrations"  && <IntegrationsTab />}
-          </div>
-        )}
+        <div className="min-w-0 flex-1">
+          {activeTab === "billing" ? (
+            <BillingTab />
+          ) : (
+            <div className="p-6">
+              {activeTab === "general"       && <GeneralTab />}
+              {activeTab === "branding"      && <BrandingTab />}
+              {activeTab === "notifications" && <NotificationsTab />}
+              {activeTab === "activity"      && <ActivityTab />}
+              {activeTab === "team"          && <TeamTab />}
+              {activeTab === "integrations"  && <IntegrationsTab />}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

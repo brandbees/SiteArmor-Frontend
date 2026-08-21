@@ -5,7 +5,6 @@ interface CardProps {
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
   hover?: boolean;
-  /** Elevated variant — stronger border accent for featured content. */
   featured?: boolean;
 }
 
@@ -26,9 +25,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-card rounded-xl border border-border transition-all duration-base",
-        featured && "border-accent/25 shadow-elevated-sm",
-        hover && "hover:border-accent/30 hover:shadow-elevated-sm cursor-pointer",
+        "rounded-xl border border-border bg-surface",
+        featured && "border-accent/25",
+        hover && "cursor-pointer transition-colors hover:border-accent/35",
         paddingMap[padding],
         className
       )}

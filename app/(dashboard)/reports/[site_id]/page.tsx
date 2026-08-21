@@ -11,6 +11,10 @@ import api from "@/lib/api";
 import { useSite } from "@/hooks/useSite";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { scoreHex, timeAgo, isValidEmail } from "@/lib/utils";
 import { getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
@@ -111,48 +115,41 @@ function SendReportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl border border-border w-full max-w-md mx-4 overflow-hidden">
-        <div className="px-6 py-5 border-b border-border">
-          <h2 className="text-base font-bold text-foreground">Send Report</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Email the client portal link to your client</p>
-        </div>
-        <div className="px-6 py-5">
-          <label className="text-xs font-semibold text-foreground block mb-1.5">
-            Recipient email
-            {clientEmail && email === clientEmail && (
-              <span className="ml-2 text-[10px] font-medium text-accent normal-case">· from client profile</span>
-            )}
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="client@example.com"
-            className="w-full px-3 py-2.5 text-sm rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-          />
-          {error && (
-            <p className="text-xs text-destructive flex items-center gap-1.5 mt-2">
-              <AlertCircle size={12} /> {error}
-            </p>
+    <Modal
+      open
+      onClose={onClose}
+      title="Send Report"
+      description="Email the client portal link to your client"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button loading={sending} disabled={!email.trim()} onClick={handleSend}>
+            <Send size={14} />
+            Send
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-1.5">
+        <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          Recipient email
+          {clientEmail && email === clientEmail && (
+            <span className="ml-2 text-[10px] font-medium normal-case text-accent">· from client profile</span>
           )}
-        </div>
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-gray-50 transition-colors">
-            Cancel
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={sending || !email.trim()}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            style={{ background: "var(--accent)" }}
-          >
-            {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            {sending ? "Sending…" : "Send"}
-          </button>
-        </div>
+        </label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="client@example.com"
+        />
+        {error && (
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+            <AlertCircle size={12} /> {error}
+          </p>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -212,7 +209,7 @@ function ReportCard({ report, clientEmail, onSend }: { report: Report; clientEma
   const accentBar = isPending ? "#f59e0b" : isFailed ? "#ef4444" : report.overall_score != null ? scoreHex(report.overall_score) : "#10b981";
 
   return (
-    <div className="bg-white rounded-2xl shadow-elevated-sm overflow-hidden flex flex-col hover:shadow-elevated-md hover:-translate-y-0.5 transition-all duration-base">
+    <div className="rounded-xl border border-border bg-surface overflow-hidden flex flex-col transition-all duration-base">
       {/* Colored top accent bar */}
       <div className="h-1 w-full" style={{ background: accentBar }} />
 
@@ -454,29 +451,30 @@ export default function SiteReportsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <button
-            onClick={() => router.push("/reports")}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
-          >
-            <ChevronLeft size={15} />
-            All reports
-          </button>
-          <h1 className="text-xl font-bold text-foreground">{site.name}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{site.url}</p>
-        </div>
+      <div>
         <button
-          onClick={handleGenerate}
-          disabled={generating || !hasCompletedAudit}
-          title={!hasCompletedAudit ? "Run an audit first" : undefined}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 shrink-0 transition-opacity"
-          style={{ background: "var(--accent)" }}
+          onClick={() => router.push("/reports")}
+          className="mb-3 flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          {generating ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
-          {generating ? "Queuing…" : "Generate Report"}
+          <ChevronLeft size={15} />
+          All reports
         </button>
+        <PageHeader
+          title={site.name}
+          description={site.url}
+          icon={<FileText size={22} />}
+          action={
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || !hasCompletedAudit}
+              loading={generating}
+              title={!hasCompletedAudit ? "Run an audit first" : undefined}
+            >
+              <RefreshCw size={15} />
+              Generate Report
+            </Button>
+          }
+        />
       </div>
 
       {/* Banners */}

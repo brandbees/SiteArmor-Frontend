@@ -1,17 +1,30 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Globe, Search, SlidersHorizontal, RefreshCw, ChevronDown,
-  CheckSquare, Square, X, Tag, Loader2, Plus,
+  Globe,
+  Search,
+  Plus,
+  RefreshCw,
+  ExternalLink,
+  ShieldAlert,
+  WifiOff,
+  Bug,
+  Plug,
+  Palette,
+  Package,
+  Star,
+  Filter,
+  RotateCcw,
+  Loader2,
+  Eye,
 } from "lucide-react";
-
+import { cn, truncateUrl } from "@/lib/utils";
 import api from "@/lib/api";
 import { useSites } from "@/hooks/useSites";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteQuickViewDrawer } from "@/components/sites/SiteQuickViewDrawer";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -21,44 +34,187 @@ import { AddSiteModal } from "@/components/sites/AddSiteModal";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { Site } from "@/types";
 
-type FilterOption = "all" | "online" | "offline" | "seo_issues" | "perf_issues" | "healthy" | "warning" | "critical";
-type BulkActionType = "run_audit" | "trigger_scan" | "send_report";
+type QuickFilter = "all" | "hacked" | "disconnected" | "down" | "vulnerable" | "warning" | "healthy";
 
-const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
-  { value: "all",        label: "All Sites"      },
-  { value: "healthy",    label: "Healthy"        },
-  { value: "warning",    label: "Warning"        },
-  { value: "critical",   label: "Critical"       },
-  { value: "online",     label: "Online Only"    },
-  { value: "offline",    label: "Offline Only"   },
-  { value: "seo_issues", label: "SEO Issues"     },
-  { value: "perf_issues",label: "Perf Issues"    },
+const QUICK: { value: QuickFilter; label: string }[] = [
+  { value: "hacked", label: "Threats" },
+  { value: "disconnected", label: "Disconnected" },
+  { value: "down", label: "Down" },
+  { value: "vulnerable", label: "Vulnerable" },
 ];
 
-const BULK_ACTIONS: { value: BulkActionType; label: string }[] = [
-  { value: "run_audit",    label: "Run Audit"     },
-  { value: "trigger_scan", label: "Trigger Scan"  },
-  { value: "send_report",  label: "Send Report"   },
-];
-
-function siteHealthBucket(s: Site): "healthy" | "warning" | "critical" {
-  if (s.overall_score == null) return "warning";
-  if (s.overall_score >= 80) return "healthy";
-  if (s.overall_score >= 50) return "warning";
-  return "critical";
+function siteAlerts(site: Site): { label: string; tone: "danger" | "warning" | "muted" }[] {
+  const out: { label: string; tone: "danger" | "warning" | "muted" }[] = [];
+  if (site.uptime_status === "down") out.push({ label: "Site Down", tone: "danger" });
+  if (!site.plugin_connected) out.push({ label: "Disconnected", tone: "muted" });
+  if (site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0)
+    out.push({ label: "Threat Detected", tone: "danger" });
+  if ((site.plugin_vuln_count ?? 0) > 0)
+    out.push({ label: "Vulnerabilities Found", tone: "warning" });
+  if ((site.latest_scores?.security ?? 100) < 50)
+    out.push({ label: "Security Issues", tone: "warning" });
+  if (out.length === 0 && (site.overall_score ?? 100) < 80)
+    out.push({ label: "Needs Attention", tone: "warning" });
+  return out;
 }
 
-function applyFilter(sites: Site[], filter: FilterOption): Site[] {
+function matchesQuick(site: Site, filter: QuickFilter): boolean {
   switch (filter) {
-    case "healthy":     return sites.filter((s) => siteHealthBucket(s) === "healthy");
-    case "warning":     return sites.filter((s) => siteHealthBucket(s) === "warning");
-    case "critical":    return sites.filter((s) => siteHealthBucket(s) === "critical");
-    case "online":      return sites.filter((s) => s.uptime_status === "up");
-    case "offline":     return sites.filter((s) => s.uptime_status === "down");
-    case "seo_issues":  return sites.filter((s) => (s.latest_scores?.seo ?? 100) < 80);
-    case "perf_issues": return sites.filter((s) => (s.latest_scores?.performance ?? 100) < 80);
-    default:            return sites;
+    case "hacked":
+      return site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0;
+    case "disconnected":
+      return !site.plugin_connected;
+    case "down":
+      return site.uptime_status === "down";
+    case "vulnerable":
+      return (site.plugin_vuln_count ?? 0) > 0;
+    case "warning":
+      return (site.overall_score ?? 100) < 80 && (site.overall_score ?? 100) >= 50;
+    case "healthy":
+      return (site.overall_score ?? 0) >= 80 && site.uptime_status === "up";
+    default:
+      return true;
   }
+}
+
+function faviconSrc(url: string) {
+  try {
+    const host = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
+    return `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+  } catch {
+    return null;
+  }
+}
+
+function SiteRow({
+  site,
+  selected,
+  onToggle,
+  onOpen,
+  onQuick,
+  showSelect,
+}: {
+  site: Site;
+  selected: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+  onQuick: () => void;
+  showSelect: boolean;
+}) {
+  const alerts = siteAlerts(site);
+  const primary = alerts[0];
+  const updates = site.plugins_needing_updates ?? 0;
+  const fav = faviconSrc(site.url);
+
+  return (
+    <tr className="group border-b border-border last:border-0 hover:bg-muted/40">
+      {showSelect && (
+        <td className="w-10 px-3 py-3.5">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggle}
+            className="h-4 w-4 rounded-[3px] border-border accent-[var(--accent)]"
+          />
+        </td>
+      )}
+      <td className="px-3 py-3.5">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex min-w-0 items-center gap-3 text-left"
+        >
+          <div className="flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-border bg-muted">
+            {fav ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={fav} alt="" className="h-6 w-6 object-contain" />
+            ) : (
+              <Globe size={16} className="text-muted-foreground" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-foreground group-hover:text-accent">
+              {site.name}
+            </p>
+            <p className="truncate text-xs font-medium text-accent/80">
+              {truncateUrl(site.url)}
+            </p>
+          </div>
+        </button>
+      </td>
+      <td className="px-3 py-3.5">
+        {primary ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 text-xs font-semibold",
+              primary.tone === "danger" && "text-[var(--score-bad)]",
+              primary.tone === "warning" && "text-[var(--score-warn)]",
+              primary.tone === "muted" && "text-muted-foreground"
+            )}
+          >
+            {primary.tone === "danger" ? (
+              <Bug size={14} />
+            ) : primary.label.includes("Down") ? (
+              <WifiOff size={14} />
+            ) : (
+              <ShieldAlert size={14} />
+            )}
+            {primary.label}
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-[var(--score-good)]">All clear</span>
+        )}
+      </td>
+      <td className="px-3 py-3.5">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span className="relative inline-flex" title="Plugin updates">
+            <Plug size={16} strokeWidth={1.75} />
+            {updates > 0 && (
+              <span className="absolute -right-2 -top-2 rounded-full bg-accent px-1 text-[9px] font-bold text-white">
+                {updates}
+              </span>
+            )}
+          </span>
+          <span className="relative inline-flex opacity-50" title="Themes">
+            <Palette size={16} strokeWidth={1.75} />
+          </span>
+          <span className="relative inline-flex opacity-50" title="Core">
+            <Package size={16} strokeWidth={1.75} />
+          </span>
+        </div>
+      </td>
+      <td className="px-3 py-3.5">
+        <div className="flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={onQuick}
+            title="Quick view"
+            className="rounded-[4px] p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <Eye size={15} strokeWidth={1.75} />
+          </button>
+          <a
+            href={site.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open site"
+            className="rounded-[4px] p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink size={15} strokeWidth={1.75} />
+          </a>
+          <button
+            type="button"
+            onClick={onOpen}
+            title="Refresh / manage"
+            className="rounded-[4px] p-2 text-muted-foreground hover:bg-muted hover:text-accent"
+          >
+            <RefreshCw size={15} strokeWidth={1.75} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 export default function SitesPage() {
@@ -66,72 +222,68 @@ export default function SitesPage() {
   const { sites, loading, error } = useSites();
   const { agency } = useAuth();
   const { roleCanDo } = useRole();
-
-  const [showAdd, setShowAdd]               = useState(false);
-  const [search, setSearch]                 = useState("");
   const searchParams = useSearchParams();
-  const [filter, setFilter]                 = useState<FilterOption>(() => {
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [search, setSearch] = useState("");
+  const [quick, setQuick] = useState<QuickFilter>(() => {
     const p = searchParams.get("filter");
-    const valid: FilterOption[] = ["all","healthy","warning","critical","online","offline","seo_issues","perf_issues"];
-    return (valid.includes(p as FilterOption) ? p : "all") as FilterOption;
+    const valid: QuickFilter[] = [
+      "all",
+      "hacked",
+      "disconnected",
+      "down",
+      "vulnerable",
+      "warning",
+      "healthy",
+    ];
+    return valid.includes(p as QuickFilter) ? (p as QuickFilter) : "all";
   });
-  const [activeTag, setActiveTag]           = useState<string | null>(null);
-  const [showFilter, setShowFilter]         = useState(false);
-  const [showBulkMenu, setShowBulkMenu]     = useState(false);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [quickViewSiteId, setQuickViewSiteId] = useState<string | null>(null);
-  const [selected, setSelected]             = useState<Set<string>>(new Set());
-  const [bulkLoading, setBulkLoading]       = useState(false);
-  const [bulkMsg, setBulkMsg]               = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
-  const filterRef   = useRef<HTMLDivElement>(null);
-  const bulkMenuRef = useRef<HTMLDivElement>(null);
-
-  const limit      = agency ? PLAN_LIMITS[agency.plan] : 1;
-  const atLimit    = sites.length >= limit;
+  const limit = agency ? PLAN_LIMITS[agency.plan] : 1;
+  const atLimit = sites.length >= limit;
   const canAddSite = roleCanDo("add_site");
+  const showSelect = !agency?.is_client_portal;
 
-  // All unique tags across portfolio
-  const allTags = Array.from(new Set(sites.flatMap((s) => s.tags ?? []))).sort();
+  const allTags = useMemo(
+    () => Array.from(new Set(sites.flatMap((s) => s.tags ?? []))).sort(),
+    [sites]
+  );
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node))   setShowFilter(false);
-      if (bulkMenuRef.current && !bulkMenuRef.current.contains(e.target as Node)) setShowBulkMenu(false);
+    setSelected(new Set());
+  }, [sites]);
+
+  const filteredSites = useMemo(() => {
+    let list = sites;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (s) => s.name.toLowerCase().includes(q) || s.url.toLowerCase().includes(q)
+      );
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    if (activeTag) list = list.filter((s) => s.tags?.includes(activeTag));
+    if (quick !== "all") list = list.filter((s) => matchesQuick(s, quick));
+    return list;
+  }, [sites, search, activeTag, quick]);
 
-  // Reset selection when sites change
-  useEffect(() => { setSelected(new Set()); }, [sites]);
+  const quickViewSite = quickViewSiteId
+    ? (sites.find((s) => s.id === quickViewSiteId) ?? null)
+    : null;
 
-  const searched = search.trim()
-    ? sites.filter((s) =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.url.toLowerCase().includes(search.toLowerCase())
-      )
-    : sites;
-
-  const tagFiltered  = activeTag ? searched.filter((s) => s.tags?.includes(activeTag)) : searched;
-  const filteredSites = applyFilter(tagFiltered, filter);
-  const quickViewSite = quickViewSiteId ? sites.find((s) => s.id === quickViewSiteId) ?? null : null;
-  const activeFilterLabel = FILTER_OPTIONS.find((o) => o.value === filter)?.label ?? "Filter";
-
-  const allSelected = filteredSites.length > 0 && filteredSites.every((s) => selected.has(s.id));
+  const allSelected =
+    filteredSites.length > 0 && filteredSites.every((s) => selected.has(s.id));
 
   function toggleAll() {
     if (allSelected) {
-      setSelected((prev) => {
-        const next = new Set(prev);
-        filteredSites.forEach((s) => next.delete(s.id));
-        return next;
-      });
+      setSelected(new Set());
     } else {
-      setSelected((prev) => {
-        const next = new Set(prev);
-        filteredSites.forEach((s) => next.add(s.id));
-        return next;
-      });
+      setSelected(new Set(filteredSites.map((s) => s.id)));
     }
   }
 
@@ -143,9 +295,8 @@ export default function SitesPage() {
     });
   }
 
-  async function executeBulkAction(action: BulkActionType) {
+  async function executeBulk(action: "run_audit" | "trigger_scan" | "send_report") {
     if (selected.size === 0) return;
-    setShowBulkMenu(false);
     setBulkLoading(true);
     setBulkMsg(null);
     try {
@@ -153,8 +304,7 @@ export default function SitesPage() {
         action,
         site_ids: Array.from(selected),
       });
-      const label = BULK_ACTIONS.find((a) => a.value === action)?.label ?? action;
-      setBulkMsg(`${label} queued for ${(data as { queued: number }).queued} site(s).`);
+      setBulkMsg(`Queued for ${(data as { queued: number }).queued} site(s).`);
       setSelected(new Set());
       setTimeout(() => setBulkMsg(null), 4000);
     } catch {
@@ -165,254 +315,229 @@ export default function SitesPage() {
     }
   }
 
+  function resetFilters() {
+    setQuick("all");
+    setActiveTag(null);
+    setSearch("");
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Sites"
-        description="Manage and monitor all your WordPress sites"
+        title="Manage Sites"
+        description="Configure your sites."
+        icon={<Globe size={22} strokeWidth={2} />}
         action={
-          canAddSite && !agency?.is_client_portal ? (
-            <Button
-              onClick={() => setShowAdd(true)}
-              disabled={atLimit}
-              className="gap-1.5"
-            >
-              <Plus size={15} />
-              Add Site
-            </Button>
-          ) : undefined
+          <>
+            <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+              <Search
+                size={15}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="text"
+                placeholder="Search for sites"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-11 w-full rounded-[4px] border border-border bg-muted/40 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:bg-surface focus:outline-none"
+              />
+            </div>
+            {canAddSite && !agency?.is_client_portal && (
+              <Button onClick={() => setShowAdd(true)} disabled={atLimit}>
+                <Plus size={15} strokeWidth={2.5} />
+                Add Site
+              </Button>
+            )}
+          </>
         }
       />
 
-      {/* Search + actions row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[180px] flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search sites..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface py-2.5 pl-9 pr-4 text-sm focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)]"
-          />
-        </div>
-
-        {/* Filter dropdown */}
-        <div className="relative" ref={filterRef}>
-          <button
-            onClick={() => setShowFilter((v) => !v)}
-            className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
-              showFilter ? "border-accent bg-accent-light text-accent" : "border-border bg-surface text-foreground hover:bg-muted"
-            }`}
-          >
-            <SlidersHorizontal size={14} />
-            {filter === "all" ? "Filter" : activeFilterLabel}
-            <ChevronDown size={13} className={`transition-transform duration-150 ${showFilter ? "rotate-180" : ""}`} />
-          </button>
-          {showFilter && (
-            <div className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
-              {FILTER_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => { setFilter(opt.value); setShowFilter(false); }}
-                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-                    filter === opt.value ? "bg-accent-light font-semibold text-accent" : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Select all + Bulk actions — hidden for clients */}
-        {!agency?.is_client_portal && filteredSites.length > 0 && (
-          <button
-            onClick={toggleAll}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-            title={allSelected ? "Deselect all" : "Select all"}
-          >
-            {allSelected
-              ? <CheckSquare size={14} className="text-accent" />
-              : <Square size={14} className="text-muted-foreground" />}
-            <span className="hidden sm:inline">{selected.size > 0 ? `${selected.size} selected` : "Select"}</span>
-          </button>
-        )}
-
-        {!agency?.is_client_portal && selected.size > 0 && (
-          <div className="relative" ref={bulkMenuRef}>
-            <button
-              onClick={() => setShowBulkMenu((v) => !v)}
-              disabled={bulkLoading}
-              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-xs font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {bulkLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              Bulk Actions
-              <ChevronDown size={13} className={`transition-transform ${showBulkMenu ? "rotate-180" : ""}`} />
-            </button>
-            {showBulkMenu && (
-              <div className="absolute right-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
-                {BULK_ACTIONS.map((action) => (
-                  <button
-                    key={action.value}
-                    onClick={() => executeBulkAction(action.value)}
-                    className="w-full px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                  >
-                    {action.label}
-                    <span className="ml-1.5 text-xs text-muted-foreground">({selected.size})</span>
-                  </button>
-                ))}
-                <div className="border-t border-border">
-                  <button
-                    onClick={() => setSelected(new Set())}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted"
-                  >
-                    <X size={12} /> Clear selection
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Tag filter chips */}
-      {allTags.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Tag size={13} className="text-muted-foreground shrink-0" />
-          <button
-            onClick={() => setActiveTag(null)}
-            className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${
-              activeTag === null
-                ? "bg-accent text-white border-accent"
-                : "bg-white text-foreground border-border hover:bg-gray-50"
-            }`}
-          >
-            All
-          </button>
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${
-                activeTag === tag
-                  ? "bg-accent text-white border-accent"
-                  : "bg-white text-foreground border-border hover:bg-gray-50"
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Bulk action feedback */}
       {bulkMsg && (
-        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium ${
-          bulkMsg.includes("failed") ? "bg-red-50 border-red-200 text-red-700" : "bg-[var(--accent-light)] border-[var(--accent)]/20 text-[var(--accent-hover)]"
-        }`}>
-          <RefreshCw size={14} className="shrink-0" />
+        <div
+          className={cn(
+            "flex items-center gap-2 rounded-[4px] border px-4 py-3 text-sm font-medium",
+            bulkMsg.includes("failed")
+              ? "border-[var(--score-bad-border)] bg-[var(--score-bad-bg)] text-[var(--score-bad)]"
+              : "border-accent/20 bg-accent-light text-accent"
+          )}
+        >
+          <RefreshCw size={14} />
           {bulkMsg}
         </div>
       )}
 
-      {/* States */}
       {loading && (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center py-20">
           <LoadingSpinner size="lg" />
         </div>
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {!loading && !error && sites.length === 0 && (
-        <EmptyState
-          icon={<Globe size={20} />}
-          title="No sites yet"
-          description="Add your first site to start monitoring."
-          action={
-            canAddSite ? (
-              <button
-                onClick={() => setShowAdd(true)}
-                className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
-                style={{ background: "var(--accent)" }}
-              >
-                Add site
-              </button>
-            ) : undefined
-          }
-        />
+        <div className="rounded-xl border border-border bg-surface">
+          <EmptyState
+            tone="brand"
+            icon={<Globe size={22} />}
+            title="No sites found"
+            description="Get started by adding your first WordPress site."
+            action={
+              canAddSite ? (
+                <Button onClick={() => setShowAdd(true)}>
+                  <Plus size={15} />
+                  Add Site
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
       )}
 
       {!loading && sites.length > 0 && (
-        <>
-          {filteredSites.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No sites match the current filter.
-            </p>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSites.map((site) => (
-              <div key={site.id} className="relative group">
-                {/* Checkbox overlay — hidden for clients */}
-                {!agency?.is_client_portal && (
-                  <button
-                    onClick={() => toggleSite(site.id)}
-                    className={`absolute top-3 left-3 z-10 w-6 h-6 rounded-md flex items-center justify-center transition-all border shadow-sm ${
-                      selected.has(site.id)
-                        ? "bg-accent border-accent text-white opacity-100"
-                        : "bg-white border-border text-transparent group-hover:opacity-100 opacity-0"
-                    }`}
-                  >
-                    {selected.has(site.id) ? <CheckSquare size={14} /> : <Square size={14} />}
-                  </button>
-                )}
-
-                {/* Tag chips on card */}
-                {site.tags && site.tags.length > 0 && (
-                  <div className="absolute top-3 right-3 z-10 flex gap-1 flex-wrap justify-end max-w-[60%]">
-                    {site.tags.slice(0, 2).map((tag) => (
-                      <span key={tag} className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
-                        {tag}
-                      </span>
-                    ))}
-                    {site.tags.length > 2 && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
-                        +{site.tags.length - 2}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div className={`transition-all ${selected.has(site.id) ? "ring-2 ring-accent rounded-2xl" : ""}`}>
-                  <SiteCard
-                    site={site}
-                    onClick={() => setQuickViewSiteId(site.id)}
-                  />
-                </div>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          {/* Filter rail */}
+          <aside className="w-full shrink-0 space-y-3 lg:w-56">
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Star size={13} className="text-accent" />
+                <p className="text-xs font-bold text-foreground">Quick Suggestions</p>
               </div>
-            ))}
+              <div className="flex flex-wrap gap-2">
+                {QUICK.map((q) => (
+                  <button
+                    key={q.value}
+                    type="button"
+                    onClick={() => setQuick(quick === q.value ? "all" : q.value)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                      quick === q.value
+                        ? "border-accent bg-accent text-white"
+                        : "border-border bg-surface text-foreground hover:border-accent/40"
+                    )}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {/* Dashed "Add New Site" card */}
-            {canAddSite && !atLimit && filter === "all" && !search && !activeTag && selected.size === 0 && (
-              <button
-                onClick={() => setShowAdd(true)}
-                className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border hover:border-accent/40 hover:bg-accent/5 transition-colors min-h-[260px] group"
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Filter size={13} className="text-accent" />
+                <p className="text-xs font-bold text-foreground">Filters</p>
+              </div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                Tags
+              </label>
+              <select
+                value={activeTag ?? ""}
+                onChange={(e) => setActiveTag(e.target.value || null)}
+                className="mb-4 h-10 w-full rounded-[4px] border border-border bg-muted/40 px-3 text-sm text-foreground focus:border-accent focus:outline-none"
               >
-                <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-accent/10 flex items-center justify-center transition-colors">
-                  <Globe size={20} className="text-muted-foreground group-hover:text-accent transition-colors" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
-                    Add New Site
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Connect a WordPress site</p>
-                </div>
-              </button>
+                <option value="">All tags</option>
+                {allTags.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-[4px] py-2 text-xs font-bold text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw size={12} />
+                  Reset
+                </button>
+                <Button size="sm" className="flex-1" onClick={() => {}}>
+                  Apply
+                </Button>
+              </div>
+            </div>
+          </aside>
+
+          {/* Table card */}
+          <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-border bg-surface">
+            {showSelect && selected.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
+                <span className="text-xs font-bold text-foreground">
+                  {selected.size} selected
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={bulkLoading}
+                  onClick={() => executeBulk("run_audit")}
+                  className="h-8"
+                >
+                  {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                  Run Audit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelected(new Set())}
+                  className="h-8"
+                >
+                  Clear
+                </Button>
+              </div>
             )}
+
+            {filteredSites.length === 0 ? (
+              <EmptyState
+                icon={<Search size={20} />}
+                title="No sites match"
+                description="Try resetting filters or clearing your search."
+                action={
+                  <Button variant="outline" onClick={resetFilters}>
+                    Reset filters
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/20 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                      {showSelect && (
+                        <th className="w-10 px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={toggleAll}
+                            className="h-4 w-4 rounded-[3px] border-border accent-[var(--accent)]"
+                          />
+                        </th>
+                      )}
+                      <th className="px-3 py-3">Site Name</th>
+                      <th className="px-3 py-3">Alerts</th>
+                      <th className="px-3 py-3">Updates</th>
+                      <th className="px-3 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSites.map((site) => (
+                      <SiteRow
+                        key={site.id}
+                        site={site}
+                        selected={selected.has(site.id)}
+                        showSelect={showSelect}
+                        onToggle={() => toggleSite(site.id)}
+                        onOpen={() => router.push(`/sites/${site.id}`)}
+                        onQuick={() => setQuickViewSiteId(site.id)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="border-t border-border px-4 py-3 text-xs font-medium text-muted-foreground">
+              {filteredSites.length} of {sites.length} total sites
+            </div>
           </div>
-        </>
+        </div>
       )}
 
       {quickViewSite && (
@@ -425,7 +550,10 @@ export default function SitesPage() {
       {showAdd && (
         <AddSiteModal
           onClose={() => setShowAdd(false)}
-          onSuccess={(siteId) => { setShowAdd(false); router.push(`/sites/${siteId}`); }}
+          onSuccess={(siteId) => {
+            setShowAdd(false);
+            router.push(`/sites/${siteId}`);
+          }}
         />
       )}
     </div>

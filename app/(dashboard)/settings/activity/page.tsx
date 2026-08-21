@@ -89,7 +89,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Log table */}
-      <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-16">
             <LoadingSpinner size="lg" />

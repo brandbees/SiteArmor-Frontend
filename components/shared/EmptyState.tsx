@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { IconChip } from "@/components/ui/IconChip";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -10,7 +9,6 @@ interface EmptyStateProps {
   description?: string;
   action?: React.ReactNode;
   className?: string;
-  /** Use the brand gradient chip instead of the flat neutral one — for primary empty states. */
   tone?: "neutral" | "brand";
 }
 
@@ -20,7 +18,6 @@ export function EmptyState({
   description,
   action,
   className,
-  tone = "neutral",
 }: EmptyStateProps) {
   return (
     <motion.div
@@ -28,21 +25,21 @@ export function EmptyState({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "flex flex-col items-center justify-center py-16 px-6 text-center",
+        "flex flex-col items-center justify-center px-6 py-16 text-center",
         className
       )}
     >
-      {icon && (
-        <IconChip tone={tone === "brand" ? "brand" : "neutral"} size="lg" className="mb-4">
+      {icon ? (
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground">
           {icon}
-        </IconChip>
-      )}
-      <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
-      {description && (
-        <p className="text-sm text-muted-foreground max-w-xs mb-5">
-          {description}
-        </p>
-      )}
+        </div>
+      ) : null}
+      <h3 className="font-portal-display mb-1 text-base font-bold text-foreground">
+        {title}
+      </h3>
+      {description ? (
+        <p className="mb-5 max-w-sm text-sm text-muted-foreground">{description}</p>
+      ) : null}
       {action}
     </motion.div>
   );

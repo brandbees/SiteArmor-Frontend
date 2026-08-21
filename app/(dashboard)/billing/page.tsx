@@ -479,7 +479,7 @@ function BillingPage() {
           { icon: Users,  title: `${seatsLimit >= 9999 ? "Unlimited" : seatsLimit} seats`, sub: "Team members included" },
           { icon: Zap,    title: "Scheduled audits", sub: currentPlan === "free" ? "Upgrade to enable" : "Weekly & monthly" },
         ].map(({ icon: Icon, title, sub }) => (
-          <div key={title} className="rounded-xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base bg-white p-4 flex items-center gap-3">
+          <div key={title} className="rounded-xl shadow-elevated-sm transition-shadow duration-base bg-white p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
               <Icon size={16} className="text-muted-foreground" />
             </div>

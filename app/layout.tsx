@@ -27,11 +27,11 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem("landingDark");var d=s!==null?s==="true":true;if(d){document.documentElement.classList.add("dark","mkt-dark")}}catch(e){}})()`,
+            __html: `(function(){try{var p=location.pathname||"";if(/^\\/(dashboard|sites|settings|login|register|onboarding|billing|clients|agent|reports|notifications|performance|seo|security|malware|uptime|master|client-portal|forgot-password|reset-password)/.test(p)){document.documentElement.classList.remove("dark","mkt-dark");return}var s=localStorage.getItem("landingDark");var d=s!==null?s==="true":true;if(d){document.documentElement.classList.add("dark","mkt-dark")}}catch(e){}})()`,
           }}
         />
       </head>
-      <body className={`${inter.className} ${portalDisplay.variable}`}>
+      <body className={`${inter.className} ${portalDisplay.variable}`} suppressHydrationWarning>
         <BrandingInit />
         {children}
         <Toaster

@@ -7,6 +7,7 @@ import { Eye, EyeOff, CheckCircle2, Circle, ArrowLeft, RefreshCw, Wand2, Buildin
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/Button";
+import { AuthShell, authInputClass, authLabelClass } from "@/components/auth/AuthShell";
 import { cn, isValidEmail } from "@/lib/utils";
 
 type AccountType = "agency" | "individual";
@@ -44,27 +45,29 @@ function getStrength(password: string) {
 
 // ── Shared input class ────────────────────────────────────────────────────────
 
-const inputCls =
-  "w-full px-3.5 py-2.5 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)] transition-shadow";
+const inputCls = authInputClass;
 
 // ── Phase 0 — Account type selection ─────────────────────────────────────────
 
 function TypeSelectionStep({ onSelect }: { onSelect: (type: AccountType) => void }) {
   return (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground text-center">Choose the option that best describes you</p>
+    <div className="space-y-3">
+      <p className="text-center text-xs text-muted-foreground">
+        Choose the option that best describes you
+      </p>
       <button
         type="button"
         onClick={() => onSelect("agency")}
-        className="w-full flex items-start gap-4 p-4 rounded-xl border-2 border-border hover:border-accent hover:bg-accent/5 transition-all text-left group"
+        className="group flex w-full items-start gap-3.5 rounded-[4px] border border-border bg-[#f7f9fc] p-4 text-left transition-all hover:border-accent hover:bg-accent-light/40"
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 group-hover:bg-accent/20 transition-colors mt-0.5">
-          <Building2 size={18} style={{ color: "var(--accent)" }} />
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] bg-accent-light text-accent transition-colors group-hover:bg-white">
+          <Building2 size={16} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">Agency / Freelancer</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-            You manage websites for multiple clients and need reporting, team access, and client portals.
+          <p className="text-sm font-bold text-foreground">Agency / Freelancer</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            You manage websites for multiple clients and need reporting, team access, and client
+            portals.
           </p>
         </div>
       </button>
@@ -72,15 +75,16 @@ function TypeSelectionStep({ onSelect }: { onSelect: (type: AccountType) => void
       <button
         type="button"
         onClick={() => onSelect("individual")}
-        className="w-full flex items-start gap-4 p-4 rounded-xl border-2 border-border hover:border-accent hover:bg-accent/5 transition-all text-left group"
+        className="group flex w-full items-start gap-3.5 rounded-[4px] border border-border bg-[#f7f9fc] p-4 text-left transition-all hover:border-accent hover:bg-accent-light/40"
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 group-hover:bg-accent/20 transition-colors mt-0.5">
-          <User size={18} style={{ color: "var(--accent)" }} />
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] bg-accent-light text-accent transition-colors group-hover:bg-white">
+          <User size={16} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">Individual / Business Owner</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-            You own or manage your own website and want simple monitoring, audits, and fix recommendations.
+          <p className="text-sm font-bold text-foreground">Individual / Business Owner</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            You own or manage your own website and want simple monitoring, audits, and fix
+            recommendations.
           </p>
         </div>
       </button>
@@ -147,17 +151,27 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-2 pb-1">
-        <button type="button" onClick={onBack} className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors">
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-[4px] p-1 text-muted-foreground transition-colors hover:bg-[#f0f2f5] hover:text-foreground"
+        >
           <ArrowLeft size={14} />
         </button>
-        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${accountType === "agency" ? "bg-accent/10 text-accent" : "bg-emerald-50 text-emerald-700"}`}>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-[4px] px-2.5 py-1 text-xs font-semibold ${
+            accountType === "agency"
+              ? "bg-accent-light text-accent"
+              : "bg-emerald-50 text-emerald-700"
+          }`}
+        >
           {accountType === "agency" ? <Building2 size={11} /> : <User size={11} />}
           {accountType === "agency" ? "Agency / Freelancer" : "Individual / Business Owner"}
         </span>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
+      <div>
+        <label className={authLabelClass}>
           {accountType === "agency" ? "Agency / business name" : "Your name or business name"}
         </label>
         <input
@@ -170,28 +184,27 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
         />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
-          Email
-        </label>
+      <div>
+        <label className={authLabelClass}>Email</label>
         <input
           type="email"
           required
           autoComplete="email"
           value={email}
-          onChange={(e) => { setEmail(e.target.value); validateEmail(e.target.value); }}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            validateEmail(e.target.value);
+          }}
           onBlur={(e) => validateEmail(e.target.value)}
-          className={cn(inputCls, emailError && "border-red-400 focus:ring-red-400")}
+          className={cn(inputCls, emailError && "border-red-400")}
           placeholder="you@agency.com"
         />
-        {emailError && <p className="text-xs text-red-600 mt-1">{emailError}</p>}
+        {emailError && <p className="mt-1 text-xs text-red-600">{emailError}</p>}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
-            Password
-          </label>
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="text-[12px] font-semibold text-foreground">Password</label>
           <button
             type="button"
             onClick={() => {
@@ -202,10 +215,10 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
               setGenerated(true);
               setTimeout(() => setGenerated(false), 2000);
             }}
-            className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline"
           >
             <Wand2 size={11} />
-            {generated ? "Copied!" : "Generate"}
+            {generated ? "Generated" : "Generate"}
           </button>
         </div>
         <div className="relative">
@@ -214,27 +227,29 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
             required
             autoComplete="new-password"
             value={password}
-            onChange={(e) => { setPassword(e.target.value); setShowStrength(true); }}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setShowStrength(true);
+            }}
             className={cn(inputCls, "pr-10")}
             placeholder="••••••••"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-[4px] p-1 text-muted-foreground hover:text-foreground"
           >
             {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
 
-        {/* Strength meter */}
         {showStrength && password.length > 0 && (
           <div className="mt-2 space-y-2">
             <div className="flex gap-1">
               {[0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="flex-1 h-1 rounded-full transition-all duration-300"
+                  className="h-1 flex-1 rounded-[2px] transition-all duration-300"
                   style={{
                     background: i <= strength.level ? strength.color : "#e2e8f0",
                   }}
@@ -250,9 +265,9 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
                 return (
                   <div key={rule.label} className="flex items-center gap-1.5 text-xs">
                     {ok ? (
-                      <CheckCircle2 size={11} className="text-green-500 shrink-0" />
+                      <CheckCircle2 size={11} className="shrink-0 text-green-500" />
                     ) : (
-                      <Circle size={11} className="text-muted-foreground shrink-0" />
+                      <Circle size={11} className="shrink-0 text-muted-foreground" />
                     )}
                     <span className={ok ? "text-foreground" : "text-muted-foreground"}>
                       {rule.label}
@@ -266,7 +281,7 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
+        <div className="rounded-[4px] border border-red-200 bg-red-50 px-3.5 py-2.5">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
@@ -285,7 +300,8 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
         type="submit"
         loading={loading}
         disabled={!!emailError || (!!CF_SITE_KEY && !cfToken)}
-        className="w-full h-11 rounded-xl text-sm font-bold mt-1"
+        className="mt-1 w-full"
+        size="lg"
       >
         Continue
       </Button>
@@ -362,10 +378,8 @@ function VerifyEmailForm({ email, onBack }: Phase2Props) {
         </p>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
-          Verification code
-        </label>
+      <div>
+        <label className={authLabelClass}>Verification code</label>
         <input
           type="text"
           inputMode="numeric"
@@ -374,23 +388,19 @@ function VerifyEmailForm({ email, onBack }: Phase2Props) {
           required
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          className={cn(inputCls, "text-center text-2xl font-bold tracking-[0.5em] py-4")}
+          className={cn(inputCls, "py-4 text-center text-2xl font-bold tracking-[0.5em]")}
           placeholder="000000"
           autoFocus
         />
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
+        <div className="rounded-[4px] border border-red-200 bg-red-50 px-3.5 py-2.5">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
-      <Button
-        type="submit"
-        loading={loading}
-        className="w-full h-11 rounded-xl text-sm font-bold"
-      >
+      <Button type="submit" loading={loading} className="w-full" size="lg">
         Verify &amp; create account
       </Button>
 
@@ -432,59 +442,60 @@ export default function RegisterPage() {
   }, [router]);
 
   const headings = {
-    type:   { title: "Create account",     sub: "Tell us a bit about how you'll use the platform" },
-    form:   { title: "Create account",     sub: accountType === "agency" ? "Start monitoring your clients' WordPress sites" : "Start monitoring your WordPress site" },
-    verify: { title: "Check your email",   sub: "Enter the code we emailed you" },
+    type: {
+      title: "Create your account",
+      sub: "Tell us a bit about how you'll use Site Armor",
+    },
+    form: {
+      title: "Create your account",
+      sub:
+        accountType === "agency"
+          ? "Start monitoring your clients' WordPress sites"
+          : "Start monitoring your WordPress site",
+    },
+    verify: {
+      title: "Check your email",
+      sub: "Enter the code we emailed you",
+    },
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/site-armor-icon.png" alt="Site Armor" className="mb-4 h-14 w-14 object-contain" />
-          <h1 className="font-portal-display text-2xl font-bold tracking-tight text-foreground">{headings[phase].title}</h1>
-          <p className="mt-1 text-center text-sm text-muted-foreground">{headings[phase].sub}</p>
-        </div>
-
-        {/* Card */}
-        <div className="rounded-xl border border-border bg-surface p-7 shadow-elevated-sm">
-          {phase === "type" && (
-            <TypeSelectionStep
-              onSelect={(type) => {
-                setAccountType(type);
-                setPhase("form");
-              }}
-            />
-          )}
-          {phase === "form" && (
-            <RegistrationForm
-              accountType={accountType}
-              onBack={() => setPhase("type")}
-              onSuccess={(email) => {
-                setPending(email);
-                setPhase("verify");
-              }}
-            />
-          )}
-          {phase === "verify" && (
-            <VerifyEmailForm
-              email={pendingEmail}
-              onBack={() => setPhase("form")}
-            />
-          )}
-
-          {phase !== "verify" && (
-            <p className="text-sm text-center text-muted-foreground mt-6">
-              Already have an account?{" "}
-              <Link href="/login" className="font-semibold text-accent hover:underline">
-                Sign in
-              </Link>
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+    <AuthShell
+      variant="register"
+      title={headings[phase].title}
+      subtitle={headings[phase].sub}
+      footer={
+        phase !== "verify" ? (
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="font-bold text-accent hover:underline">
+              Sign in
+            </Link>
+          </p>
+        ) : null
+      }
+    >
+      {phase === "type" && (
+        <TypeSelectionStep
+          onSelect={(type) => {
+            setAccountType(type);
+            setPhase("form");
+          }}
+        />
+      )}
+      {phase === "form" && (
+        <RegistrationForm
+          accountType={accountType}
+          onBack={() => setPhase("type")}
+          onSuccess={(email) => {
+            setPending(email);
+            setPhase("verify");
+          }}
+        />
+      )}
+      {phase === "verify" && (
+        <VerifyEmailForm email={pendingEmail} onBack={() => setPhase("form")} />
+      )}
+    </AuthShell>
   );
 }

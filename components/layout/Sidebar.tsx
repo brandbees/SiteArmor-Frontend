@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -22,6 +21,8 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
+  LifeBuoy,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,11 +38,12 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   clientVisible?: boolean;
   agencyOnly?: boolean;
+  quickAdd?: boolean;
 };
 
 const MANAGE_NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, clientVisible: true },
-  { href: "/sites", label: "Sites", icon: Globe, clientVisible: true },
+  { href: "/sites", label: "Sites", icon: Globe, clientVisible: true, quickAdd: true },
   { href: "/clients", label: "Clients", icon: Users, clientVisible: false, agencyOnly: true },
   { href: "/notifications", label: "Notifications", icon: Bell, clientVisible: false },
 ];
@@ -56,31 +58,19 @@ const INSIGHTS_NAV: NavItem[] = [
   { href: "/agent", label: "AI Agent", icon: Bot, clientVisible: false },
 ];
 
-const ACCOUNT_NAV: NavItem[] = [
+const SETTINGS_NAV: NavItem[] = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-type TooltipState = { label: string; top: number; left: number } | null;
-
-function SidebarTooltipPortal({ tooltip }: { tooltip: TooltipState }) {
-  if (!tooltip) return null;
-  return createPortal(
-    <div
-      style={{
-        position: "fixed",
-        top: tooltip.top,
-        left: tooltip.left,
-        transform: "translateY(-50%)",
-        zIndex: 9999,
-      }}
-      className="pointer-events-none"
-    >
-      <div className="absolute right-full top-1/2 -translate-y-1/2 border-[5px] border-transparent border-r-foreground" />
-      <div className="whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-semibold text-background shadow-elevated-md">
-        {tooltip.label}
-      </div>
-    </div>,
-    document.body
+function filterNav(
+  items: NavItem[],
+  isClientPortal: boolean,
+  isIndividual: boolean
+) {
+  return items.filter(
+    (item) =>
+      (!isClientPortal || item.clientVisible) &&
+      (!isIndividual || !item.agencyOnly)
   );
 }
 
@@ -88,38 +78,53 @@ function NavLink({
   item,
   active,
   collapsed,
-  onShowTooltip,
-  onHideTooltip,
 }: {
   item: NavItem;
   active: boolean;
   collapsed: boolean;
-  onShowTooltip: (e: React.MouseEvent<HTMLElement>, label: string) => void;
-  onHideTooltip: () => void;
 }) {
   const Icon = item.icon;
   return (
     <Link
       href={item.href}
-      onMouseEnter={(e) => onShowTooltip(e, item.label)}
-      onMouseLeave={onHideTooltip}
+      title={collapsed ? item.label : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-lg text-sm font-semibold transition-all duration-150",
-        collapsed ? "w-full justify-center px-0 py-2.5" : "px-3 py-2",
+        "group relative flex items-center gap-3 rounded-[4px] text-[13px] font-semibold transition-colors",
+        collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2",
         active
-          ? "bg-accent-light text-accent"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-accent text-white"
+          : "text-foreground/80 hover:bg-muted hover:text-foreground"
       )}
     >
-      {active && !collapsed ? (
-        <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
-      ) : null}
-      <Icon
-        size={16}
-        strokeWidth={active ? 2.25 : 2}
-        className={cn("shrink-0", active ? "text-accent" : "group-hover:text-accent")}
-      />
-      {!collapsed && item.label}
+      <Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="shrink-0" />
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate">{item.label}</span>
+          {item.quickAdd && (
+            <span
+              className={cn(
+                "flex h-5 w-5 items-center justify-center rounded-[3px] opacity-0 transition-opacity group-hover:opacity-100",
+                active ? "bg-white/20 text-white" : "bg-accent/10 text-accent"
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent("bb:open-add-site"));
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  window.dispatchEvent(new CustomEvent("bb:open-add-site"));
+                }
+              }}
+            >
+              <Plus size={12} strokeWidth={2.5} />
+            </span>
+          )}
+        </>
+      )}
     </Link>
   );
 }
@@ -129,25 +134,21 @@ function NavSection({
   items,
   collapsed,
   pathname,
-  onShowTooltip,
-  onHideTooltip,
 }: {
   label: string;
   items: NavItem[];
   collapsed: boolean;
   pathname: string;
-  onShowTooltip: (e: React.MouseEvent<HTMLElement>, label: string) => void;
-  onHideTooltip: () => void;
 }) {
   if (!items.length) return null;
   return (
-    <div className="mb-4">
+    <div className="mb-5">
       {!collapsed ? (
-        <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/80">
+        <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
       ) : (
-        <div className="mx-auto mb-1.5 h-px w-6 bg-border" />
+        <div className="mx-auto mb-2 h-px w-6 bg-border" />
       )}
       <div className="space-y-0.5">
         {items.map((item) => (
@@ -156,8 +157,6 @@ function NavSection({
             item={item}
             active={pathname === item.href || pathname.startsWith(item.href + "/")}
             collapsed={collapsed}
-            onShowTooltip={onShowTooltip}
-            onHideTooltip={onHideTooltip}
           />
         ))}
       </div>
@@ -173,14 +172,16 @@ export function Sidebar() {
   const router = useRouter();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("bb_sidebar_collapsed") === "1";
-  });
-  const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [navQuery, setNavQuery] = useState("");
+  const [collapsed, setCollapsed] = useState(false);
 
   const isClientPortal = agency?.is_client_portal ?? false;
   const isIndividual = agency?.account_type === "individual";
+
+  // Read collapse preference after mount to avoid SSR/client hydration mismatch
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("bb_sidebar_collapsed") === "1");
+  }, []);
 
   useEffect(() => {
     if (isClientPortal) return;
@@ -190,30 +191,26 @@ export function Sidebar() {
       .catch(() => {});
   }, [isClientPortal]);
 
-  function filterNav(items: NavItem[]) {
-    return items.filter(
-      (item) =>
-        (!isClientPortal || item.clientVisible) &&
-        (!isIndividual || !item.agencyOnly)
-    );
-  }
+  const manageItems = filterNav(MANAGE_NAV, isClientPortal, isIndividual);
+  const insightsItems = filterNav(INSIGHTS_NAV, isClientPortal, isIndividual);
+  const settingsItems = filterNav(SETTINGS_NAV, isClientPortal, isIndividual).filter(
+    ({ href }) => (href === "/billing" ? roleCanDo("access_billing") : true)
+  );
 
-  const manageItems = filterNav(MANAGE_NAV);
-  const insightsItems = filterNav(INSIGHTS_NAV);
-  const accountItems = filterNav(ACCOUNT_NAV).filter(({ href }) => {
-    if (href === "/billing") return roleCanDo("access_billing");
-    return true;
-  });
+  const allItems = useMemo(
+    () => [...manageItems, ...insightsItems, ...settingsItems],
+    [manageItems, insightsItems, settingsItems]
+  );
+
+  const filtered = useMemo(() => {
+    const q = navQuery.trim().toLowerCase();
+    if (!q) return null;
+    return allItems.filter((i) => i.label.toLowerCase().includes(q));
+  }, [allItems, navQuery]);
 
   const displayName = agency?.member_name ?? agency?.name ?? "";
   const displayEmail = agency?.email ?? "";
-  const initials = displayName
-    .split(" ")
-    .filter(Boolean)
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const brand = agency?.brand_name || "Site Armor";
 
   function handleLogout() {
     if (isClientPortal) {
@@ -225,7 +222,6 @@ export function Sidebar() {
   }
 
   function toggleCollapsed() {
-    setTooltip(null);
     setCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem("bb_sidebar_collapsed", next ? "1" : "0");
@@ -233,172 +229,184 @@ export function Sidebar() {
     });
   }
 
-  const showTooltip = useCallback(
-    (e: React.MouseEvent<HTMLElement>, label: string) => {
-      if (!collapsed) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      setTooltip({ label, top: rect.top + rect.height / 2, left: rect.right + 12 });
-    },
-    [collapsed]
-  );
-
-  const hideTooltip = useCallback(() => setTooltip(null), []);
-
   return (
     <>
       <aside
         className={cn(
-          "hidden min-h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-surface transition-all duration-200 lg:flex",
-          collapsed ? "w-[60px]" : "w-60"
+          "hidden min-h-screen shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 lg:flex",
+          collapsed ? "w-[68px]" : "w-[260px]"
         )}
       >
-        <div className="flex h-[4.5rem] shrink-0 items-center gap-2 border-b border-border px-3">
-          <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt="Agency logo"
-                className={cn(
-                  "shrink-0 object-contain",
-                  collapsed ? "h-7 w-7" : "h-8 max-h-8 max-w-[120px]"
-                )}
-              />
-            ) : (
-              <>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
-                  <Wifi size={16} className="text-white" />
-                </div>
-                {!collapsed && (
-                  <div className="min-w-0">
-                    <p className="font-portal-display truncate text-sm font-bold leading-none text-foreground">
-                      {agency?.brand_name || "Site Armor"}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">Agency portal</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+        {/* Brand */}
+        <div
+          className={cn(
+            "flex h-16 shrink-0 items-center border-b border-border",
+            collapsed ? "justify-center px-2" : "gap-3 px-4"
+          )}
+        >
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt=""
+              className={cn("object-contain", collapsed ? "h-7 w-7" : "h-8 max-w-[130px]")}
+            />
+          ) : (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-accent">
+              <Wifi size={15} className="text-white" />
+            </div>
+          )}
+          {!collapsed && !logoUrl && (
+            <div className="min-w-0 flex-1">
+              <p className="font-portal-display truncate text-sm font-bold text-foreground">
+                {brand}
+              </p>
+            </div>
+          )}
+          {!collapsed && logoUrl && <div className="flex-1" />}
           <button
+            type="button"
             onClick={toggleCollapsed}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-all hover:border-border-strong hover:bg-muted hover:text-foreground"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-muted hover:text-foreground"
+            title={collapsed ? "Expand" : "Collapse"}
           >
-            {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
         </div>
 
-        <nav
-          className={cn(
-            "flex-1 overflow-x-hidden overflow-y-auto pb-2 pt-4",
-            collapsed ? "px-2" : "px-3"
-          )}
-        >
-          <NavSection
-            label="Manage"
-            items={manageItems}
-            collapsed={collapsed}
-            pathname={pathname}
-            onShowTooltip={showTooltip}
-            onHideTooltip={hideTooltip}
-          />
-          <NavSection
-            label="Insights"
-            items={insightsItems}
-            collapsed={collapsed}
-            pathname={pathname}
-            onShowTooltip={showTooltip}
-            onHideTooltip={hideTooltip}
-          />
-          {!isClientPortal && (
-            <NavSection
-              label="Account"
-              items={accountItems}
-              collapsed={collapsed}
-              pathname={pathname}
-              onShowTooltip={showTooltip}
-              onHideTooltip={hideTooltip}
-            />
-          )}
-        </nav>
-
-        {!isClientPortal && (
-          <div className={cn("pb-2", collapsed ? "px-2" : "px-3")}>
-            <button
-              onClick={() => setChangelogOpen(true)}
-              onMouseEnter={(e) => showTooltip(e, "What's new")}
-              onMouseLeave={hideTooltip}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg text-sm font-semibold text-muted-foreground transition-all hover:bg-muted hover:text-foreground",
-                collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"
-              )}
-            >
-              <div className="relative shrink-0">
-                <Sparkles size={16} />
-                {collapsed && unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />
-                )}
-              </div>
-              {!collapsed && (
-                <>
-                  What&apos;s new
-                  {unreadCount > 0 && (
-                    <span className="ml-auto min-w-[18px] rounded-md bg-accent px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
-                      {unreadCount}
-                    </span>
-                  )}
-                </>
-              )}
-            </button>
+        {/* Search */}
+        {!collapsed && (
+          <div className="px-3 pt-3">
+            <div className="relative">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                value={navQuery}
+                onChange={(e) => setNavQuery(e.target.value)}
+                placeholder="Search…"
+                className="h-9 w-full rounded-[4px] border border-border bg-background pl-9 pr-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none"
+              />
+            </div>
           </div>
         )}
 
-        <div className={cn("border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
-          {!!agency &&
-            (collapsed ? (
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className="flex h-8 w-8 shrink-0 cursor-default items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{ background: "var(--accent)" }}
-                  onMouseEnter={(e) => showTooltip(e, displayName)}
-                  onMouseLeave={hideTooltip}
-                >
-                  {initials}
-                </div>
-                <button
-                  onClick={handleLogout}
-                  onMouseEnter={(e) => showTooltip(e, "Sign out")}
-                  onMouseLeave={hideTooltip}
-                  className="rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-[var(--destructive-light)] hover:text-destructive"
-                >
-                  <LogOut size={13} />
-                </button>
+        {/* Nav */}
+        <nav
+          className={cn(
+            "flex-1 overflow-y-auto overflow-x-hidden py-4",
+            collapsed ? "px-2" : "px-3"
+          )}
+        >
+          {filtered ? (
+            <div className="space-y-0.5">
+              {filtered.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">No matches</p>
+              ) : (
+                filtered.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    active={
+                      pathname === item.href || pathname.startsWith(item.href + "/")
+                    }
+                    collapsed={collapsed}
+                  />
+                ))
+              )}
+            </div>
+          ) : (
+            <>
+              <NavSection
+                label="Manage"
+                items={manageItems}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
+              <NavSection
+                label="Insights"
+                items={insightsItems}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
+              {!isClientPortal && (
+                <NavSection
+                  label="Settings"
+                  items={settingsItems}
+                  collapsed={collapsed}
+                  pathname={pathname}
+                />
+              )}
+            </>
+          )}
+
+          {!isClientPortal && !collapsed && (
+            <button
+              type="button"
+              onClick={() => setChangelogOpen(true)}
+              className="mt-1 flex w-full items-center gap-3 rounded-[4px] px-3 py-2 text-[13px] font-semibold text-foreground/80 hover:bg-muted"
+            >
+              <Sparkles size={16} strokeWidth={1.75} />
+              What&apos;s new
+              {unreadCount > 0 && (
+                <span className="ml-auto rounded-[4px] bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+        </nav>
+
+        {/* Support + user */}
+        <div className={cn("shrink-0 border-t border-border p-3", collapsed && "px-2")}>
+          {!collapsed && (
+            <a
+              href="mailto:support@sitearmor.com"
+              className="mb-3 flex items-center gap-3 rounded-[4px] border border-border bg-background px-3 py-2.5 hover:border-accent/30"
+            >
+              <LifeBuoy size={16} className="shrink-0 text-accent" strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-foreground">Support</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  support@sitearmor.com
+                </p>
               </div>
-            ) : (
-              <div className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted">
-                <div
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{ background: "var(--accent)" }}
-                >
-                  {initials}
-                </div>
+            </a>
+          )}
+
+          {!!agency && (
+            <div
+              className={cn(
+                "flex items-center gap-2.5",
+                collapsed ? "flex-col" : "rounded-[4px] px-1 py-1"
+              )}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-white">
+                {displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </div>
+              {!collapsed && (
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold leading-none text-foreground">
-                    {displayName}
-                  </p>
-                  <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                    {displayEmail}
-                  </p>
+                  <p className="truncate text-xs font-bold text-foreground">{displayName}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">{displayEmail}</p>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  title="Sign out"
-                  className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-[var(--destructive-light)] hover:text-destructive"
-                >
-                  <LogOut size={13} />
-                </button>
-              </div>
-            ))}
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Sign out"
+                className="rounded-[4px] p-1.5 text-muted-foreground hover:bg-[var(--destructive-light)] hover:text-destructive"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          )}
         </div>
 
         <ChangelogModal
@@ -407,8 +415,6 @@ export function Sidebar() {
           onSeen={() => setUnreadCount(0)}
         />
       </aside>
-
-      <SidebarTooltipPortal tooltip={tooltip} />
     </>
   );
 }

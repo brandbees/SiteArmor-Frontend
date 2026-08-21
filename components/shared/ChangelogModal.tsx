@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import api from "@/lib/api";
+import { Modal } from "@/components/ui/Modal";
+import { Badge } from "@/components/ui/Badge";
 
 interface ChangelogEntry {
   version: string;
@@ -10,7 +12,6 @@ interface ChangelogEntry {
   highlights: string[];
 }
 
-// Fallback used when the API is unreachable (e.g. backend not yet deployed)
 const FALLBACK_ENTRIES: ChangelogEntry[] = [
   {
     version: "1.4.0",
@@ -38,26 +39,6 @@ const FALLBACK_ENTRIES: ChangelogEntry[] = [
       "Client report portal — shareable branded link for each report",
       "Per-client branding kits — individual logo and color per client",
       "Standalone security audit PDF — one-click download from malware tab",
-      "Scheduled report delivery — weekly and monthly auto-send",
-    ],
-  },
-  {
-    version: "1.1.0",
-    date: "2026-04-05",
-    highlights: [
-      "PDF report generator — fully branded with agency logo and colors",
-      "WooCommerce tab — orders, revenue, and gateway data",
-      "Site detail tabs — Security, Performance, SEO, Malware, Plugins",
-    ],
-  },
-  {
-    version: "1.0.0",
-    date: "2026-03-15",
-    highlights: [
-      "Site Armor is live — connect your first site",
-      "WordPress plugin — hourly push of 53 data points",
-      "Audit pipeline — scanner + uptime + score normalisation",
-      "Alert system — threshold-based email alerts",
     ],
   },
 ];
@@ -65,7 +46,7 @@ const FALLBACK_ENTRIES: ChangelogEntry[] = [
 interface ChangelogModalProps {
   open: boolean;
   onClose: () => void;
-  onSeen: () => void;
+  onSeen?: () => void;
 }
 
 export function ChangelogModal({ open, onClose, onSeen }: ChangelogModalProps) {
@@ -75,81 +56,65 @@ export function ChangelogModal({ open, onClose, onSeen }: ChangelogModalProps) {
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    api.get<{ entries: ChangelogEntry[]; unread: number }>("/changelog")
+    api
+      .get<{ entries: ChangelogEntry[]; unread: number }>("/changelog")
       .then(({ data }) => setEntries(data.entries))
       .catch(() => setEntries(FALLBACK_ENTRIES))
       .finally(() => setLoading(false));
 
-    // Best-effort — ignore if backend not yet deployed
     api.post("/changelog/seen").then(onSeen).catch(() => {});
-  }, [open]);
-
-  if (!open) return null;
+  }, [open, onSeen]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-accent" />
-            <h2 className="text-base font-semibold text-foreground">What's new</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-muted-foreground hover:bg-gray-100 transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto px-6 py-5 space-y-8">
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse space-y-2">
-                  <div className="h-4 bg-gray-100 rounded w-24" />
-                  <div className="h-3 bg-gray-100 rounded w-full" />
-                  <div className="h-3 bg-gray-100 rounded w-4/5" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            entries.map((entry, idx) => (
-              <div key={`${entry.version}-${idx}`}>
-                <div className="flex items-center gap-3 mb-3">
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
-                    style={{ background: "var(--accent)" }}
-                  >
-                    v{entry.version}
-                  </span>
-                  {idx === 0 && (
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                      Latest
-                    </span>
-                  )}
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    {new Date(entry.date).toLocaleDateString("en-US", {
-                      month: "short", day: "numeric", year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <ul className="space-y-1.5">
-                  {entry.highlights.map((h, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                      {h}
-                    </li>
-                  ))}
-                </ul>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={
+        <span className="flex items-center gap-2">
+          <Sparkles size={16} className="text-accent" />
+          What&apos;s new
+        </span>
+      }
+      size="lg"
+      className="max-h-[80vh]"
+    >
+      <div className="max-h-[55vh] space-y-8 overflow-y-auto">
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse space-y-2">
+                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-3 w-full rounded bg-muted" />
+                <div className="h-3 w-4/5 rounded bg-muted" />
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          entries.map((entry, idx) => (
+            <div key={`${entry.version}-${idx}`}>
+              <div className="mb-3 flex items-center gap-3">
+                <Badge variant="accent">v{entry.version}</Badge>
+                {idx === 0 && <Badge variant="success">Latest</Badge>}
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {new Date(entry.date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+              <ul className="space-y-1.5">
+                {entry.highlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }

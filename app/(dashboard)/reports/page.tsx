@@ -5,22 +5,26 @@ import { FileText, TrendingUp, Search, Shield, Bug, ChevronRight, Globe } from "
 import { useSites } from "@/hooks/useSites";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { scoreHex, truncateUrl, timeAgo } from "@/lib/utils";
 import type { Site } from "@/types";
+import { Badge } from "@/components/ui/Badge";
 
 const PILLARS = [
-  { key: "performance" as const, label: "Perf",  color: "#10b981", Icon: TrendingUp },
-  { key: "seo"         as const, label: "SEO",   color: "#ec4899", Icon: Search    },
-  { key: "security"    as const, label: "Sec",   color: "#06b6d4", Icon: Shield    },
-  { key: "malware"     as const, label: "Mal",   color: "#8b5cf6", Icon: Bug       },
+  { key: "performance" as const, label: "Perf" },
+  { key: "seo" as const, label: "SEO" },
+  { key: "security" as const, label: "Sec" },
+  { key: "malware" as const, label: "Mal" },
 ];
 
-const AVATAR_COLORS = ["#1f5fb8","#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
-function avatarColor(id: string) { return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length]; }
+const AVATAR_COLORS = ["#1a56db", "#0ea5e9", "#16a34a", "#d97706", "#dc2626", "#475569"];
+function avatarColor(id: string) {
+  return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length];
+}
 
-function ScorePill({ score }: { score: number | undefined }) {
+function ScoreCell({ score }: { score: number | undefined }) {
   if (score === undefined) {
-    return <span className="text-sm font-bold text-gray-300">—</span>;
+    return <span className="text-sm font-bold text-muted-foreground/40">—</span>;
   }
   return (
     <span className="text-sm font-bold tabular-nums" style={{ color: scoreHex(score) }}>
@@ -29,101 +33,26 @@ function ScorePill({ score }: { score: number | undefined }) {
   );
 }
 
-function ReportSiteCard({ site }: { site: Site }) {
-  const router = useRouter();
-  const hasScores = !!site.latest_scores;
-  const overall = hasScores
-    ? Math.round(
-        ((site.latest_scores!.performance ?? 0) +
-          (site.latest_scores!.seo ?? 0) +
-          (site.latest_scores!.security ?? 0) +
-          (site.latest_scores!.malware ?? 100)) / 4
-      )
-    : null;
-
-  return (
-    <button
-      onClick={() => router.push(`/reports/${site.id}`)}
-      className="group flex w-full cursor-pointer flex-col rounded-xl border border-border bg-surface text-left transition-all duration-base hover:border-accent/30"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 pb-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-base font-bold shrink-0"
-            style={{ background: avatarColor(site.id) }}
-          >
-            {site.name[0].toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-sm text-foreground leading-snug truncate">
-              {site.name}
-            </p>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {truncateUrl(site.url)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {overall !== null && (
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-              style={{ background: scoreHex(overall) }}
-            >
-              {overall}
-            </div>
-          )}
-          <ChevronRight
-            size={16}
-            className="text-muted-foreground group-hover:text-accent transition-colors shrink-0"
-          />
-        </div>
-      </div>
-
-      {/* Pillar scores */}
-      <div className="grid grid-cols-4 gap-1.5 px-3 py-3 border-t border-border/50">
-        {PILLARS.map(({ key, label, color, Icon }) => (
-          <div
-            key={key}
-            className="flex flex-col items-center gap-1.5 bg-[#f8fafc] rounded-xl py-2.5 px-1"
-          >
-            <Icon size={12} style={{ color }} />
-            <ScorePill score={site.latest_scores?.[key]} />
-            <span className="text-[10px] text-muted-foreground">{label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-border/50 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          {site.last_audit_at ? `Last audit ${timeAgo(site.last_audit_at)}` : "No audit yet"}
-        </span>
-        <span
-          className="text-xs font-semibold flex items-center gap-1 transition-colors text-muted-foreground group-hover:text-accent"
-        >
-          <FileText size={11} />
-          View reports
-        </span>
-      </div>
-    </button>
-  );
-}
-
 export default function ReportsPage() {
+  const router = useRouter();
   const { sites, loading, error } = useSites();
 
   const sitesWithAudits = sites.filter((s) => !!s.last_audit_at);
   const sitesWithout = sites.filter((s) => !s.last_audit_at);
+  const ordered = [...sitesWithAudits, ...sitesWithout];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Reports</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Generate and send branded PDF reports to clients
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Reports"
+        description="Generate and send branded PDF reports to clients."
+        icon={<FileText size={22} />}
+        action={
+          sites.length > 0 ? (
+            <Badge variant="muted">{sitesWithAudits.length} ready</Badge>
+          ) : undefined
+        }
+      />
 
       {loading && (
         <div className="flex justify-center py-16">
@@ -134,58 +63,91 @@ export default function ReportsPage() {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {!loading && !error && sites.length === 0 && (
-        <EmptyState
-          icon={<FileText size={20} />}
-          title="No sites yet"
-          description="Add a site and run an audit before generating reports."
-        />
+        <div className="rounded-xl border border-border bg-surface">
+          <EmptyState
+            icon={<FileText size={20} />}
+            title="No sites yet"
+            description="Add a site and run an audit before generating reports."
+          />
+        </div>
       )}
 
       {!loading && !error && sites.length > 0 && (
-        <>
-          {/* Sites with audit data */}
-          {sitesWithAudits.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Ready to report ({sitesWithAudits.length})
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sitesWithAudits.map((site) => (
-                  <ReportSiteCard key={site.id} site={site} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Sites without audit data */}
-          {sitesWithout.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Needs audit first ({sitesWithout.length})
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sitesWithout.map((site) => (
-                  <div
-                    key={site.id}
-                    className="bg-white rounded-2xl border border-dashed border-border flex items-center gap-3 p-4 opacity-60"
-                  >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-base font-bold shrink-0"
-                      style={{ background: avatarColor(site.id) }}
+        <div className="overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-border bg-muted/20 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3">Site</th>
+                  {PILLARS.map((p) => (
+                    <th key={p.key} className="px-3 py-3 text-center">
+                      {p.label}
+                    </th>
+                  ))}
+                  <th className="px-4 py-3">Last audit</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordered.map((site) => {
+                  const ready = !!site.last_audit_at;
+                  return (
+                    <tr
+                      key={site.id}
+                      className={`border-b border-border last:border-0 ${
+                        ready
+                          ? "cursor-pointer hover:bg-muted/40"
+                          : "opacity-60"
+                      }`}
+                      onClick={
+                        ready ? () => router.push(`/reports/${site.id}`) : undefined
+                      }
                     >
-                      {site.name[0].toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm text-foreground truncate">{site.name}</p>
-                      <p className="text-xs text-muted-foreground">Run an audit to generate a report</p>
-                    </div>
-                    <Globe size={16} className="text-muted-foreground ml-auto shrink-0" />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] text-xs font-bold text-white"
+                            style={{ background: avatarColor(site.id) }}
+                          >
+                            {site.name[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-foreground">
+                              {site.name}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {truncateUrl(site.url)}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      {PILLARS.map((p) => (
+                        <td key={p.key} className="px-3 py-3.5 text-center">
+                          <ScoreCell score={site.latest_scores?.[p.key]} />
+                        </td>
+                      ))}
+                      <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">
+                        {ready ? timeAgo(site.last_audit_at!) : "Needs audit"}
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        {ready ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-accent">
+                            View <ChevronRight size={14} />
+                          </span>
+                        ) : (
+                          <Globe size={14} className="ml-auto text-muted-foreground" />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="border-t border-border px-4 py-3 text-xs font-medium text-muted-foreground">
+            {sitesWithAudits.length} ready · {sitesWithout.length} need an audit first
+          </div>
+        </div>
       )}
     </div>
   );

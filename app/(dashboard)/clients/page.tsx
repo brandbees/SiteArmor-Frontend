@@ -3,24 +3,27 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
-  Plus, Users, Globe, Mail, Building2, Trash2, Link2, Search,
-  ChevronRight, Pencil, Loader2, X, Send, CheckCircle2, Clock,
+  Plus, Users, Globe, Building2, Trash2, Link2, Search,
+  Pencil, Loader2, Send, CheckCircle2, Mail,
 } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useRole } from "@/hooks/useRole";
-import { useAuth } from "@/hooks/useAuth";
 import { AddClientModal } from "@/components/clients/AddClientModal";
 import { AssignSitesModal } from "@/components/clients/AssignSitesModal";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { MetricTile } from "@/components/shared/PortalPrimitives";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
 import api from "@/lib/api";
 import type { Client } from "@/types";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 const CLIENT_COLORS = [
-  "#1f5fb8", "#8b5cf6", "#ec4899", "#f97316",
-  "#14b8a6", "#0ea5e9", "#84cc16", "#f59e0b",
+  "#1a56db", "#0ea5e9", "#16a34a", "#d97706", "#dc2626", "#475569",
 ];
 
 function clientColor(name: string): string {
@@ -30,17 +33,23 @@ function clientColor(name: string): string {
 }
 
 function initials(name: string): string {
-  return name.split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  return name.split(" ").filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
-// ── EditClientModal ───────────────────────────────────────────────────────────
-
-function EditClientModal({ client, onClose, onSaved }: { client: Client; onClose: () => void; onSaved: (updated: Client) => void }) {
-  const [name,    setName]    = useState(client.name);
-  const [email,   setEmail]   = useState(client.email ?? "");
+function EditClientModal({
+  client,
+  onClose,
+  onSaved,
+}: {
+  client: Client;
+  onClose: () => void;
+  onSaved: (updated: Client) => void;
+}) {
+  const [name, setName] = useState(client.name);
+  const [email, setEmail] = useState(client.email ?? "");
   const [company, setCompany] = useState(client.company ?? "");
-  const [saving,  setSaving]  = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -63,92 +72,73 @@ function EditClientModal({ client, onClose, onSaved }: { client: Client; onClose
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl border border-border w-full max-w-md mx-4 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-          <div>
-            <h2 className="text-base font-bold text-foreground">Edit Client</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Update client details</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-            <X size={15} />
-          </button>
+    <Modal
+      open
+      onClose={onClose}
+      title="Edit Client"
+      description="Update client details"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button loading={saving} disabled={!name.trim()} onClick={handleSave}>
+            Save changes
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Name *
+          </label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-foreground block mb-1.5">Name <span className="text-destructive">*</span></label>
-            <input value={name} onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-foreground block mb-1.5">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="client@example.com"
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-foreground block mb-1.5">Company</label>
-            <input value={company} onChange={e => setCompany(e.target.value)}
-              placeholder="Company name (optional)"
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
-          </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Email
+          </label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@example.com" />
         </div>
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-gray-50 transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={saving || !name.trim()}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            style={{ background: "var(--accent)" }}>
-            {saving ? <Loader2 size={14} className="animate-spin" /> : null}
-            {saving ? "Saving…" : "Save changes"}
-          </button>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Company
+          </label>
+          <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company name" />
         </div>
+        {error ? <Alert variant="error">{error}</Alert> : null}
       </div>
-    </div>
+    </Modal>
   );
 }
 
-// ── ClientCard ────────────────────────────────────────────────────────────────
-
-function ClientCard({
-  client, onDeleted, onSitesChanged,
+function ClientRow({
+  client,
+  onDeleted,
+  onSitesChanged,
+  canManage,
 }: {
   client: Client;
   onDeleted: () => void;
   onSitesChanged: () => void;
+  canManage: boolean;
 }) {
+  const [local, setLocal] = useState(client);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting]           = useState(false);
-  const [showAssign, setShowAssign]       = useState(false);
-  const [showEdit, setShowEdit]           = useState(false);
-  const [localClient, setLocalClient]     = useState(client);
-  const [inviting, setInviting]           = useState(false);
-  const { roleCanDo }                     = useRole();
-  const color                             = clientColor(localClient.name);
-
-  async function handleSendInvite() {
-    if (!localClient.email) {
-      toast.error("Add an email address to this client first.");
-      return;
-    }
-    setInviting(true);
-    try {
-      await api.post(`/clients/${localClient.id}/invite`);
-      toast.success(`Portal invite sent to ${localClient.email}`);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      toast.error(msg || "Failed to send invite.");
-    } finally {
-      setInviting(false);
-    }
-  }
+  const [deleting, setDeleting] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const color = clientColor(local.name);
 
   async function handleDelete() {
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     setDeleting(true);
     try {
-      await api.delete(`/clients/${client.id}`);
-      toast.success(`${client.name} deleted.`);
+      await api.delete(`/clients/${local.id}`);
+      toast.success("Client deleted.");
       onDeleted();
     } catch {
       toast.error("Failed to delete client.");
@@ -157,290 +147,287 @@ function ClientCard({
     }
   }
 
+  async function handleSendInvite() {
+    setInviting(true);
+    try {
+      await api.post(`/clients/${local.id}/invite`);
+      toast.success("Invite sent.");
+      setLocal({ ...local, invite_token: "pending" });
+      onSitesChanged();
+    } catch {
+      toast.error("Failed to send invite.");
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  const portalBadge = local.invite_accepted ? (
+    <Badge variant="success" dot>Portal active</Badge>
+  ) : local.invite_token ? (
+    <Badge variant="warning" dot>Invite pending</Badge>
+  ) : (
+    <Badge variant="muted">No invite</Badge>
+  );
+
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md hover:-translate-y-0.5 transition-all duration-base overflow-hidden group">
-
-        {/* Colored top accent */}
-        <div className="h-1.5 w-full" style={{ background: `${color}60` }} />
-
-        <div className="p-5">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
-                style={{ background: color }}>
-                {initials(client.name)}
-              </div>
-              <div className="min-w-0">
-                <p className="font-bold text-sm text-foreground truncate leading-tight">{localClient.name}</p>
-                {localClient.company && (
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">{localClient.company}</p>
-                )}
-              </div>
+      <tr className="group border-b border-border last:border-0 hover:bg-muted/40">
+        <td className="px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] text-xs font-bold text-white"
+              style={{ background: color }}
+            >
+              {initials(local.name)}
             </div>
-
-            {roleCanDo("add_site") && (
-              <div className="shrink-0 flex items-center gap-1">
-                {confirmDelete ? (
-                  <>
-                    <button onClick={handleDelete} disabled={deleting}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50">
-                      {deleting ? "…" : "Confirm"}
-                    </button>
-                    <button onClick={() => setConfirmDelete(false)}
-                      className="px-2.5 py-1 text-xs rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
-                      No
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => setShowEdit(true)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-accent hover:bg-accent/10 transition-all"
-                      title="Edit client">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={handleDelete}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all"
-                      title="Delete client">
-                      <Trash2 size={13} />
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-foreground">{local.name}</p>
+              {local.company ? (
+                <p className="truncate text-xs text-muted-foreground">{local.company}</p>
+              ) : null}
+            </div>
           </div>
-
-          {/* Stats strip */}
-          <div className="flex items-center gap-4 py-3 px-3 bg-muted/40 rounded-xl mb-4">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Globe size={11} style={{ color }} />
-              <span className="font-semibold text-foreground">{localClient.site_count ?? 0}</span>
-              <span>{localClient.site_count === 1 ? "site" : "sites"}</span>
-            </div>
-            {localClient.email && (
+        </td>
+        <td className="px-4 py-3.5">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Mail size={12} />
+            <span className="truncate max-w-[180px]">{local.email || "—"}</span>
+          </div>
+        </td>
+        <td className="px-4 py-3.5">
+          <span className="text-sm font-bold tabular-nums text-foreground">
+            {local.site_count ?? 0}
+          </span>
+          <span className="ml-1 text-xs text-muted-foreground">sites</span>
+        </td>
+        <td className="px-4 py-3.5">{portalBadge}</td>
+        <td className="px-4 py-3.5">
+          <div className="flex items-center justify-end gap-1">
+            {canManage && (
               <>
-                <div className="h-3 w-px bg-border" />
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-                  <Mail size={11} className="shrink-0" />
-                  <span className="truncate max-w-[130px]">{localClient.email}</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAssign(true)}
+                  className="rounded-[4px] p-2 text-muted-foreground hover:bg-muted hover:text-accent"
+                  title="Manage sites"
+                >
+                  <Link2 size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEdit(true)}
+                  className="rounded-[4px] p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  title="Edit"
+                >
+                  <Pencil size={15} />
+                </button>
+                {!local.invite_accepted && (
+                  <button
+                    type="button"
+                    onClick={handleSendInvite}
+                    disabled={inviting || !local.email}
+                    className="rounded-[4px] p-2 text-muted-foreground hover:bg-muted hover:text-accent disabled:opacity-40"
+                    title="Send portal invite"
+                  >
+                    {inviting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="rounded-[4px] p-2 text-muted-foreground hover:bg-[var(--destructive-light)] hover:text-destructive"
+                  title={confirmDelete ? "Confirm delete" : "Delete"}
+                >
+                  {deleting ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : confirmDelete ? (
+                    <CheckCircle2 size={15} />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                </button>
               </>
             )}
           </div>
-
-          {/* Portal invite status + action */}
-          {roleCanDo("add_site") && (
-            <div className="mb-3">
-              {localClient.invite_accepted ? (
-                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-50 border border-green-100 text-xs text-green-700 font-medium">
-                  <CheckCircle2 size={12} className="text-green-500 shrink-0" />
-                  Client portal active
-                </div>
-              ) : localClient.invite_token ? (
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 border border-amber-100">
-                  <div className="flex items-center gap-1.5 text-xs text-amber-700 font-medium">
-                    <Clock size={12} className="shrink-0" />
-                    Invite pending
-                  </div>
-                  <button onClick={handleSendInvite} disabled={inviting}
-                    className="text-xs text-amber-600 hover:text-amber-800 font-semibold disabled:opacity-50">
-                    {inviting ? "Sending…" : "Resend"}
-                  </button>
-                </div>
-              ) : (
-                <button onClick={handleSendInvite} disabled={inviting || !localClient.email}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-dashed border-border hover:border-accent/40 hover:bg-accent/5 transition-all group/inv disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ color: "var(--accent)" }}
-                  title={!localClient.email ? "Add an email to this client first" : undefined}>
-                  <span className="flex items-center gap-1.5">
-                    {inviting ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                    {inviting ? "Sending invite…" : "Send portal invite"}
-                  </span>
-                  <ChevronRight size={12} className="opacity-50 group-hover/inv:opacity-100 group-hover/inv:translate-x-0.5 transition-all" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Actions */}
-          {roleCanDo("add_site") ? (
-            <button
-              onClick={() => setShowAssign(true)}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-border hover:border-accent/40 hover:bg-accent/5 transition-all group/btn"
-              style={{ color: "var(--accent)" }}>
-              <span className="flex items-center gap-1.5">
-                <Link2 size={11} />Manage assigned sites
-              </span>
-              <ChevronRight size={12} className="opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition-all" />
-            </button>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs text-muted-foreground">
-              <Globe size={11} />
-              <span>{client.site_count ?? 0} site{client.site_count === 1 ? "" : "s"} assigned</span>
-            </div>
-          )}
-        </div>
-      </div>
+        </td>
+      </tr>
 
       {showAssign && (
         <AssignSitesModal
-          clientId={localClient.id}
-          clientName={localClient.name}
+          clientId={local.id}
+          clientName={local.name}
           onClose={() => setShowAssign(false)}
-          onSaved={() => { setShowAssign(false); onSitesChanged(); }}
+          onSaved={() => {
+            setShowAssign(false);
+            onSitesChanged();
+          }}
         />
       )}
-
       {showEdit && (
         <EditClientModal
-          client={localClient}
+          client={local}
           onClose={() => setShowEdit(false)}
-          onSaved={(updated) => { setLocalClient({ ...localClient, ...updated }); setShowEdit(false); }}
+          onSaved={(updated) => {
+            setLocal({ ...local, ...updated });
+            setShowEdit(false);
+          }}
         />
       )}
     </>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function ClientsPage() {
   const { clients, loading, error, refetch } = useClients();
-  const { roleCanDo }  = useRole();
-  const { agency }     = useAuth();
-  const brandColor     = agency?.accent_color ?? "#1f5fb8";
-  const canAdd         = roleCanDo("add_site");
+  const { roleCanDo } = useRole();
+  const canAdd = roleCanDo("add_site");
 
   const [showAdd, setShowAdd] = useState(false);
-  const [search, setSearch]   = useState("");
+  const [search, setSearch] = useState("");
 
-  const totalSites    = useMemo(() => clients.reduce((sum, c) => sum + (c.site_count ?? 0), 0), [clients]);
-  const withCompany   = useMemo(() => clients.filter(c => c.company).length, [clients]);
+  const totalSites = useMemo(
+    () => clients.reduce((sum, c) => sum + (c.site_count ?? 0), 0),
+    [clients]
+  );
+  const withCompany = useMemo(() => clients.filter((c) => c.company).length, [clients]);
+  const portalActive = useMemo(
+    () => clients.filter((c) => c.invite_accepted).length,
+    [clients]
+  );
 
   const filtered = useMemo(() => {
     if (!search.trim()) return clients;
     const q = search.toLowerCase();
-    return clients.filter(c =>
-      c.name.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.company?.toLowerCase().includes(q)
+    return clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.company?.toLowerCase().includes(q)
     );
   }, [clients, search]);
 
   return (
-    <div className="space-y-6">
-
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase mb-1">Management</p>
-          <h1 className="text-2xl font-bold text-foreground">Clients</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage client relationships, assign sites, and send branded reports.
-          </p>
-        </div>
-        {canAdd && (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
-            style={{ background: brandColor }}>
-            <Plus size={15} />Add Client
-          </button>
-        )}
-      </div>
-
-      {/* ── Loading / Error ── */}
-      {loading && <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>}
-      {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>}
-
-      {/* ── Content ── */}
-      {!loading && !error && (
-        <>
-          {clients.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-elevated-sm hover:shadow-elevated-md hover:-translate-y-0.5 transition-all duration-base">
-              <EmptyState
-                icon={<Users size={22} />}
-                title="No clients yet"
-                description="Add your first client to group sites and send branded reports."
-                action={canAdd ? (
-                  <button
-                    onClick={() => setShowAdd(true)}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
-                    style={{ background: brandColor }}>
-                    Add your first client
-                  </button>
-                ) : undefined}
+    <div className="space-y-5">
+      <PageHeader
+        title="Clients"
+        description="Manage relationships, assign sites, and send portal invites."
+        icon={<Users size={22} />}
+        action={
+          <>
+            <div className="relative min-w-[200px] sm:w-64">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search clients"
+                className="h-11 w-full rounded-[4px] border border-border bg-muted/40 pl-9 pr-3 text-sm focus:border-accent focus:bg-surface focus:outline-none"
               />
             </div>
-          ) : (
-            <>
-              {/* Summary stats */}
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { label: "Total Clients",    value: clients.length,  icon: Users,     color: brandColor },
-                  { label: "Sites Assigned",   value: totalSites,      icon: Globe,     color: "#16a34a" },
-                  { label: "With Company Info", value: withCompany,    icon: Building2, color: "#f97316" },
-                ].map(stat => (
-                  <div key={stat.label} className="bg-white rounded-2xl shadow-elevated-sm px-5 py-4 flex items-center gap-4 hover:shadow-elevated-md hover:-translate-y-0.5 transition-all duration-base">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: `${stat.color}15` }}>
-                      <stat.icon size={18} style={{ color: stat.color }} />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-black tabular-nums text-foreground">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    </div>
-                  </div>
-                ))}
+            {canAdd && (
+              <Button onClick={() => setShowAdd(true)}>
+                <Plus size={15} strokeWidth={2.5} />
+                Add Client
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      {loading && (
+        <div className="flex justify-center py-20">
+          <LoadingSpinner size="lg" />
+        </div>
+      )}
+      {error && <Alert variant="error">{error}</Alert>}
+
+      {!loading && !error && clients.length === 0 && (
+        <div className="rounded-xl border border-border bg-surface">
+          <EmptyState
+            tone="brand"
+            icon={<Users size={22} />}
+            title="No clients found"
+            description="Add your first client to group sites and send branded reports."
+            action={
+              canAdd ? (
+                <Button onClick={() => setShowAdd(true)}>
+                  <Plus size={15} />
+                  Add Client
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
+      )}
+
+      {!loading && !error && clients.length > 0 && (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <MetricTile label="Total Clients" value={clients.length} icon={<Users size={16} />} />
+            <MetricTile label="Sites Assigned" value={totalSites} icon={<Globe size={16} />} />
+            <MetricTile label="With Company" value={withCompany} icon={<Building2 size={16} />} />
+            <MetricTile label="Portal Active" value={portalActive} icon={<CheckCircle2 size={16} />} />
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-border bg-surface">
+            {filtered.length === 0 ? (
+              <EmptyState
+                icon={<Search size={20} />}
+                title="No clients match"
+                description="Try a different search term."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/20 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                      <th className="px-4 py-3">Client</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Sites</th>
+                      <th className="px-4 py-3">Portal</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((c) => (
+                      <ClientRow
+                        key={c.id}
+                        client={c}
+                        canManage={canAdd}
+                        onDeleted={refetch}
+                        onSitesChanged={refetch}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              {/* Search */}
-              <div className="relative w-64">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
-                <input
-                  type="text" placeholder="Search clients…" value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-white border border-border rounded-xl shadow-xs outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all placeholder:text-muted-foreground/50"
-                />
-              </div>
-
-              {/* Grid */}
-              {filtered.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">No clients match your search.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filtered.map(client => (
-                    <ClientCard
-                      key={client.id}
-                      client={client}
-                      onDeleted={refetch}
-                      onSitesChanged={refetch}
-                    />
-                  ))}
-
-                  {/* Add client tile */}
-                  {canAdd && (
-                    <button
-                      onClick={() => setShowAdd(true)}
-                      className="rounded-2xl border-2 border-dashed border-border hover:border-accent/40 hover:bg-accent/3 transition-all flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground hover:text-accent group min-h-[180px]">
-                      <div className="w-10 h-10 rounded-xl border-2 border-dashed border-current flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Plus size={18} />
-                      </div>
-                      <span className="text-xs font-semibold">Add new client</span>
-                    </button>
-                  )}
-                </div>
+            )}
+            <div className="border-t border-border px-4 py-3 text-xs font-medium text-muted-foreground">
+              {filtered.length} of {clients.length} clients
+              {canAdd && (
+                <button
+                  type="button"
+                  onClick={() => setShowAdd(true)}
+                  className="ml-3 font-bold text-accent hover:underline"
+                >
+                  + Add client
+                </button>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </>
       )}
 
       {showAdd && (
         <AddClientModal
           onClose={() => setShowAdd(false)}
-          onSuccess={() => { setShowAdd(false); refetch(); }}
+          onSuccess={() => {
+            setShowAdd(false);
+            refetch();
+          }}
         />
       )}
     </div>

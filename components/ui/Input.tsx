@@ -6,7 +6,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const fieldBase =
-  "w-full text-sm bg-surface border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.12)] transition-shadow";
+  "w-full rounded-[4px] border border-border bg-surface text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors";
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, icon, ...props }, ref) => {
@@ -18,7 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           </span>
           <input
             ref={ref}
-            className={cn(fieldBase, "py-2 pl-9 pr-3", className)}
+            className={cn(fieldBase, "py-2.5 pl-9 pr-3", className)}
             {...props}
           />
         </div>
@@ -28,7 +28,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         ref={ref}
-        className={cn(fieldBase, "px-3 py-2", className)}
+        className={cn(fieldBase, "px-3 py-2.5", className)}
         {...props}
       />
     );

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Button } from "@/components/ui/Button";
 import { scoreHex } from "@/lib/utils";
 
 interface Issue {
@@ -187,24 +188,25 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
   // ── Never crawled ─────────────────────────────────────────────────────────
   if (!crawl) {
     return (
-      <div className="bg-white rounded-2xl border border-border p-8 text-center">
-        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
-          <Search size={20} className="text-blue-600" />
+      <div className="rounded-[4px] border border-border bg-white px-5 py-6 text-center">
+        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-[4px] bg-accent-light">
+          <Search size={18} className="text-accent" />
         </div>
-        <p className="font-semibold text-foreground">No SEO crawl yet</p>
-        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+        <p className="text-sm font-bold text-foreground">No SEO crawl yet</p>
+        <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
           Crawl the site to find issues across every page — missing descriptions, broken
           pages, duplicate titles, missing structured data, and whether AI search engines
           can read it at all.
         </p>
-        <button
+        <Button
+          className="mt-4"
+          size="sm"
           onClick={startCrawl}
           disabled={crawling}
-          className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
-          style={{ background: "var(--accent)" }}
+          loading={crawling}
         >
           {crawling ? "Crawling…" : "Run SEO crawl"}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -218,7 +220,7 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
     <div className="space-y-4">
       {/* A blocked or truncated crawl must never read as a clean audit. */}
       {blocked && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3">
+        <div className="rounded-[4px] border border-red-200 bg-red-50 p-4 flex gap-3">
           <AlertTriangle size={18} className="text-red-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-red-800">This site blocked our crawler</p>
@@ -232,7 +234,7 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
         </div>
       )}
       {truncated && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+        <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           Crawl stopped at the {crawl.stop_reason === "page_limit" ? "page limit" : "time limit"} —
           {" "}{crawl.pages_crawled} of {crawl.pages_limit} pages. Findings are partial; anything
           beyond that limit was not checked.
@@ -243,7 +245,7 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <ScoreCard label="SEO score" value={seoScore} icon={<ShieldCheck size={12} />} />
         <ScoreCard label="AI readiness" value={ai?.score ?? null} icon={<Bot size={12} />} />
-        <div className="bg-white rounded-2xl border border-border p-4">
+        <div className="bg-white rounded-[4px] border border-border p-4">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Pages crawled</p>
           <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{pagesCrawled}</p>
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
@@ -264,7 +266,7 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
           can rank well and still be invisible to AI answer engines, and merging the two
           numbers would hide exactly that gap. */}
       {ai && (ai.crawlers_blocked?.length > 0 || ai.has_llms_txt === false || ai.sitemap_found === false) && (
-        <div className="bg-white rounded-2xl border border-border p-4">
+        <div className="bg-white rounded-[4px] border border-border p-4">
           <p className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
             <Bot size={14} className="text-purple-600" /> AI search readiness
           </p>
@@ -284,7 +286,7 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
       )}
 
       {/* Issues */}
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      <div className="bg-white rounded-[4px] border border-border overflow-hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-wrap">
           <p className="text-sm font-semibold text-foreground">
             Issues{" "}
@@ -321,7 +323,7 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
 
       {/* Applied fixes — the audit trail, and the only place rollback lives */}
       {activeFixes.length > 0 && (
-        <div className="bg-white rounded-2xl border border-border overflow-hidden">
+        <div className="bg-white rounded-[4px] border border-border overflow-hidden">
           <p className="px-4 py-3 border-b border-border text-sm font-semibold text-foreground">
             Applied fixes <span className="text-muted-foreground font-normal">({activeFixes.length})</span>
           </p>
@@ -383,7 +385,7 @@ function Flag({ ok, label }: { ok: boolean | null; label: string }) {
 
 function ScoreCard({ label, value, icon }: { label: string; value: number | null; icon: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-border p-4">
+    <div className="bg-white rounded-[4px] border border-border p-4">
       <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
         {icon} {label}
       </p>
@@ -662,7 +664,7 @@ function IssueRow({ issue, onChange }: { issue: Issue; onChange: () => void }) {
       )}
 
       {preview?.diff && (
-        <div className="mt-3 rounded-xl bg-muted/40 border border-border p-3 space-y-2">
+        <div className="mt-3 rounded-[4px] bg-muted/40 border border-border p-3 space-y-2">
           {preview.diff.json_to_add ? (
             <>
               <p className="text-[11px] font-semibold text-foreground">Structured data to add</p>

@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  /* Base — MalCare-clean light portal canvas */
-  --background: #f4f6f9;
+  /* Base — soft gray canvas, pure white cards (MalCare contrast) */
+  --background: #f0f2f5;
   --surface: #ffffff;
-  --foreground: #0a0f1a;
-  --muted: #eef1f6;
-  --muted-foreground: #64748b;
-  --border: rgb(15 23 42 / 0.08);
-  --border-strong: rgb(15 23 42 / 0.14);
+  --foreground: #1a1d23;
+  --muted: #e8ebf0;
+  --muted-foreground: #6b7280;
+  --border: rgb(26 29 35 / 0.09);
+  --border-strong: rgb(26 29 35 / 0.14);
   --card: #ffffff;
   --card-foreground: #0a0f1a;
 

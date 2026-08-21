@@ -8,6 +8,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { PortalTabs } from "@/components/shared/PortalPrimitives";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Badge } from "@/components/ui/Badge";
 
 type Tab = "all" | "alerts" | "announcements";
 
@@ -156,69 +160,46 @@ export default function NotificationsPage() {
   const to   = Math.min(page * LIMIT, total);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <PageHeader
+        title="Notifications"
+        description="Site alerts and platform announcements."
+        icon={<Bell size={22} />}
+        action={
+          total > 0 ? (
+            <Badge variant="muted">{total} total</Badge>
+          ) : undefined
+        }
+      />
 
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Notifications</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Site alerts and platform announcements
-          </p>
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="px-2 pt-1">
+          <PortalTabs tabs={TABS} value={tab} onChange={switchTab} />
         </div>
-        {total > 0 && (
-          <span className="text-xs font-medium text-muted-foreground bg-gray-100 px-2.5 py-1 rounded-full">
-            {total} total
-          </span>
-        )}
-      </div>
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-0 border-b border-border">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => switchTab(t.key)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === t.key
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── List ── */}
-      <div className="bg-white rounded-2xl shadow-elevated-sm overflow-hidden hover:shadow-elevated-md hover:-translate-y-0.5 transition-all duration-base">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
-              <Bell size={20} className="text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">No notifications</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {tab === "alerts"
-                  ? "Site alerts appear here when thresholds are breached."
-                  : tab === "announcements"
+          <EmptyState
+            icon={<Bell size={20} />}
+            title="No notifications"
+            description={
+              tab === "alerts"
+                ? "Site alerts appear here when thresholds are breached."
+                : tab === "announcements"
                   ? "Platform announcements will appear here."
-                  : "Alerts and announcements will appear here."}
-              </p>
-            </div>
-          </div>
+                  : "Alerts and announcements will appear here."
+            }
+          />
         ) : (
           <div className="divide-y divide-border">
-            {items.map(item => {
-              const sev      = SEV[item.severity] ?? SEV.info;
+            {items.map((item) => {
+              const sev = SEV[item.severity] ?? SEV.info;
               const breaches = item.details?.breaches ?? [];
-              const dest     = item.site_id ? `/sites/${item.site_id}` : null;
-              const isAlert  = item.notification_type === "alert";
+              const dest = item.site_id ? `/sites/${item.site_id}` : null;
+              const isAlert = item.notification_type === "alert";
 
               return (
                 <div
@@ -226,30 +207,41 @@ export default function NotificationsPage() {
                   role={dest ? "button" : undefined}
                   tabIndex={dest ? 0 : undefined}
                   onClick={dest ? () => router.push(dest) : undefined}
-                  onKeyDown={dest ? (e) => { if (e.key === "Enter") router.push(dest); } : undefined}
-                  className={`flex items-start gap-4 px-5 py-5 transition-colors group ${dest ? "cursor-pointer hover:bg-gray-50/80" : "hover:bg-gray-50/40"}`}
+                  onKeyDown={
+                    dest
+                      ? (e) => {
+                          if (e.key === "Enter") router.push(dest);
+                        }
+                      : undefined
+                  }
+                  className={`group flex items-start gap-3 px-4 py-3.5 transition-colors ${
+                    dest ? "cursor-pointer hover:bg-muted/50" : "hover:bg-muted/30"
+                  }`}
                 >
-                  {/* Icon circle */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${sev.iconBg}`}>
+                  <div
+                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] ${sev.iconBg}`}
+                  >
                     {mainIcon(item, "")}
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-
-                    {/* Title + pin */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">
-                        {notifTitle(item)}
-                      </p>
-                      {item.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold text-foreground">{notifTitle(item)}</p>
+                      {item.pinned && <Pin size={10} className="shrink-0 text-amber-500" />}
+                      <Badge variant={isAlert ? "danger" : "accent"}>
+                        {isAlert ? "Alert" : "Announcement"}
+                      </Badge>
+                      <span
+                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${sev.badge}`}
+                      >
+                        {sev.label}
+                      </span>
                     </div>
 
-                    {/* Site name + URL */}
                     {(item.site_name || item.site_url) && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <Globe size={11} className="text-muted-foreground shrink-0" />
-                        <span className="text-xs font-medium text-muted-foreground truncate">
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <Globe size={11} className="shrink-0 text-muted-foreground" />
+                        <span className="truncate text-xs font-medium text-muted-foreground">
                           {item.site_name ?? ""}
                           {item.site_url && (
                             <span className="font-normal text-muted-foreground/60">
@@ -261,16 +253,17 @@ export default function NotificationsPage() {
                       </div>
                     )}
 
-                    {/* Description */}
-                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                    <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
                       {notifDescription(item)}
                     </p>
 
-                    {/* Breach chips */}
                     {isAlert && breaches.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {breaches.map((b, i) => (
-                          <span key={i} className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-lg ${breachChipClass(b)}`}>
+                          <span
+                            key={i}
+                            className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold ${breachChipClass(b)}`}
+                          >
                             {pillarIcon(b.pillar, "", 11)}
                             {breachLabel(b)}
                           </span>
@@ -279,26 +272,13 @@ export default function NotificationsPage() {
                     )}
                   </div>
 
-                  {/* Right: badges + time + arrow */}
-                  <div className="flex flex-col items-end gap-2 shrink-0 ml-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${
-                        isAlert
-                          ? "bg-red-50 text-red-600 border border-red-100"
-                          : "bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/20"
-                      }`}>
-                        {isAlert ? "Alert" : "Announcement"}
-                      </span>
-                      <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${sev.badge}`}>
-                        {sev.label}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-muted-foreground tabular-nums">
+                  <div className="ml-2 flex shrink-0 flex-col items-end gap-1.5">
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
                       {timeAgo(item.created_at)}
                     </span>
                     {dest && (
-                      <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        View site <ArrowRight size={11} />
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-accent opacity-0 transition-opacity group-hover:opacity-100">
+                        View <ArrowRight size={11} />
                       </span>
                     )}
                   </div>
@@ -308,27 +288,28 @@ export default function NotificationsPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-gray-50/40">
-            <p className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between border-t border-border bg-muted/20 px-4 py-3">
+            <p className="text-xs font-medium text-muted-foreground">
               {from}–{to} of {total}
             </p>
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 disabled={page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="p-1.5 rounded-lg border border-border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-[4px] border border-border bg-surface p-1.5 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft size={14} />
               </button>
-              <span className="text-xs font-medium text-foreground">
+              <span className="text-xs font-bold text-foreground">
                 {page} / {totalPages}
               </span>
               <button
+                type="button"
                 disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="p-1.5 rounded-lg border border-border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="rounded-[4px] border border-border bg-surface p-1.5 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronRight size={14} />
               </button>

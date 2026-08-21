@@ -10,26 +10,25 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
+/** Match marketing ButtonLink: sharp 4px radius, solid accent, uppercase CTAs */
 const base =
-  "inline-flex items-center justify-center gap-2 font-bold uppercase tracking-[0.06em] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap transition-all duration-fast active:scale-[0.98]";
+  "inline-flex items-center justify-center gap-2 rounded-[4px] font-bold uppercase tracking-[0.08em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap transition-all duration-200";
 
 const variants: Record<Variant, string> = {
-  primary:
-    "text-white bg-accent hover:bg-accent-hover shadow-elevated-xs",
+  primary: "bg-accent text-white hover:bg-accent-hover",
   secondary:
-    "bg-surface text-foreground border border-border-strong hover:border-accent/30 hover:bg-muted",
+    "bg-surface text-foreground ring-1 ring-border-strong hover:ring-accent/30",
   outline:
-    "bg-transparent text-foreground border border-border hover:bg-muted hover:border-border-strong",
+    "bg-transparent text-accent ring-1 ring-accent hover:bg-accent-light",
   ghost:
     "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted normal-case tracking-normal font-semibold",
-  danger:
-    "bg-destructive text-white hover:bg-red-700 shadow-elevated-xs",
+  danger: "bg-destructive text-white hover:bg-red-700",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-8 px-3 text-[11px]",
-  md: "h-9 px-4 text-xs",
-  lg: "h-11 px-5 text-xs",
+  sm: "h-9 px-4 text-[11px]",
+  md: "h-11 px-6 text-xs",
+  lg: "h-[52px] px-8 text-[13px]",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -53,7 +52,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && (
-          <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
         )}
         {children}
       </button>

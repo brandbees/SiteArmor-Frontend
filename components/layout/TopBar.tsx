@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Bell, Plus, ChevronDown, RefreshCw, User, LogOut, X, Pin, AlertTriangle, Megaphone, ShieldAlert, Zap, Search, ArrowRight, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Bell, Plus, RefreshCw, User, LogOut, X, Pin, AlertTriangle, Megaphone, ShieldAlert, Zap, Search, ArrowRight, Settings, MoreVertical } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { MobileNav } from "./MobileNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { AddSiteModal } from "@/components/sites/AddSiteModal";
+import { Button } from "@/components/ui/Button";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { cacheClear, getLastFetchedAt } from "@/lib/dataCache";
@@ -136,18 +137,58 @@ function breachLabel(b: NotifBreach): string {
   return `${name}: ${b.score}/100`;
 }
 
+const CRUMB_LABELS: Record<string, string> = {
+  dashboard: "Dashboard",
+  sites: "Sites",
+  clients: "Clients",
+  notifications: "Notifications",
+  performance: "Performance",
+  seo: "SEO",
+  security: "Security",
+  malware: "Malware",
+  uptime: "Uptime",
+  reports: "Reports",
+  agent: "AI Agent",
+  settings: "Settings",
+  billing: "Billing",
+  profile: "Profile",
+};
+
+function useBreadcrumbs(pathname: string) {
+  return useMemo(() => {
+    const parts = pathname.split("/").filter(Boolean);
+    if (parts.length === 0) return [{ label: "Dashboard", href: "/dashboard" }];
+    const crumbs: { label: string; href: string }[] = [
+      { label: "Dashboard", href: "/dashboard" },
+    ];
+    let href = "";
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      href += `/${part}`;
+      if (part === "dashboard" && i === 0) continue;
+      const isId = /^[0-9a-f-]{8,}$/i.test(part);
+      const label = isId
+        ? "Details"
+        : CRUMB_LABELS[part] ?? part.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      crumbs.push({ label, href });
+    }
+    return crumbs;
+  }, [pathname]);
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TopBar() {
   const { agency, logout } = useAuth();
   const { roleCanDo } = useRole();
   const router = useRouter();
+  const pathname = usePathname();
+  const breadcrumbs = useBreadcrumbs(pathname);
 
   const isClientPortal = agency?.is_client_portal ?? false;
   const isIndividual   = agency?.account_type === "individual";
 
   const [showAddSite,    setShowAddSite]    = useState(false);
-  const [showDropdown,   setShowDropdown]   = useState(false);
   const [showNotif,      setShowNotif]      = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
@@ -156,13 +197,19 @@ export function TopBar() {
   const [lastUpdated,  setLastUpdated]  = useState<number | null>(null);
   const [, tick] = useState(0);
 
-  const dropdownRef  = useRef<HTMLDivElement>(null);
   const notifRef     = useRef<HTMLDivElement>(null);
   const avatarRef    = useRef<HTMLDivElement>(null);
 
   const displayName = agency?.member_name ?? agency?.name ?? "";
-  const agencyLabel = agency?.brand_name || agency?.name || "Agency";
   const initials    = displayName.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+
+  useEffect(() => {
+    function openAdd() {
+      if (!isClientPortal && !isIndividual && roleCanDo("add_site")) setShowAddSite(true);
+    }
+    window.addEventListener("bb:open-add-site", openAdd);
+    return () => window.removeEventListener("bb:open-add-site", openAdd);
+  }, [isClientPortal, isIndividual, roleCanDo]);
 
   // Seed lastUpdated from cache on mount, then listen for fresh fetches
   useEffect(() => {
@@ -179,7 +226,6 @@ export function TopBar() {
     return () => window.removeEventListener("bb:data-fetched", handle);
   }, []);
 
-  // Re-render every 30 s so "X ago" label stays current
   useEffect(() => {
     const id = setInterval(() => tick(n => n + 1), 30_000);
     return () => clearInterval(id);
@@ -211,7 +257,6 @@ export function TopBar() {
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false);
       if (notifRef.current    && !notifRef.current.contains(e.target as Node))    setShowNotif(false);
       if (avatarRef.current   && !avatarRef.current.contains(e.target as Node))   setShowAvatarMenu(false);
     }
@@ -228,11 +273,9 @@ export function TopBar() {
       }
       return !v;
     });
-    setShowDropdown(false);
   }
 
   function handleSignOut() {
-    setShowDropdown(false);
     if (isClientPortal) {
       clearToken();
       router.push("/client-portal/login");
@@ -245,188 +288,160 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-5">
-        {/* Left */}
-        <div className="flex items-center gap-3">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-4 sm:px-6">
+        {/* Left: breadcrumbs */}
+        <div className="flex min-w-0 items-center gap-3">
           <MobileNav />
-
-          {/* Agency / client selector */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => { setShowDropdown(v => !v); setShowNotif(false); }}
-              className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted"
-            >
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold text-white"
-                style={{ background: "var(--accent)" }}>
-                {agencyLabel[0]?.toUpperCase()}
-              </div>
-              <span className="hidden text-sm font-semibold text-foreground sm:block">{agencyLabel}</span>
-              <ChevronDown size={13} className={`text-muted-foreground transition-transform duration-150 ${showDropdown ? "rotate-180" : ""}`} />
-            </button>
-
-            {showDropdown && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
-                <div className="border-b border-border px-4 py-3">
-                  <p className="truncate text-xs font-bold text-foreground">{displayName}</p>
-                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{agency?.email}</p>
-                </div>
-                <div className="py-1.5">
-                  {!isClientPortal && (
-                    <>
-                      <Link href="/settings/profile" onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-light">
-                          <User size={14} className="text-accent" />
-                        </div>
-                        <span className="font-semibold">Profile</span>
-                      </Link>
-                      <div className="mx-3 my-1 border-t border-border" />
-                    </>
+          <nav className="hidden min-w-0 items-center gap-1.5 text-[13px] sm:flex">
+            {breadcrumbs.map((c, i) => {
+              const last = i === breadcrumbs.length - 1;
+              return (
+                <span key={c.href + i} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-muted-foreground/50">›</span>}
+                  {last ? (
+                    <span className="truncate font-semibold text-accent">{c.label}</span>
+                  ) : (
+                    <Link href={c.href} className="truncate text-muted-foreground hover:text-foreground">
+                      {c.label}
+                    </Link>
                   )}
-                  <button onClick={handleSignOut}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-[var(--destructive-light)]">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--destructive-light)]">
-                      <LogOut size={14} className="text-destructive" />
-                    </div>
-                    <span className="font-semibold">Sign out</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="hidden items-center gap-2 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground md:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--score-good)]" />
-            Ready
-          </div>
-
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="hidden items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 md:flex"
-          >
-            <RefreshCw size={11} className={refreshing ? "animate-spin" : ""} />
-            <span>{lastUpdated ? `Updated ${tsAgo(lastUpdated)}` : "Refresh"}</span>
-          </button>
+                </span>
+              );
+            })}
+          </nav>
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="hidden items-center gap-2 rounded-[4px] border border-border bg-background px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 md:flex"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--score-good)]" />
+            {refreshing ? "Refreshing…" : lastUpdated ? `Updated ${tsAgo(lastUpdated)}` : "No tasks running"}
+            <RefreshCw size={11} className={refreshing ? "animate-spin" : ""} />
+          </button>
+
           {!isClientPortal && !isIndividual && roleCanDo("add_site") && (
-            <button onClick={() => setShowAddSite(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-xs font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-hover">
-              <Plus size={15} />
-              <span className="hidden sm:inline">Add Site</span>
-            </button>
+            <Button size="sm" onClick={() => setShowAddSite(true)} className="hidden h-9 sm:inline-flex">
+              <Plus size={14} strokeWidth={2.5} />
+              Add Site
+            </Button>
           )}
 
-          {/* Bell — agency only */}
           {!isClientPortal && (
             <div className="relative" ref={notifRef}>
-              <button onClick={openNotif}
-                className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-50 transition-colors">
-                <Bell size={16} />
+              <button
+                type="button"
+                onClick={openNotif}
+                className="relative rounded-[4px] p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Bell size={18} strokeWidth={1.75} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold leading-none text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotif && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-2xl border border-border shadow-xl z-50 overflow-hidden">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <div className="absolute right-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
+                  <div className="flex items-center justify-between border-b border-border px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Bell size={14} className="text-muted-foreground" />
-                      <p className="text-sm font-semibold text-foreground">Notifications</p>
+                      <p className="text-sm font-bold text-foreground">Notifications</p>
                       {notifications.length > 0 && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-muted-foreground">
+                        <span className="rounded-[4px] bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
                           {notifications.length}
                         </span>
                       )}
                     </div>
-                    <button onClick={() => setShowNotif(false)}
-                      className="p-1 rounded-lg text-muted-foreground hover:bg-gray-100 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setShowNotif(false)}
+                      className="rounded-[4px] p-1 text-muted-foreground hover:bg-muted"
+                    >
                       <X size={13} />
                     </button>
                   </div>
 
-                  {/* Items */}
-                  <div className="divide-y divide-border max-h-[420px] overflow-y-auto">
+                  <div className="max-h-[420px] divide-y divide-border overflow-y-auto">
                     {preview.length === 0 ? (
                       <div className="px-4 py-10 text-center">
-                        <Bell size={24} className="text-gray-300 mx-auto mb-2" />
+                        <Bell size={24} className="mx-auto mb-2 text-muted-foreground/40" />
                         <p className="text-sm text-muted-foreground">No notifications</p>
                       </div>
                     ) : (
-                      preview.map(item => {
-                        const sev      = SEVERITY_STYLE[item.severity] ?? SEVERITY_STYLE.info;
+                      preview.map((item) => {
+                        const sev = SEVERITY_STYLE[item.severity] ?? SEVERITY_STYLE.info;
                         const breaches = item.details?.breaches ?? [];
-                        const dest     = item.site_id ? `/sites/${item.site_id}` : "/notifications";
+                        const dest = item.site_id ? `/sites/${item.site_id}` : "/notifications";
                         return (
                           <button
                             key={item.id}
-                            onClick={() => { router.push(dest); setShowNotif(false); }}
-                            className="w-full text-left px-4 py-3.5 hover:bg-gray-50/80 transition-colors group"
+                            type="button"
+                            onClick={() => {
+                              router.push(dest);
+                              setShowNotif(false);
+                            }}
+                            className="group w-full px-4 py-3.5 text-left transition-colors hover:bg-muted/60"
                           >
                             <div className="flex items-start gap-3">
-                              {/* Icon circle */}
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${sev.iconBg}`}>
+                              <div
+                                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] ${sev.iconBg}`}
+                              >
                                 {notifMainIcon(item)}
                               </div>
-
-                              <div className="flex-1 min-w-0">
-                                {/* Title row */}
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <div className="flex items-center gap-1.5 min-w-0">
-                                    <p className="text-xs font-semibold text-foreground leading-snug">
+                                  <div className="flex min-w-0 items-center gap-1.5">
+                                    <p className="text-xs font-bold leading-snug text-foreground">
                                       {notifTitle(item)}
                                     </p>
-                                    {item.pinned && <Pin size={9} className="text-amber-500 shrink-0" />}
+                                    {item.pinned && (
+                                      <Pin size={9} className="shrink-0 text-amber-500" />
+                                    )}
                                   </div>
-                                  <span className="text-[10px] text-muted-foreground/60 shrink-0 mt-0.5 whitespace-nowrap">
+                                  <span className="mt-0.5 shrink-0 whitespace-nowrap text-[10px] text-muted-foreground/60">
                                     {timeAgo(item.created_at)}
                                   </span>
                                 </div>
-
-                                {/* Site name + URL */}
                                 {item.site_name && (
-                                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">
+                                  <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground">
                                     {item.site_name}
-                                    {item.site_url && (
-                                      <span className="font-normal text-muted-foreground/60"> · {item.site_url.replace(/^https?:\/\//, "")}</span>
-                                    )}
                                   </p>
                                 )}
-
-                                {/* Breach score chips */}
                                 {breaches.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1 mt-1.5">
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
                                     {breaches.map((b, i) => (
-                                      <span key={i} className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
-                                        b.score === null || b.score < 50
-                                          ? "bg-red-50 text-red-600 border border-red-100"
-                                          : "bg-amber-50 text-amber-600 border border-amber-100"
-                                      }`}>
+                                      <span
+                                        key={i}
+                                        className={`inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[10px] font-semibold ${
+                                          b.score === null || b.score < 50
+                                            ? "border border-red-100 bg-red-50 text-red-600"
+                                            : "border border-amber-100 bg-amber-50 text-amber-600"
+                                        }`}
+                                      >
                                         {pillarIcon(b.pillar, "w-2.5 h-2.5")}
                                         {breachLabel(b)}
                                       </span>
                                     ))}
                                   </div>
                                 ) : item.body ? (
-                                  <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-snug">
+                                  <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
                                     {item.body}
                                   </p>
                                 ) : null}
-
-                                {/* Severity badge */}
-                                <div className="flex items-center justify-between mt-1.5">
-                                  <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${sev.badge}`}>
+                                <div className="mt-1.5 flex items-center justify-between">
+                                  <span
+                                    className={`rounded-[4px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${sev.badge}`}
+                                  >
                                     {sev.label}
                                   </span>
                                   {item.site_id && (
-                                    <span className="text-[10px] font-medium text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                                    <span className="flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                                       View site <ArrowRight size={10} />
                                     </span>
                                   )}
@@ -439,12 +454,11 @@ export function TopBar() {
                     )}
                   </div>
 
-                  {/* Footer */}
-                  <div className="px-4 py-2.5 border-t border-border bg-gray-50/40">
+                  <div className="border-t border-border bg-muted/30 px-4 py-2.5">
                     <Link
                       href="/notifications"
                       onClick={() => setShowNotif(false)}
-                      className="block text-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                      className="block text-center text-xs font-bold text-accent hover:underline"
                     >
                       View all notifications →
                     </Link>
@@ -457,57 +471,78 @@ export function TopBar() {
           {!!agency && (
             <div className="relative" ref={avatarRef}>
               <button
-                onClick={() => { setShowAvatarMenu(v => !v); setShowDropdown(false); setShowNotif(false); }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-1"
-                style={{ background: "var(--accent)" }}
-                title={displayName}
+                type="button"
+                onClick={() => {
+                  setShowAvatarMenu((v) => !v);
+                  setShowNotif(false);
+                }}
+                className="flex items-center gap-2.5 rounded-[4px] py-1 pl-1 pr-1.5 transition-colors hover:bg-muted"
               >
-                {initials}
+                <div className="hidden min-w-0 text-right sm:block">
+                  <p className="truncate text-xs font-bold leading-tight text-foreground">
+                    {displayName}
+                  </p>
+                  <p className="truncate text-[10px] text-muted-foreground">{agency?.email}</p>
+                </div>
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                  style={{ background: "var(--accent)" }}
+                >
+                  {initials}
+                </div>
+                <MoreVertical size={14} className="hidden text-muted-foreground sm:block" />
               </button>
 
               {showAvatarMenu && (
-                <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-xl border border-border shadow-lg z-50 overflow-hidden">
-                  {/* User info */}
-                  <div className="px-4 py-3 border-b border-border">
+                <div className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-surface shadow-elevated-lg">
+                  <div className="border-b border-border px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                        style={{ background: "var(--accent)" }}>
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                        style={{ background: "var(--accent)" }}
+                      >
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-foreground truncate">{displayName}</p>
-                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{agency?.email}</p>
+                        <p className="truncate text-xs font-bold text-foreground">{displayName}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                          {agency?.email}
+                        </p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Actions */}
                   <div className="py-1.5">
                     {!isClientPortal && (
                       <>
-                        <Link href="/settings/profile" onClick={() => setShowAvatarMenu(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors">
-                          <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                            <User size={14} className="text-indigo-500" />
-                          </div>
-                          <span className="font-medium">Profile</span>
+                        <Link
+                          href="/settings/profile"
+                          onClick={() => setShowAvatarMenu(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted"
+                        >
+                          <User size={14} className="text-accent" />
+                          <span className="font-semibold">Profile</span>
                         </Link>
-                        <Link href="/settings" onClick={() => setShowAvatarMenu(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors">
-                          <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                            <Settings size={14} className="text-gray-500" />
-                          </div>
-                          <span className="font-medium">Settings</span>
+                        <Link
+                          href="/settings"
+                          onClick={() => setShowAvatarMenu(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted"
+                        >
+                          <Settings size={14} className="text-muted-foreground" />
+                          <span className="font-semibold">Settings</span>
                         </Link>
                         <div className="mx-3 my-1 border-t border-border" />
                       </>
                     )}
-                    <button onClick={() => { setShowAvatarMenu(false); handleSignOut(); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                      <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                        <LogOut size={14} className="text-red-500" />
-                      </div>
-                      <span className="font-medium">Sign out</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAvatarMenu(false);
+                        handleSignOut();
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-[var(--destructive-light)]"
+                    >
+                      <LogOut size={14} />
+                      <span className="font-semibold">Sign out</span>
                     </button>
                   </div>
                 </div>
@@ -520,7 +555,10 @@ export function TopBar() {
       {showAddSite && (
         <AddSiteModal
           onClose={() => setShowAddSite(false)}
-          onSuccess={(siteId) => { setShowAddSite(false); router.push(`/sites/${siteId}`); }}
+          onSuccess={(siteId) => {
+            setShowAddSite(false);
+            router.push(`/sites/${siteId}`);
+          }}
         />
       )}
     </>

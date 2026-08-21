@@ -5,7 +5,7 @@ interface PageHeaderProps {
   description?: string;
   action?: React.ReactNode;
   className?: string;
-  eyebrow?: string;
+  icon?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -13,26 +13,22 @@ export function PageHeader({
   description,
   action,
   className,
-  eyebrow,
+  icon,
 }: PageHeaderProps) {
   return (
-    <div className={cn("mb-6 flex items-start justify-between gap-4", className)}>
+    <div className={cn("mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="min-w-0">
-        {eyebrow ? (
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="font-portal-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
-          {title}
-        </h1>
+        <div className="flex items-center gap-2.5">
+          {icon ? <span className="text-accent">{icon}</span> : null}
+          <h1 className="font-portal-display text-[1.75rem] font-bold leading-none tracking-tight text-foreground">
+            {title}
+          </h1>
+        </div>
         {description ? (
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </p>
+          <p className="mt-2 text-sm font-medium text-accent">{description}</p>
         ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="flex shrink-0 flex-wrap items-center gap-3">{action}</div> : null}
     </div>
   );
 }

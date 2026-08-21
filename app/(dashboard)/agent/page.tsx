@@ -12,7 +12,6 @@ import api from "@/lib/api";
 import { mapSite, type RawSite } from "@/lib/mappers";
 import { useAuth } from "@/hooks/useAuth";
 import type { Site, AgentMessage } from "@/types";
-import { IconChip } from "@/components/ui/IconChip";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { TokenTopupModal } from "@/components/agent/TokenTopupModal";
 
@@ -721,7 +720,7 @@ function SiteSelectorDropdown({ sites, selectedSiteId, onChange }: {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 pl-2.5 pr-2 sm:pr-2.5 py-1.5 text-xs font-medium rounded-lg bg-white shadow-elevated-xs hover:shadow-elevated-sm transition-all duration-base text-foreground w-[130px] sm:min-w-[160px]"
+        className="flex items-center gap-1.5 pl-2.5 pr-2 sm:pr-2.5 py-1.5 text-xs font-medium rounded-lg bg-white shadow-elevated-xs transition-all duration-base text-foreground w-[130px] sm:min-w-[160px]"
       >
         {selected ? (
           <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
@@ -1366,18 +1365,22 @@ function AgentInner() {
     <div className="-m-6 flex flex-col" style={{ height: "calc(100dvh - 3.5rem)" }}>
 
       {/* ── Top bar ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3.5 bg-white border-b border-border shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <IconChip size="sm">
-            <Sparkles size={15} />
-          </IconChip>
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-3 py-3 sm:gap-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-accent-light text-accent">
+            <Sparkles size={16} />
+          </div>
           <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-foreground leading-none whitespace-nowrap">AI Assistant</h1>
-            <p className="text-[11px] text-muted-foreground mt-0.5 hidden xl:block whitespace-nowrap">Powered by real audit &amp; scan data</p>
+            <h1 className="font-portal-display truncate text-base font-bold leading-none text-foreground">
+              AI Assistant
+            </h1>
+            <p className="mt-0.5 hidden whitespace-nowrap text-[11px] font-medium text-muted-foreground xl:block">
+              Powered by real audit &amp; scan data
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {tokenState && canUseAgent && <div className="hidden md:flex"><TokenBar state={tokenState} onTopup={() => setShowTopupModal(true)} /></div>}
 
           {messages.length > 0 && (
@@ -1387,7 +1390,7 @@ function AgentInner() {
                   onClick={() => { if (!loading) send(UNDO_PROMPT); }}
                   disabled={loading}
                   title="Undo the changes the assistant made"
-                  className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 rounded-lg text-xs font-medium text-amber-700 hover:text-amber-800 hover:bg-amber-50 transition-colors border border-amber-200 disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-[4px] border border-amber-200 px-2 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-50 disabled:opacity-50 lg:px-3"
                 >
                   <Undo2 size={11} /><span className="hidden lg:inline">Undo</span>
                 </button>
@@ -1395,7 +1398,7 @@ function AgentInner() {
               <button
                 onClick={copyTranscript}
                 title="Copy transcript"
-                className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors border border-border"
+                className="flex items-center gap-1.5 rounded-[4px] border border-border px-2 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:px-3"
               >
                 {copied ? <Check size={11} className="text-green-600" /> : <Copy size={11} />}
                 <span className="hidden lg:inline">{copied ? "Copied!" : "Copy"}</span>
@@ -1410,7 +1413,7 @@ function AgentInner() {
                   optimizeModeRef.current = false;
                 }}
                 title="New chat"
-                className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors border border-border"
+                className="flex items-center gap-1.5 rounded-[4px] border border-border px-2 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:px-3"
               >
                 <RotateCcw size={11} /><span className="hidden lg:inline">New chat</span>
               </button>
@@ -1431,17 +1434,16 @@ function AgentInner() {
       {isFreePlan && (
         <div className="flex-1 flex items-center justify-center bg-[#f8fafc] p-6">
           <div className="max-w-md w-full text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm"
-              style={{ background: "var(--accent-light)" }}>
-              <Sparkles size={28} style={{ color: "var(--accent)" }} />
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-accent/20 bg-accent-light">
+              <Sparkles size={26} style={{ color: "var(--accent)" }} />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">AI Assistant</h2>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            <h2 className="font-portal-display mb-2 text-xl font-bold text-foreground">AI Assistant</h2>
+            <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
               {isIndividual
                 ? "AI Assistant is available on upgraded plans. Get plain-English explanations of your audit results, find out exactly what to fix, and take action — no technical knowledge needed."
                 : "AI Assistant is available on upgraded plans. Ask questions about your sites, get audit insights, run audits, send reports, and more — all in plain English."}
             </p>
-            <div className="bg-white rounded-2xl shadow-elevated-sm p-5 mb-6 text-left space-y-3">
+            <div className="mb-6 space-y-3 rounded-xl border border-border bg-surface p-5 text-left">
               {(isIndividual ? [
                 "\"What's wrong with my site right now?\"",
                 "\"Is my WordPress version up to date?\"",
@@ -1461,7 +1463,7 @@ function AgentInner() {
             </div>
             <Link
               href="/settings?tab=billing&from=%2Fagent"
-              className="inline-flex items-center justify-center gap-2 h-11 px-8 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[4px] px-8 text-xs font-bold uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-90"
               style={{ background: "var(--accent)" }}
             >
               <Zap size={15} /> Upgrade to unlock AI Assistant

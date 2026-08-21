@@ -108,16 +108,13 @@ export function MobileNav() {
                     href={href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors",
+                      "relative flex items-center gap-3 rounded-[4px] px-3 py-2.5 text-sm font-semibold transition-colors",
                       active
-                        ? "bg-accent-light text-accent"
+                        ? "bg-accent text-white"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    {active ? (
-                      <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
-                    ) : null}
-                    <Icon size={16} className={active ? "text-accent" : ""} />
+                    <Icon size={16} className={active ? "text-white" : ""} />
                     {label}
                   </Link>
                 );

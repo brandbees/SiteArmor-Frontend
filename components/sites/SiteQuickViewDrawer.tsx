@@ -1,10 +1,11 @@
 "use client";
 
 import { X, ExternalLink, ChevronDown } from "lucide-react";
-import { PieChart, Pie, Cell } from "recharts";
 import { useState } from "react";
 import { scoreHex } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/Button";
+import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import type { Site } from "@/types";
 
 interface Props {
@@ -27,32 +28,14 @@ function ScoreChip({ score, label }: { score: number; label: string }) {
   };
   return (
     <div
-      className="flex flex-col items-center px-4 py-2 rounded-xl border"
+      className="flex flex-col items-center rounded-[4px] border px-2 py-2"
       style={{ background: bgMap[hex] ?? "#f9fafb", borderColor: hex + "33" }}
     >
-      <span className="text-lg font-bold tabular-nums" style={{ color: hex }}>
+      <span className="text-base font-bold tabular-nums" style={{ color: hex }}>
         {score}
       </span>
-      <span className="text-[11px] text-muted-foreground font-medium mt-0.5">{label}</span>
+      <span className="mt-0.5 text-[10px] font-medium text-muted-foreground">{label}</span>
     </div>
-  );
-}
-
-function UptimeRing({ pct }: { pct: number }) {
-  return (
-    <PieChart width={64} height={64}>
-      <Pie
-        data={[{ value: pct }, { value: 100 - pct }]}
-        cx={27} cy={27}
-        innerRadius={20} outerRadius={30}
-        startAngle={90} endAngle={-270}
-        dataKey="value"
-        strokeWidth={0}
-      >
-        <Cell fill="#10b981" />
-        <Cell fill="#f3f4f6" />
-      </Pie>
-    </PieChart>
   );
 }
 
@@ -71,29 +54,28 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40"
+      <button
+        type="button"
+        aria-label="Close drawer"
+        className="fixed inset-0 z-40 bg-[#0f172a]/40 backdrop-blur-[1px]"
         onClick={onClose}
       />
 
-      {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-[420px] bg-white border-l border-border shadow-2xl z-50 flex flex-col animate-slide-in-right overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
+      <div className="fixed top-0 right-0 z-50 flex h-full w-[420px] max-w-[100vw] flex-col overflow-hidden border-l border-border bg-white shadow-[0_24px_64px_-16px_rgb(15_23_42/0.28)] animate-slide-in-right">
+        <div className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-4">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-base font-bold shrink-0"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-base font-bold text-white"
             style={{ background: avatarColor(site.id) }}
           >
             {site.name[0].toUpperCase()}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-foreground truncate">{site.name}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-foreground">{site.name}</p>
             <a
               href={site.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-accent truncate mt-0.5"
+              className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-accent hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               {cleanUrl}
@@ -101,36 +83,39 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
             </a>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors shrink-0"
+            className="shrink-0 rounded-[4px] p-1.5 text-muted-foreground transition-colors hover:bg-[#f0f2f5] hover:text-foreground"
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* Status + Health */}
+        <div className="flex-1 space-y-3 overflow-y-auto bg-[#f0f2f5] px-4 py-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs text-muted-foreground font-medium mb-2">Status</p>
+            <div className="rounded-[4px] border border-border bg-white p-3.5">
+              <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">Status</p>
               <div className="flex items-center gap-1.5">
                 <span
-                  className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-red-500"}`}
+                  className={`h-2 w-2 rounded-full ${isOnline ? "bg-[var(--score-good)]" : "bg-[var(--score-bad)]"}`}
                 />
-                <span className={`text-sm font-semibold ${isOnline ? "text-green-600" : "text-red-600"}`}>
+                <span
+                  className={`text-sm font-bold ${
+                    isOnline ? "text-[var(--score-good)]" : "text-[var(--score-bad)]"
+                  }`}
+                >
                   {isOnline ? "Online" : site.uptime_status === "down" ? "Down" : "Unknown"}
                 </span>
               </div>
             </div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs text-muted-foreground font-medium mb-2">Health</p>
+            <div className="rounded-[4px] border border-border bg-white p-3.5">
+              <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">Health</p>
               {overallScore !== null ? (
                 <p className="text-sm font-semibold text-foreground">
                   <span className="text-xl font-bold" style={{ color: scoreHex(overallScore) }}>
                     {overallScore}
                   </span>
-                  <span className="text-muted-foreground text-xs">/100</span>
+                  <span className="text-xs text-muted-foreground">/100</span>
                 </p>
               ) : (
                 <p className="text-sm font-semibold text-muted-foreground">No data</p>
@@ -138,10 +123,9 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
             </div>
           </div>
 
-          {/* Audit Scores */}
           {scores && (
-            <div className="bg-white border border-border rounded-xl p-4">
-              <p className="text-sm font-semibold text-foreground mb-3">Audit Scores</p>
+            <div className="rounded-[4px] border border-border bg-white p-3.5">
+              <p className="mb-2.5 text-[13px] font-bold text-foreground">Audit Scores</p>
               <div className="grid grid-cols-4 gap-2">
                 <ScoreChip score={scores.performance} label="Perf" />
                 <ScoreChip score={scores.seo} label="SEO" />
@@ -151,23 +135,22 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
             </div>
           )}
 
-          {/* Uptime */}
-          <div className="bg-white border border-border rounded-xl p-4">
-            <p className="text-sm font-semibold text-foreground mb-1">Uptime</p>
-            <div className="flex items-center justify-between">
+          <div className="rounded-[4px] border border-border bg-white p-3.5">
+            <p className="mb-1 text-[13px] font-bold text-foreground">Uptime</p>
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-2xl font-bold text-foreground">{uptime.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground mt-0.5">30-day window</p>
+                <p className="text-2xl font-bold tabular-nums text-foreground">{uptime.toFixed(1)}%</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">30-day window</p>
               </div>
-              <UptimeRing pct={uptime} />
+              <SiteScoreWheel score={Math.round(uptime)} caption="" size={72} />
             </div>
           </div>
 
-          {/* Site Details collapsible */}
-          <div className="bg-white border border-border rounded-xl overflow-hidden">
+          <div className="overflow-hidden rounded-[4px] border border-border bg-white">
             <button
+              type="button"
               onClick={() => setDetailsOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-foreground hover:bg-gray-50 transition-colors"
+              className="flex w-full items-center justify-between px-3.5 py-3 text-[13px] font-bold text-foreground transition-colors hover:bg-[#f0f2f5]"
             >
               Site Details
               <ChevronDown
@@ -176,7 +159,7 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
               />
             </button>
             {detailsOpen && (
-              <div className="px-4 pb-4 space-y-2 border-t border-border pt-3">
+              <div className="space-y-2 border-t border-border px-3.5 pb-3.5 pt-3">
                 <DetailRow label="Plugin" value={site.plugin_connected ? "Connected" : "Not connected"} />
                 {site.plugin_data?.wp_version && (
                   <DetailRow label="WP Version" value={site.plugin_data.wp_version} />
@@ -202,31 +185,37 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
           </div>
         </div>
 
-        {/* Footer buttons */}
-        <div className="px-5 py-4 border-t border-border shrink-0 flex gap-3">
+        <div className="flex shrink-0 gap-2 border-t border-border bg-white px-4 py-3">
           {isClientPortal ? (
-            <button
-              onClick={() => { window.location.href = `/sites/${site.id}`; }}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
-              style={{ background: "var(--accent)" }}
+            <Button
+              className="flex-1"
+              size="sm"
+              onClick={() => {
+                window.location.href = `/sites/${site.id}`;
+              }}
             >
               View Site Details
-            </button>
+            </Button>
           ) : (
             <>
-              <button
-                onClick={() => { window.location.href = `/sites/${site.id}`; }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
-                style={{ background: "var(--accent)" }}
+              <Button
+                className="flex-1"
+                size="sm"
+                onClick={() => {
+                  window.location.href = `/sites/${site.id}`;
+                }}
               >
                 Run Audit Now
-              </button>
-              <button
-                onClick={() => { window.location.href = `/reports/${site.id}`; }}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-gray-50 transition-colors"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  window.location.href = `/reports/${site.id}`;
+                }}
               >
                 View Reports
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -237,9 +226,9 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-2">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xs font-medium text-foreground capitalize">{value}</span>
+      <span className="text-xs font-semibold capitalize text-foreground">{value}</span>
     </div>
   );
 }

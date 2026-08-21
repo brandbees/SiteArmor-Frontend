@@ -84,8 +84,7 @@ export function SecurityNotificationsPanel({
               />
               <button
                 onClick={() => setEditEmail(false)}
-                className="px-2.5 py-1.5 text-xs font-semibold text-white rounded-lg"
-                style={{ background: "var(--accent)" }}
+                className="rounded-[4px] px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-white bg-accent hover:bg-accent-hover"
               >
                 Save
               </button>
