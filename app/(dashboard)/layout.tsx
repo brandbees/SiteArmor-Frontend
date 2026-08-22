@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { BrandingProvider } from "@/contexts/BrandingContext";
+import { SiteProvider } from "@/components/sites/SiteContext";
 import { isLoggedIn, isTokenExpired, clearToken, getAgency } from "@/lib/auth";
 
 // Paths a client portal user is allowed to visit
@@ -20,8 +22,54 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => pathname === "/sites");
+  const sidebarUserToggled = useRef(false);
+  const prevPathname = useRef<string | null>(null);
+  const isSitesList = pathname === "/sites";
+  const isSiteDetail = /^\/sites\/[^/]+$/.test(pathname ?? "");
+  const siteDetailId = pathname?.match(/^\/sites\/([^/]+)$/)?.[1];
+  const isDashboard = pathname === "/dashboard";
+  const isFullBleed =
+    isSiteDetail ||
+    isDashboard ||
+    pathname === "/sites" ||
+    pathname === "/notifications" ||
+    pathname === "/reports" ||
+    pathname === "/agent" ||
+    /^\/reports\/[^/]+(\/[^/]+)?$/.test(pathname ?? "");
+  const isAgent = pathname === "/agent";
+
+  useEffect(() => {
+    const prev = prevPathname.current;
+    const enteringSites = (isSitesList || isSiteDetail) && prev !== "/sites" && !prev?.match(/^\/sites\/[^/]+$/);
+    const leavingSites = !isSitesList && !isSiteDetail && (prev === "/sites" || !!prev?.match(/^\/sites\/[^/]+$/));
+
+    if (enteringSites) {
+      setSidebarCollapsed(true);
+      sidebarUserToggled.current = false;
+    } else if (leavingSites) {
+      setSidebarCollapsed(localStorage.getItem("bb_sidebar_collapsed") === "1");
+      sidebarUserToggled.current = false;
+    } else if (prev === null && !isSitesList && !isSiteDetail) {
+      setSidebarCollapsed(localStorage.getItem("bb_sidebar_collapsed") === "1");
+    }
+
+    prevPathname.current = pathname ?? "";
+  }, [pathname, isSitesList, isSiteDetail]);
+
+  function toggleSidebar() {
+    sidebarUserToggled.current = true;
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      if (!isSitesList && !isSiteDetail) {
+        localStorage.setItem("bb_sidebar_collapsed", next ? "1" : "0");
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -108,17 +156,40 @@ export default function DashboardLayout({
 
   if (!ready) return null;
 
-  return (
-    <BrandingProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <TopBar />
+  const dashboardShell = (
+    <div className="flex h-screen flex-col overflow-hidden bg-[#f4f4f5]">
+      <AnnouncementBanner />
+      <div className="flex min-h-0 flex-1">
+        <Sidebar collapsed={sidebarCollapsed} />
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <TopBar collapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
           <TrialBanner />
-          <AnnouncementBanner />
-          <main className="flex-1 overflow-y-auto bg-background p-5 sm:p-6 lg:p-8">{children}</main>
+          <main
+            className={cn(
+              "min-w-0 flex-1 overflow-x-auto",
+              isDashboard ? "flex flex-col bg-[#f4f4f5]" : "bg-[#f4f4f5]",
+              isFullBleed ? "p-0" : "p-4 md:p-5",
+              isAgent || isSiteDetail || pathname?.startsWith("/reports")
+                ? "flex flex-col overflow-hidden"
+                : isDashboard
+                  ? "overflow-hidden"
+                  : "overflow-y-auto"
+            )}
+          >
+            {children}
+          </main>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <BrandingProvider>
+      {siteDetailId ? (
+        <SiteProvider siteId={siteDetailId}>{dashboardShell}</SiteProvider>
+      ) : (
+        dashboardShell
+      )}
     </BrandingProvider>
   );
 }

@@ -1,25 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  /* Base — soft gray canvas, pure white cards (MalCare contrast) */
-  --background: #f0f2f5;
+  /* MalCare shell — zinc neutrals, white surfaces, blue primary (BrandBees) */
+  --background: #f4f4f5;
   --surface: #ffffff;
-  --foreground: #1a1d23;
-  --muted: #e8ebf0;
-  --muted-foreground: #6b7280;
-  --border: rgb(26 29 35 / 0.09);
-  --border-strong: rgb(26 29 35 / 0.14);
+  --foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
   --card: #ffffff;
-  --card-foreground: #0a0f1a;
+  --card-foreground: #09090b;
 
-  /* Brand — #1a56db: a saturated royal blue that reads clearly on
-     both light and dark backgrounds while staying in the BrandBees
-     navy family. Derived tints/shades stay blue, never muddy. */
+  /* Brand — keep Site Armor blue for CTAs / active states */
   --primary: #0a0f1a;
   --primary-foreground: #ffffff;
   --accent: #1a56db;
   --accent-hover: #1347b8;
-  --accent-light: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-light: #eff6ff;
   --accent-deep: #102850;
   --accent-rgb: 26, 86, 219;
   --accent-foreground: #ffffff;
@@ -29,7 +27,8 @@
   --destructive: #dc2626;
   --destructive-light: #fef2f2;
   --ring: #1a56db;
-  --radius: 0.5rem;
+  --radius: 0.375rem;
+  --radius-card: 1.5rem;
 
   /* Shadows — prefer hairline border; keep elevation subtle */
   --shadow-xs: 0 0 0 1px rgb(15 23 42 / 0.06);
@@ -164,6 +163,15 @@ textarea:focus:not(.no-focus-ring) {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+/* Hide scrollbar but keep scroll (tab rows, drawers) */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
 
 /* Smooth transitions for interactive elements */
 button, a, input, select, textarea {

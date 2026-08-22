@@ -2,18 +2,27 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Bell, AlertTriangle, Megaphone,
-  Pin, ChevronLeft, ChevronRight, Globe,
-  ShieldAlert, Zap, Search, ArrowRight, WifiOff,
+  Bell,
+  AlertTriangle,
+  Megaphone,
+  Pin,
+  ChevronLeft,
+  ChevronRight,
+  ShieldAlert,
+  Zap,
+  Search,
+  WifiOff,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { PortalTabs } from "@/components/shared/PortalPrimitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Badge } from "@/components/ui/Badge";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { McAlert, McIconBox, McPill } from "@/components/shared/MalCareUI";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 type Tab = "all" | "alerts" | "announcements";
+type Tone = "neutral" | "good" | "warn" | "bad" | "accent";
 
 interface NotifBreach {
   pillar: string;
@@ -36,152 +45,397 @@ interface NotifItem {
   created_at: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const LIMIT = 25;
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "alerts", label: "Site Alerts" },
+  { key: "announcements", label: "Announcements" },
+];
+
+const SEV_TONE: Record<NotifItem["severity"], Tone> = {
+  critical: "bad",
+  warning: "warn",
+  success: "good",
+  info: "accent",
+};
+
+const ROW_GRID =
+  "md:grid-cols-[36px_minmax(0,1fr)_minmax(100px,160px)_92px_20px]";
 
 function timeAgo(d: string) {
   const diff = Date.now() - new Date(d).getTime();
   const s = Math.floor(diff / 1000);
-  if (s < 60)    return "just now";
-  if (s < 3600)  return `${Math.floor(s / 60)}m ago`;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
   const days = Math.floor(s / 86400);
-  if (days < 7)  return `${days}d ago`;
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  if (days < 7) return `${days}d ago`;
+  return new Date(d).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
-const SEV: Record<string, { iconBg: string; iconColor: string; badge: string; label: string }> = {
-  critical: { iconBg: "bg-red-50",   iconColor: "text-red-500",   badge: "bg-red-50 text-red-600 border border-red-100",     label: "Critical" },
-  warning:  { iconBg: "bg-amber-50", iconColor: "text-amber-500", badge: "bg-amber-50 text-amber-600 border border-amber-100", label: "Warning"  },
-  success:  { iconBg: "bg-green-50", iconColor: "text-green-600", badge: "bg-green-50 text-green-700 border border-green-100", label: "Healthy"  },
-  info:     { iconBg: "bg-blue-50",  iconColor: "text-blue-500",  badge: "bg-blue-50 text-blue-700 border border-blue-100",   label: "Info"     },
-};
-
-function pillarIcon(pillar: string, cls: string, size = 16) {
-  if (pillar === "malware" || pillar === "security") return <ShieldAlert size={size} className={cls} />;
-  if (pillar === "performance") return <Zap size={size} className={cls} />;
-  if (pillar === "seo")         return <Search size={size} className={cls} />;
-  if (pillar === "uptime")      return <WifiOff size={size} className={cls} />;
-  return <AlertTriangle size={size} className={cls} />;
+function pillarIcon(pillar: string, size = 14) {
+  if (pillar === "malware" || pillar === "security")
+    return <ShieldAlert size={size} strokeWidth={2.25} />;
+  if (pillar === "performance") return <Zap size={size} strokeWidth={2.25} />;
+  if (pillar === "seo") return <Search size={size} strokeWidth={2.25} />;
+  if (pillar === "uptime") return <WifiOff size={size} strokeWidth={2.25} />;
+  return <AlertTriangle size={size} strokeWidth={2.25} />;
 }
 
-function mainIcon(item: NotifItem, cls: string) {
-  if (item.notification_type === "announcement") return <Megaphone size={16} className={`text-[var(--accent)] ${cls}`} />;
-  if (item.action === "audit_failed")            return <AlertTriangle size={16} className={`text-amber-500 ${cls}`} />;
-  const breaches = item.details?.breaches ?? [];
-  const firstPillar = breaches[0]?.pillar ?? "";
-  const sev = SEV[item.severity] ?? SEV.info;
-  return pillarIcon(firstPillar, `${sev.iconColor} ${cls}`);
+function rowIcon(item: NotifItem) {
+  if (item.notification_type === "announcement")
+    return <Megaphone size={14} strokeWidth={2.25} />;
+  if (item.action === "audit_failed")
+    return <AlertTriangle size={14} strokeWidth={2.25} />;
+  const firstPillar = item.details?.breaches?.[0]?.pillar ?? "";
+  if (firstPillar) return pillarIcon(firstPillar, 14);
+  return <Bell size={14} strokeWidth={2.25} />;
 }
 
 function notifTitle(item: NotifItem): string {
   if (item.notification_type === "announcement") return item.title;
-  if (item.action === "audit_failed") return "Audit Failed";
+  if (item.action === "audit_failed") return "Audit failed";
   const breaches = item.details?.breaches ?? [];
   if (breaches.length === 0) return item.title;
-  const pillars = breaches.map(b => b.pillar);
+  const pillars = breaches.map((b) => b.pillar);
   if (pillars.length === 1) {
     const p = pillars[0];
-    if (p === "malware")     return "Malware Detected";
-    if (p === "security")    return "Security Issue Found";
-    if (p === "performance") return "Performance Degraded";
-    if (p === "seo")         return "SEO Score Dropped";
-    if (p === "uptime")      return "Site Went Offline";
+    if (p === "malware") return "Malware detected";
+    if (p === "security") return "Security issue";
+    if (p === "performance") return "Performance degraded";
+    if (p === "seo") return "SEO score dropped";
+    if (p === "uptime") return "Site offline";
     return item.title;
   }
-  return pillars.map(p => p[0].toUpperCase() + p.slice(1)).join(" & ") + " Alert";
+  return `${pillars.length} pillar alerts`;
 }
 
-function notifDescription(item: NotifItem): string {
+function rawDescription(item: NotifItem): string {
   if (item.notification_type === "announcement") return item.body;
-  if (item.action === "audit_failed") {
-    return item.body || "The scheduled audit could not be completed. Check the site connection.";
-  }
+  if (item.action === "audit_failed") return item.body;
   const breaches = item.details?.breaches ?? [];
   if (breaches.length === 0) return item.body;
-  return breaches.map(b => {
-    const name = b.pillar.charAt(0).toUpperCase() + b.pillar.slice(1);
-    if (b.score === null) return `${name} monitoring detected the site is offline.`;
-    if (b.pillar === "malware")     return `Malware scan scored ${b.score}/100 — threats detected on this site.`;
-    if (b.pillar === "security")    return `Security score dropped to ${b.score}/100 — review firewall and hardening settings.`;
-    if (b.pillar === "performance") return `Performance score is ${b.score}/100 — page speed issues detected.`;
-    if (b.pillar === "seo")         return `SEO score dropped to ${b.score}/100 — check metadata and crawlability.`;
-    if (b.pillar === "uptime")      return `Uptime score is ${b.score}/100 — site may be intermittently down.`;
-    return `${name} score: ${b.score}/100`;
-  }).join(" ");
+  return breaches
+    .map((b) => {
+      const name = b.pillar.charAt(0).toUpperCase() + b.pillar.slice(1);
+      if (b.score === null) return `${name}: site appears offline`;
+      return `${name} score ${b.score}/100`;
+    })
+    .join(" · ");
 }
 
-function breachChipClass(b: NotifBreach): string {
-  const bad = b.score === null || b.score < 50;
-  return bad
-    ? "bg-red-50 text-red-600 border border-red-100"
-    : "bg-amber-50 text-amber-600 border border-amber-100";
+/** Turn raw backend / scanner errors into readable copy */
+function formatNotifBody(raw: string): string {
+  const body = raw.trim();
+  if (!body) return "No additional details.";
+
+  if (
+    /is not a function/i.test(body) ||
+    /TypeError|ReferenceError|SyntaxError/i.test(body)
+  ) {
+    return "Scanner encountered an internal error. Reconnect the plugin and run a manual scan from the site page.";
+  }
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|network error/i.test(body)) {
+    return "Could not reach the site. Check that the plugin is connected and the site is online.";
+  }
+  if (/Scanner failed after/i.test(body)) {
+    if (/fetch failed/i.test(body)) {
+      return "Scanner could not reach the site after multiple attempts.";
+    }
+    return "Automated scan failed. Try running a manual scan from the site dashboard.";
+  }
+  return body;
 }
 
-function breachLabel(b: NotifBreach): string {
-  const name = b.pillar.charAt(0).toUpperCase() + b.pillar.slice(1);
-  if (b.score === null) return `${name}: Offline`;
-  return `${name}: ${b.score}/100`;
+function siteLabel(item: NotifItem): string | null {
+  if (item.site_name) return item.site_name;
+  if (item.site_url) return item.site_url.replace(/^https?:\/\//, "");
+  return null;
 }
 
-const LIMIT = 20;
+function stripeClass(tone: Tone) {
+  const map: Record<Tone, string> = {
+    bad: "bg-[var(--score-bad)]",
+    warn: "bg-[var(--score-warn)]",
+    good: "bg-[var(--score-good)]",
+    accent: "bg-accent",
+    neutral: "bg-muted-foreground",
+  };
+  return map[tone];
+}
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "all",           label: "All"           },
-  { key: "alerts",        label: "Site Alerts"   },
-  { key: "announcements", label: "Announcements" },
-];
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: Tone;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5 bg-white px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "font-portal-display text-xl font-bold tabular-nums leading-none",
+          tone === "warn" && "text-[var(--score-warn)]",
+          tone === "accent" && "text-accent",
+          tone === "bad" && "text-[var(--score-bad)]",
+          !tone && "text-foreground"
+        )}
+      >
+        {value.toLocaleString()}
+      </p>
+    </div>
+  );
+}
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+function NotificationRow({
+  item,
+  onNavigate,
+}: {
+  item: NotifItem;
+  onNavigate: (path: string) => void;
+}) {
+  const tone = SEV_TONE[item.severity] ?? "neutral";
+  const dest = item.site_id ? `/sites/${item.site_id}` : null;
+  const site = siteLabel(item);
+  const title = notifTitle(item);
+  const message = formatNotifBody(rawDescription(item));
+  const isAnnouncement = item.notification_type === "announcement";
+
+  return (
+    <div
+      role={dest ? "button" : undefined}
+      tabIndex={dest ? 0 : undefined}
+      onClick={dest ? () => onNavigate(dest) : undefined}
+      onKeyDown={
+        dest
+          ? (e) => {
+              if (e.key === "Enter") onNavigate(dest);
+            }
+          : undefined
+      }
+      className={cn(
+        "group relative grid min-w-0 grid-cols-1 gap-1 border-b border-border px-4 py-3 transition-colors last:border-b-0",
+        ROW_GRID,
+        "md:items-center md:gap-3 md:py-2.5",
+        dest ? "cursor-pointer hover:bg-[#f7f9fc]" : "hover:bg-[#fafbfc]"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute inset-y-0 left-0 w-[3px] md:hidden",
+          stripeClass(tone)
+        )}
+      />
+
+      <McIconBox icon={rowIcon(item)} tone={tone} size="sm" className="hidden md:flex" />
+
+      <div className="flex min-w-0 items-start gap-2.5 md:contents">
+        <McIconBox icon={rowIcon(item)} tone={tone} size="sm" className="md:hidden" />
+        <div className="min-w-0 flex-1 md:col-start-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate text-[13px] font-bold text-foreground">{title}</p>
+            {item.pinned && (
+              <Pin size={10} className="shrink-0 text-[var(--score-warn)]" />
+            )}
+            {isAnnouncement && (
+              <McPill tone="accent" className="hidden shrink-0 sm:inline-flex">
+                Announcement
+              </McPill>
+            )}
+          </div>
+          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground md:line-clamp-1">
+            {message}
+          </p>
+          {site && (
+            <p className="mt-1 truncate text-[11px] font-medium text-muted-foreground/80 md:hidden">
+              {site}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <p className="hidden min-w-0 truncate text-xs font-medium text-muted-foreground md:block">
+        {site ?? "—"}
+      </p>
+
+      <time className="shrink-0 text-[11px] tabular-nums text-muted-foreground md:text-right">
+        {timeAgo(item.created_at)}
+      </time>
+
+      <ChevronRight
+        size={14}
+        strokeWidth={2.25}
+        className={cn(
+          "hidden shrink-0 text-muted-foreground/40 transition-colors md:block",
+          dest && "group-hover:text-accent"
+        )}
+      />
+    </div>
+  );
+}
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const [tab,     setTab]     = useState<Tab>("all");
-  const [page,    setPage]    = useState(1);
-  const [items,   setItems]   = useState<NotifItem[]>([]);
-  const [total,   setTotal]   = useState(0);
+  const [tab, setTab] = useState<Tab>("all");
+  const [page, setPage] = useState(1);
+  const [items, setItems] = useState<NotifItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState<Record<Tab, number>>({
+    all: 0,
+    alerts: 0,
+    announcements: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadCounts = useCallback(async () => {
+    try {
+      const results = await Promise.all(
+        TABS.map(async ({ key }) => {
+          const { data } = await api.get(
+            `/notifications?tab=${key}&page=1&limit=1`
+          );
+          return [key, data.total ?? 0] as const;
+        })
+      );
+      setCounts(Object.fromEntries(results) as Record<Tab, number>);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const { data } = await api.get(`/notifications?tab=${tab}&page=${page}&limit=${LIMIT}`);
+      const { data } = await api.get(
+        `/notifications?tab=${tab}&page=${page}&limit=${LIMIT}`
+      );
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
+      setCounts((prev) => ({ ...prev, [tab]: data.total ?? prev[tab] }));
+    } catch {
+      setError("Could not load notifications. Please try again.");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, [tab, page]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    loadCounts();
+  }, [loadCounts]);
 
-  function switchTab(t: Tab) { setTab(t); setPage(1); }
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  function switchTab(t: Tab) {
+    setTab(t);
+    setPage(1);
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
-  const from = (page - 1) * LIMIT + 1;
-  const to   = Math.min(page * LIMIT, total);
+  const from = total === 0 ? 0 : (page - 1) * LIMIT + 1;
+  const to = Math.min(page * LIMIT, total);
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Notifications"
-        description="Site alerts and platform announcements."
-        icon={<Bell size={22} />}
-        action={
-          total > 0 ? (
-            <Badge variant="muted">{total} total</Badge>
-          ) : undefined
-        }
-      />
-
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="px-2 pt-1">
-          <PortalTabs tabs={TABS} value={tab} onChange={switchTab} />
+    <div className="flex min-w-0 w-full flex-col overflow-x-hidden">
+      {/* Header */}
+      <div className="border-b border-border bg-white px-4 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <McIconBox icon={<Bell size={16} strokeWidth={2.25} />} tone="accent" />
+            <div className="min-w-0">
+              <h1 className="font-portal-display text-xl font-bold tracking-tight text-foreground sm:text-[1.375rem]">
+                Notifications
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Site alerts and platform announcements
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => load()}
+            disabled={loading}
+            className="normal-case tracking-normal"
+          >
+            Refresh
+          </Button>
         </div>
+      </div>
+
+      {/* Stats strip */}
+      <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-white">
+        <StatCell label="Site alerts" value={counts.alerts} tone="warn" />
+        <StatCell label="Announcements" value={counts.announcements} tone="accent" />
+        <StatCell label="Total" value={counts.all} />
+      </div>
+
+      {/* Tabs — 3 items, no horizontal scroll needed */}
+      <div className="flex border-b border-border bg-white px-2 sm:px-4">
+        {TABS.map(({ key, label }) => {
+          const active = tab === key;
+          const count = counts[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => switchTab(key)}
+              className={cn(
+                "relative flex shrink-0 items-center gap-2 px-3 py-3 text-[13px] font-semibold transition-colors sm:px-4",
+                active
+                  ? "text-accent"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {label}
+              <span
+                className={cn(
+                  "rounded-[3px] px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  active
+                    ? "bg-accent/10 text-accent"
+                    : "bg-[#eef1f6] text-muted-foreground"
+                )}
+              >
+                {count}
+              </span>
+              {active && (
+                <span className="absolute inset-x-1 bottom-0 h-[3px] rounded-t-full bg-accent sm:inset-x-2" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* List panel — full width, no side padding wrapper */}
+      <div className="min-w-0 overflow-x-hidden bg-white">
+        {error && (
+          <div className="border-b border-border p-4">
+            <McAlert variant="error" title="Failed to load">
+              {error}
+            </McAlert>
+          </div>
+        )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <div className="flex items-center justify-center py-24">
+            <LoadingSpinner />
           </div>
-        ) : items.length === 0 ? (
+        ) : items.length === 0 && !error ? (
           <EmptyState
             icon={<Bell size={20} />}
             title="No notifications"
@@ -194,125 +448,64 @@ export default function NotificationsPage() {
             }
           />
         ) : (
-          <div className="divide-y divide-border">
-            {items.map((item) => {
-              const sev = SEV[item.severity] ?? SEV.info;
-              const breaches = item.details?.breaches ?? [];
-              const dest = item.site_id ? `/sites/${item.site_id}` : null;
-              const isAlert = item.notification_type === "alert";
+          <>
+            <div
+              className={cn(
+                "hidden min-w-0 border-b border-border bg-[#f7f9fc] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground md:grid md:gap-3",
+                ROW_GRID
+              )}
+            >
+              <span />
+              <span>Notification</span>
+              <span>Site</span>
+              <span className="text-right">When</span>
+              <span />
+            </div>
 
-              return (
-                <div
+            <div className="min-w-0 divide-y-0">
+              {items.map((item) => (
+                <NotificationRow
                   key={item.id}
-                  role={dest ? "button" : undefined}
-                  tabIndex={dest ? 0 : undefined}
-                  onClick={dest ? () => router.push(dest) : undefined}
-                  onKeyDown={
-                    dest
-                      ? (e) => {
-                          if (e.key === "Enter") router.push(dest);
-                        }
-                      : undefined
-                  }
-                  className={`group flex items-start gap-3 px-4 py-3.5 transition-colors ${
-                    dest ? "cursor-pointer hover:bg-muted/50" : "hover:bg-muted/30"
-                  }`}
-                >
-                  <div
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] ${sev.iconBg}`}
-                  >
-                    {mainIcon(item, "")}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-bold text-foreground">{notifTitle(item)}</p>
-                      {item.pinned && <Pin size={10} className="shrink-0 text-amber-500" />}
-                      <Badge variant={isAlert ? "danger" : "accent"}>
-                        {isAlert ? "Alert" : "Announcement"}
-                      </Badge>
-                      <span
-                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${sev.badge}`}
-                      >
-                        {sev.label}
-                      </span>
-                    </div>
-
-                    {(item.site_name || item.site_url) && (
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <Globe size={11} className="shrink-0 text-muted-foreground" />
-                        <span className="truncate text-xs font-medium text-muted-foreground">
-                          {item.site_name ?? ""}
-                          {item.site_url && (
-                            <span className="font-normal text-muted-foreground/60">
-                              {item.site_name ? " · " : ""}
-                              {item.site_url.replace(/^https?:\/\//, "")}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    )}
-
-                    <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      {notifDescription(item)}
-                    </p>
-
-                    {isAlert && breaches.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {breaches.map((b, i) => (
-                          <span
-                            key={i}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold ${breachChipClass(b)}`}
-                          >
-                            {pillarIcon(b.pillar, "", 11)}
-                            {breachLabel(b)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="ml-2 flex shrink-0 flex-col items-end gap-1.5">
-                    <span className="text-[11px] tabular-nums text-muted-foreground">
-                      {timeAgo(item.created_at)}
-                    </span>
-                    {dest && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-accent opacity-0 transition-opacity group-hover:opacity-100">
-                        View <ArrowRight size={11} />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  item={item}
+                  onNavigate={(path) => router.push(path)}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border bg-muted/20 px-4 py-3">
-            <p className="text-xs font-medium text-muted-foreground">
-              {from}–{to} of {total}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-[#f7f9fc] px-4 py-3">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-bold text-foreground">{from}–{to}</span> of{" "}
+              <span className="font-bold text-foreground">{total.toLocaleString()}</span>
             </p>
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-[4px] border border-border bg-surface p-1.5 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                className="normal-case tracking-normal"
               >
                 <ChevronLeft size={14} />
-              </button>
-              <span className="text-xs font-bold text-foreground">
+                Prev
+              </Button>
+              <span className="min-w-[4rem] text-center text-xs font-bold tabular-nums">
                 {page} / {totalPages}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="rounded-[4px] border border-border bg-surface p-1.5 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                className="normal-case tracking-normal"
               >
+                Next
                 <ChevronRight size={14} />
-              </button>
+              </Button>
             </div>
           </div>
         )}

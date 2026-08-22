@@ -8,6 +8,7 @@ interface PageHeaderProps {
   icon?: React.ReactNode;
 }
 
+/** MalCare page title row — text-xl title, accent subtitle */
 export function PageHeader({
   title,
   description,
@@ -16,17 +17,19 @@ export function PageHeader({
   icon,
 }: PageHeaderProps) {
   return (
-    <div className={cn("mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2.5">
-          {icon ? <span className="text-accent">{icon}</span> : null}
-          <h1 className="font-portal-display text-[1.75rem] font-bold leading-none tracking-tight text-foreground">
-            {title}
-          </h1>
-        </div>
-        {description ? (
-          <p className="mt-2 text-sm font-medium text-accent">{description}</p>
+    <div className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
+      <div className="flex min-w-0 items-center gap-3">
+        {icon ? (
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-950">
+            {icon}
+          </span>
         ) : null}
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold leading-normal text-black">{title}</h1>
+          {description ? (
+            <p className="text-xs font-normal leading-normal text-accent">{description}</p>
+          ) : null}
+        </div>
       </div>
       {action ? <div className="flex shrink-0 flex-wrap items-center gap-3">{action}</div> : null}
     </div>

@@ -15,11 +15,12 @@ import { useSites, type PortfolioStats } from "@/hooks/useSites";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { McAlert } from "@/components/shared/MalCareUI";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { UpgradeBanner } from "@/components/shared/UpgradeBanner";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AddSiteModal } from "@/components/sites/AddSiteModal";
-import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { MalCareDashboard } from "@/components/dashboard/MalCareDashboard";
 import { Button } from "@/components/ui/Button";
 import { IconChip } from "@/components/ui/IconChip";
 import { PLAN_LIMITS } from "@/lib/constants";
@@ -740,9 +741,9 @@ export default function DashboardPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (loading) {
+  if (loading && sites.length === 0) {
     return (
-      <div className="flex justify-center py-20">
+      <div className="flex min-h-full justify-center py-20" style={{ background: "linear-gradient(180deg, rgba(209, 250, 229, 0.15) 0%, rgba(236, 253, 245, 0.70) 0.98%, #F4F4F5 4.16%)" }}>
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -750,15 +751,18 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-        {error}
+      <div className="min-h-full p-4 md:p-5" style={{ background: "linear-gradient(180deg, rgba(209, 250, 229, 0.15) 0%, rgba(236, 253, 245, 0.70) 0.98%, #F4F4F5 4.16%)" }}>
+        <McAlert variant="error" title="Could not load dashboard">
+          {error}
+        </McAlert>
       </div>
     );
   }
 
   if (sites.length === 0) {
     return (
-      <EmptyState
+      <div className="min-h-full p-4 md:p-5" style={{ background: "linear-gradient(180deg, rgba(209, 250, 229, 0.15) 0%, rgba(236, 253, 245, 0.70) 0.98%, #F4F4F5 4.16%)" }}>
+        <EmptyState
         icon={<Globe size={22} />}
         title="No sites yet"
         description={
@@ -774,326 +778,26 @@ export default function DashboardPage() {
           ) : undefined
         }
       />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {atLimit && canAddSite && !isIndividual && (
-        <UpgradeBanner
-          message={`You've reached your ${limit}-site limit on the ${agency?.plan} plan.`}
-        />
-      )}
-
-      <PageHeader
-        title="Dashboard"
-        description={
-          isIndividual
-            ? "Your site health overview."
-            : "Monitor alerts and portfolio health."
-        }
-        icon={<LayoutDashboard size={22} />}
-        action={
-          canAddSite && !agency?.is_client_portal ? (
-            <Button onClick={() => setShowAdd(true)}>
-              <Plus size={15} strokeWidth={2.5} />
-              Add Site
-            </Button>
-          ) : undefined
-        }
+    <>
+      <MalCareDashboard
+        sites={sites}
+        portfolio={portfolio}
+        agency={agency}
+        isIndividual={isIndividual}
+        canAddSite={canAddSite}
+        atLimit={atLimit}
+        onAddSite={() => setShowAdd(true)}
+        avgScore={avgScore}
+        threatCount={threatCount}
+        connectedCount={connectedCount}
+        displayTrendData={displayTrendData}
+        needsAuditSites={sites.filter((s) => s.plugin_connected && !s.last_audit_at)}
       />
-
-      {agency && !agency.is_client_portal && (
-        <OnboardingChecklist agency={agency} sites={sites} />
-      )}
-
-      {!agency?.is_client_portal && <NextStepsPanel sites={sites} />}
-
-      {/* Metric row — MalCare style */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Link
-          href="/sites"
-          className="rounded-xl border border-border bg-surface p-5 transition-colors hover:border-accent/35"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Sites
-            </p>
-            <Globe size={16} className="text-accent" strokeWidth={1.75} />
-          </div>
-          <p className="font-portal-display text-lg font-bold text-[var(--score-good)]">
-            {sites.filter((s) => s.uptime_status === "up").length} Sites Up
-          </p>
-          <p className="mt-1 text-sm font-semibold text-[var(--score-bad)]">
-            {sites.filter((s) => s.uptime_status === "down").length} Sites Down
-          </p>
-        </Link>
-
-        <Link
-          href="/sites"
-          className="rounded-xl border border-border bg-surface p-5 transition-colors hover:border-accent/35"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Health
-            </p>
-            <TrendingUp size={16} className="text-accent" strokeWidth={1.75} />
-          </div>
-          <p className="font-portal-display text-2xl font-bold tabular-nums text-foreground">
-            {avgScore !== null ? avgScore : "—"}
-            <span className="text-sm font-semibold text-muted-foreground"> /100</span>
-          </p>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            {avgScore === null
-              ? "No audits yet"
-              : avgScore >= 80
-                ? "Portfolio healthy"
-                : "Needs attention"}
-          </p>
-        </Link>
-
-        <Link
-          href="/malware"
-          className="rounded-xl border border-border bg-surface p-5 transition-colors hover:border-accent/35"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Threats
-            </p>
-            <Shield size={16} className="text-accent" strokeWidth={1.75} />
-          </div>
-          <p className="font-portal-display text-2xl font-bold tabular-nums text-foreground">
-            {threatCount}
-          </p>
-          <p
-            className={`mt-1 text-sm font-semibold ${threatCount === 0 ? "text-[var(--score-good)]" : "text-[var(--score-bad)]"}`}
-          >
-            {threatCount === 0 ? "All clear" : "Sites affected"}
-          </p>
-        </Link>
-
-        <Link
-          href="/sites"
-          className="rounded-xl border border-border bg-surface p-5 transition-colors hover:border-accent/35"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Plugins
-            </p>
-            <Puzzle size={16} className="text-accent" strokeWidth={1.75} />
-          </div>
-          <p className="font-portal-display text-2xl font-bold tabular-nums text-foreground">
-            {connectedCount}/{sites.length}
-          </p>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            Connected agents
-          </p>
-        </Link>
-      </div>
-
-      {/* Alerts panel */}
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-          <div className="flex items-center gap-2">
-            <h2 className="font-portal-display text-lg font-bold text-foreground">Alerts</h2>
-            <span className="rounded-[4px] bg-accent-light px-2 py-0.5 text-[11px] font-bold text-accent">
-              {sites.length} Sites
-            </span>
-          </div>
-          <Link href="/notifications" className="text-xs font-bold text-accent hover:underline">
-            View all
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 border-b border-border p-4 sm:grid-cols-3">
-          <Link
-            href="/sites?filter=hacked"
-            className="rounded-[4px] border border-[var(--score-bad-border)] bg-[var(--score-bad-bg)] px-4 py-3"
-          >
-            <p className="text-xs font-bold text-[var(--score-bad)]">
-              Threats ({threatCount})
-            </p>
-          </Link>
-          <Link
-            href="/sites?filter=down"
-            className="rounded-[4px] border border-border bg-muted/40 px-4 py-3"
-          >
-            <p className="text-xs font-bold text-foreground">
-              Down ({sites.filter((s) => s.uptime_status === "down").length})
-            </p>
-          </Link>
-          <Link
-            href="/sites?filter=warning"
-            className="rounded-[4px] border border-[var(--score-warn-border)] bg-[var(--score-warn-bg)] px-4 py-3"
-          >
-            <p className="text-xs font-bold text-[var(--score-warn)]">
-              Warnings (
-              {
-                sites.filter((s) => {
-                  const sc = s.overall_score ?? 100;
-                  return sc < 80 && sc >= 50;
-                }).length
-              }
-              )
-            </p>
-          </Link>
-        </div>
-
-        <div className="divide-y divide-border">
-          {sites
-            .filter(
-              (s) =>
-                s.uptime_status === "down" ||
-                s.malware_status === "threat" ||
-                (s.overall_score != null && s.overall_score < 80) ||
-                !s.plugin_connected
-            )
-            .slice(0, 8)
-            .map((s) => {
-              const isThreat = s.malware_status === "threat";
-              const isDown = s.uptime_status === "down";
-              const label = isThreat
-                ? "Threat Detected"
-                : isDown
-                  ? "Site Down"
-                  : !s.plugin_connected
-                    ? "Plugin Disconnected"
-                    : "Needs Attention";
-              return (
-                <Link
-                  key={s.id}
-                  href={`/sites/${s.id}`}
-                  className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/40"
-                >
-                  <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] ${
-                      isThreat || isDown
-                        ? "bg-[var(--score-bad-bg)] text-[var(--score-bad)]"
-                        : "bg-[var(--score-warn-bg)] text-[var(--score-warn)]"
-                    }`}
-                  >
-                    {isThreat ? (
-                      <Shield size={16} />
-                    ) : isDown ? (
-                      <WifiOff size={16} />
-                    ) : (
-                      <AlertTriangle size={16} />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-foreground">{label}</p>
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          isThreat || isDown ? "bg-[var(--score-bad)]" : "bg-[var(--score-warn)]"
-                        }`}
-                      />
-                    </div>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {s.name} · {s.url.replace(/^https?:\/\//, "")}
-                    </p>
-                  </div>
-                  <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-                </Link>
-              );
-            })}
-          {sites.every(
-            (s) =>
-              s.uptime_status !== "down" &&
-              s.malware_status !== "threat" &&
-              (s.overall_score == null || s.overall_score >= 80) &&
-              s.plugin_connected
-          ) && (
-            <div className="px-5 py-10 text-center">
-              <CheckCircle2 size={28} className="mx-auto mb-2 text-[var(--score-good)]" />
-              <p className="text-sm font-bold text-foreground">No active alerts</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                All monitored sites look healthy right now.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Charts — quieter secondary row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <h3 className="text-sm font-bold text-foreground">Health Score Trend</h3>
-          <p className="mb-4 text-xs text-muted-foreground">Recent audits</p>
-          {displayTrendData.length === 0 ? (
-            <div className="flex h-40 items-center justify-center text-xs text-muted-foreground">
-              Run audits to build trend data
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart data={displayTrendData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1a56db" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#1a56db" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 4, border: "1px solid rgb(15 23 42 / 0.08)" }} />
-                <Area type="monotone" dataKey="score" stroke="#1a56db" strokeWidth={2} fill="url(#scoreGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <h3 className="text-sm font-bold text-foreground">Score by Pillar</h3>
-          <p className="mb-4 text-xs text-muted-foreground">Portfolio averages</p>
-          {radarData.length === 0 ? (
-            <div className="flex h-40 items-center justify-center text-xs text-muted-foreground">
-              No audit data yet
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={160}>
-              <RadarChart data={radarData} margin={{ top: 10, right: 30, left: 30, bottom: 10 }}>
-                <PolarGrid stroke="#f1f5f9" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "#64748b" }} />
-                <Radar dataKey="value" stroke="#1a56db" strokeWidth={2} fill="#1a56db" fillOpacity={0.12} />
-              </RadarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="mb-1 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-foreground">Sites</h3>
-            <Link href="/sites" className="text-xs font-bold text-accent hover:underline">
-              Manage →
-            </Link>
-          </div>
-          <p className="mb-3 text-xs text-muted-foreground">Quick portfolio view</p>
-          <div className="max-h-40 space-y-1 overflow-y-auto">
-            {sites.slice(0, 6).map((s) => (
-              <Link
-                key={s.id}
-                href={`/sites/${s.id}`}
-                className="flex items-center justify-between rounded-[4px] px-2 py-2 hover:bg-muted/50"
-              >
-                <span className="truncate text-xs font-semibold text-foreground">{s.name}</span>
-                <span
-                  className={`text-xs font-bold tabular-nums ${
-                    (s.overall_score ?? 0) >= 80
-                      ? "text-[var(--score-good)]"
-                      : (s.overall_score ?? 0) >= 50
-                        ? "text-[var(--score-warn)]"
-                        : "text-muted-foreground"
-                  }`}
-                >
-                  {s.overall_score ?? "—"}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {showAdd && (
         <AddSiteModal
           onClose={() => setShowAdd(false)}
@@ -1103,6 +807,6 @@ export default function DashboardPage() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }

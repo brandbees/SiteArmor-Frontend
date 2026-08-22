@@ -29,10 +29,9 @@ export function useSites() {
   const [error, setError] = useState<string | null>(null);
 
   const fetch = useCallback(async (invalidate = false, silent = false) => {
-    // ALWAYS clear cache to ensure fresh data (especially for malware scores)
-    cacheClear(CACHE_KEY);
+    if (invalidate) cacheClear(CACHE_KEY);
     setError(null);
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const { data } = await api.get<{ sites: RawSite[]; portfolio?: PortfolioStats } | RawSite[]>("/sites");
       const raw: RawSite[] = Array.isArray(data)
@@ -44,32 +43,36 @@ export function useSites() {
         : null;
       setSites(mappedSites);
       setPortfolio(portf);
-      // Skip caching - always fetch fresh
+      cacheSet(CACHE_KEY, { sites: mappedSites, portfolio: portf });
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("bb:data-fetched", { detail: { key: CACHE_KEY, fetchedAt: Date.now() } })
         );
       }
     } catch {
-      setError("Failed to load sites.");
+      if (!silent) setError("Failed to load sites.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Check if a refresh was needed while this component was unmounted
-    const needsRefresh = typeof window !== "undefined" && sessionStorage.getItem('needsDataRefresh') === 'true';
+    const needsRefresh =
+      typeof window !== "undefined" && sessionStorage.getItem("needsDataRefresh") === "true";
     if (needsRefresh) {
-      sessionStorage.removeItem('needsDataRefresh');
-      fetch(true, false); // Force fresh fetch
+      sessionStorage.removeItem("needsDataRefresh");
+      fetch(true, false);
+    } else if (cached?.data.sites.length) {
+      fetch(false, true);
     } else {
-      fetch();
+      fetch(false, false);
     }
-  }, [fetch]);
+  }, [fetch]); // eslint-disable-line react-hooks/exhaustive-deps -- only run on mount
 
   useEffect(() => {
-    function handleRefresh() { fetch(true); }
+    function handleRefresh() {
+      fetch(true, true);
+    }
     window.addEventListener("bb:refresh", handleRefresh);
     return () => window.removeEventListener("bb:refresh", handleRefresh);
   }, [fetch]);

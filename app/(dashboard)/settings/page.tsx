@@ -10,7 +10,7 @@ import {
   Package, Lock, Eye, EyeOff, Palette,
   Mail, Webhook, UserPlus, Trash2, ChevronDown,
   Activity, RefreshCw, ChevronLeft, ChevronRight,
-  Check, AlertCircle, Tag, Zap, HardDrive, Brain, Receipt,
+  Check, AlertCircle, Tag, Zap, HardDrive, Receipt,
 } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { useBranding } from "@/contexts/BrandingContext";
@@ -19,13 +19,15 @@ import { Button } from "@/components/ui/Button";
 import { IconChip } from "@/components/ui/IconChip";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { McAlert, McCard, McIconBox, McPill, McTag } from "@/components/shared/MalCareUI";
+import { ScrollFadeRow } from "@/components/shared/ScrollFadeRow";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { useSites } from "@/hooks/useSites";
 import { setAgency } from "@/lib/auth";
 import api from "@/lib/api";
 import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES, API_BASE_URL } from "@/lib/constants";
-import { isValidEmail } from "@/lib/utils";
+import { isValidEmail, cn } from "@/lib/utils";
 import type { AlertSettings, TeamMember, TeamRole, Site } from "@/types";
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
@@ -127,14 +129,18 @@ function UsageBar({ used, total, label }: { used: number; total: number; label: 
   const isNearLimit = pct >= 80;
   return (
     <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-xs font-semibold text-foreground">{used} / {total >= 9999 ? "∞" : total}</span>
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-bold tabular-nums text-foreground">
+          {used} / {total >= 9999 ? "∞" : total}
+        </span>
       </div>
-      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+      <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
         {total < 9999 && (
-          <div className="h-full rounded-full transition-all"
-            style={{ width: `${pct}%`, background: isNearLimit ? "var(--score-bad)" : "var(--accent)" }} />
+          <div
+            className="h-full rounded-[2px] transition-all duration-300"
+            style={{ width: `${pct}%`, background: isNearLimit ? "var(--score-bad)" : "var(--accent)" }}
+          />
         )}
       </div>
     </div>
@@ -1104,11 +1110,19 @@ function fmtCents(cents: number, currency = "usd"): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
 }
 
-const TX_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  subscription:  { label: "Plan",      color: "bg-blue-100 text-blue-700",     icon: CreditCard },
-  token_topup:   { label: "AI Tokens", color: "bg-purple-100 text-purple-700", icon: Brain },
-  storage_addon: { label: "Storage",   color: "bg-emerald-100 text-emerald-700", icon: HardDrive },
+const TX_META: Record<string, { label: string; tone: "accent" | "good" | "warn"; icon: React.ElementType }> = {
+  subscription:  { label: "Plan",      tone: "accent", icon: CreditCard },
+  token_topup:   { label: "AI Tokens", tone: "warn",   icon: Zap },
+  storage_addon: { label: "Storage",   tone: "good",   icon: HardDrive },
 };
+
+const BILLING_TABS = [
+  { id: "plans", label: "Plans" },
+  { id: "tokens", label: "Tokens" },
+  { id: "storage", label: "Storage" },
+  { id: "history", label: "History" },
+  { id: "coupon", label: "Coupon" },
+] as const;
 
 function BillingContent() {
   const { agency, refreshAgency } = useAuth();
@@ -1269,354 +1283,444 @@ function BillingContent() {
   const storagePkgList = Object.entries(storagePkgs).map(([key, pkg]) => ({ key, ...pkg }));
 
   return (
-    <div className="flex flex-col">
-      <div className="sticky -top-6 z-10 bg-white border-b border-border px-6 py-2 flex items-center gap-1">
-        {(["plans", "tokens", "storage", "history", "coupon"] as const).map((id) => (
-          <button
-            key={id}
-            onClick={() => {
-              setBillingTab(id);
-              document.getElementById(`billing-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors ${
-              billingTab === id
-                ? "bg-[var(--accent)] text-white"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
-            {id}
-          </button>
-        ))}
-      </div>
-      <div className="p-6 space-y-6">
-
-      {/* Current plan + usage */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Current Plan</p>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{PLAN_LABELS[currentPlan]}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {PLAN_PRICES[currentPlan].monthly === 0 ? "Free forever" : `$${PLAN_PRICES[currentPlan].monthly}/month`}
-            </p>
-          </div>
-          {currentPlan !== "free" && (
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--accent)]/10 text-[var(--accent)]">Active</span>
-          )}
-        </div>
-        <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-4 sm:col-span-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Usage</p>
-          <UsageBar used={sites.length} total={sitesLimit} label="Sites" />
-          {!isIndividual && <UsageBar used={seatsUsed} total={seatsLimit} label="Team seats" />}
-        </div>
-      </div>
-
-      {/* Checkout error */}
-      {checkoutError && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
-          <AlertCircle size={16} className="shrink-0 mt-0.5" />
-          <span className="flex-1">{checkoutError}</span>
-          <button onClick={() => setCheckoutError(null)} className="text-red-400 hover:text-red-600 transition-colors shrink-0">
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {/* ── Plans ──────────────────────────────────────────────────────────── */}
-      <section id="billing-plans" className="scroll-mt-16 space-y-4">
-        <p className="text-sm font-semibold text-foreground">Available Plans</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {PLANS.map((plan) => {
-            const isCurrent   = plan === currentPlan;
-            const price       = PLAN_PRICES[plan].monthly;
-            const isDowngrade = PLANS.indexOf(plan) < PLANS.indexOf(currentPlan);
-            const limits      = planLimits[plan];
+    <div className="flex min-w-0 flex-col">
+      <div className="shrink-0 border-b border-border bg-white px-4 sm:px-6">
+        <ScrollFadeRow innerClassName="flex gap-0">
+          {BILLING_TABS.map(({ id, label }) => {
+            const active = billingTab === id;
             return (
-              <div
-                key={plan}
-                className={`rounded-2xl border p-5 flex flex-col gap-4 ${
-                  isCurrent ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-border bg-white"
-                }`}
+              <button
+                key={id}
+                type="button"
+                onClick={() => setBillingTab(id)}
+                className={cn(
+                  "relative shrink-0 whitespace-nowrap px-4 py-3 text-[13px] font-semibold transition-colors",
+                  active ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                )}
               >
-                {isCurrent && (
-                  <span className="self-start px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[var(--accent)] text-white">
-                    Current
-                  </span>
+                {label}
+                {active && (
+                  <span className="absolute inset-x-0 bottom-0 h-[2px] rounded-t-[1px] bg-accent" aria-hidden />
                 )}
-                <div>
-                  <p className="font-bold text-base text-foreground">{PLAN_LABELS[plan]}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {price === 0 ? "Free" : `$${price}`}
-                    {price > 0 && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
-                  </p>
-                  {limits && (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <Brain size={11} /> {fmtTokens(limits.tokens)} AI tokens/mo
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <HardDrive size={11} /> {formatBytes(limits.storage)} storage
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <ul className="space-y-2 flex-1">
-                  {PLAN_FEATURES[plan].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Check size={12} className="text-green-500 shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                {!isCurrent && !isDowngrade && plan !== "free" && (
-                  <Button className="w-full" onClick={() => handleUpgrade(plan)} loading={checkoutLoading === plan}>
-                    Upgrade
-                  </Button>
-                )}
-                {isCurrent && <div className="text-center text-xs text-muted-foreground py-1">Your current plan</div>}
-                {isDowngrade && !isCurrent && <div className="text-center text-xs text-muted-foreground py-1">Lower tier</div>}
-              </div>
+              </button>
             );
           })}
-        </div>
-      </section>
-
-      {/* Quick feature stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { icon: Globe, title: `${sitesLimit >= 9999 ? "Unlimited" : sitesLimit} site${sitesLimit === 1 ? "" : "s"}`, sub: "Monitored and audited", show: true },
-          { icon: Users, title: `${seatsLimit >= 9999 ? "Unlimited" : seatsLimit} seats`, sub: "Team members included", show: !isIndividual },
-          { icon: Zap,   title: "Scheduled audits", sub: currentPlan === "free" ? "Upgrade to enable" : "Weekly & monthly", show: true },
-        ].filter(s => s.show).map(({ icon: Icon, title, sub }) => (
-          <div key={title} className="rounded-xl border border-border bg-muted/20 p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-              <Icon size={16} className="text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{title}</p>
-              <p className="text-xs text-muted-foreground">{sub}</p>
-            </div>
-          </div>
-        ))}
+        </ScrollFadeRow>
       </div>
 
-      {/* Agency upgrade callout */}
-      {isIndividual && (
-        <div className="rounded-xl border border-border bg-muted/20 p-5 flex items-start gap-4">
-          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <Users size={16} className="text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">Need to manage clients or add team members?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Switch your account to Agency to unlock multi-site management, white-label branding, client portals, and team collaboration.
-            </p>
-          </div>
-          <a href="mailto:support@brandbees.io?subject=Switch to Agency account"
-            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border bg-white text-foreground hover:bg-muted/60 transition-colors">
-            Contact us
-          </a>
-        </div>
-      )}
-
-      {/* ── AI Tokens ──────────────────────────────────────────────────────── */}
-      {currentPlan !== "free" && (
-        <section id="billing-tokens" className="scroll-mt-16 rounded-xl border border-border bg-muted/20 p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Brain size={15} className="text-[var(--accent)]" />
-            <p className="text-sm font-semibold text-foreground">AI Assistant Tokens</p>
-          </div>
-          {tokenState && (() => {
-            // Two meters, matching TokenBar in agent/page.tsx. The plan allowance refills
-            // monthly; the purchased top-up is a fixed lifetime balance. Summing them into
-            // one bar hid the monthly refill, which reads as "the tokens never renewed".
-            const monthlyBase = tokenState.monthly_limit ?? tokenState.tokens_limit;
-            const planUsed    = Math.min(tokenState.tokens_used, monthlyBase);
-            const planPct     = Math.min(100, (planUsed / Math.max(monthlyBase, 1)) * 100);
-
-            const extraTotal  = tokenState.tokens_extra;
-            const extraLeft   = Math.max(0, tokenState.extra_remaining ?? (extraTotal - (tokenState.extra_used ?? 0)));
-            const extraPct    = extraTotal > 0 ? Math.min(100, ((extraTotal - extraLeft) / extraTotal) * 100) : 0;
-
-            return (
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Plan allowance <span className="opacity-70">· refills monthly</span></span>
-                    <span className="font-medium text-foreground">
-                      {fmtTokens(planUsed)} / {fmtTokens(monthlyBase)}
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${planPct}%` }} />
-                  </div>
-                </div>
-
-                {extraTotal > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Top-up balance <span className="opacity-70">· one-time, does not refill</span></span>
-                      <span className="font-medium text-foreground">
-                        {fmtTokens(extraLeft)} left of {fmtTokens(extraTotal)}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${extraLeft <= extraTotal * 0.2 ? "bg-amber-500" : "bg-[var(--accent)]"}`}
-                        style={{ width: `${extraPct}%` }} />
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-[11px] text-muted-foreground">Your plan allowance refills at the start of each month. Top-up tokens never expire and are used only after the monthly allowance runs out.</p>
-              </div>
-            );
-          })()}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {tokenPkgList.length > 0 ? tokenPkgList.map(({ key, tokens, price_cents, label }) => (
-              <div key={key} className="rounded-xl border border-border bg-white p-4 flex flex-col gap-3">
-                <div>
-                  <p className="text-lg font-bold text-foreground">{fmtCents(price_cents)}</p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">{fmtTokens(tokens)} tokens</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-                </div>
-                <Button className="w-full mt-auto" onClick={() => handleAddonCheckout("tokens", key)}
-                  loading={addonLoading === key} disabled={addonLoading !== null && addonLoading !== key}>Buy</Button>
-              </div>
-            )) : [1,2,3].map(i => (
-              <div key={i} className="rounded-xl border border-border bg-white p-4 h-28 animate-pulse bg-muted/30" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Storage ────────────────────────────────────────────────────────── */}
-      {currentPlan !== "free" && (() => {
-        const storageExtra = agency?.storage_extra_bytes ?? 0;
-        const storageUsed  = agency?.storage_used_bytes  ?? 0;
-        const storageTotal = dynStorageLimit + storageExtra;
-        const storagePct   = Math.min(100, (storageUsed / Math.max(storageTotal, 1)) * 100);
-        const storageWarn  = storagePct >= 80;
-        return (
-          <section id="billing-storage" className="scroll-mt-16 rounded-xl border border-border bg-muted/20 p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <HardDrive size={15} className="text-[var(--accent)]" />
-              <p className="text-sm font-semibold text-foreground">Storage</p>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Used</span>
-                <span className="font-medium text-foreground">
-                  {formatBytes(storageUsed)} / {formatBytes(storageTotal)}
-                  {storageExtra > 0 && <span className="ml-2 text-[var(--accent)] font-semibold">+{formatBytes(storageExtra)} extra</span>}
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full transition-all"
-                  style={{ width: `${storagePct}%`, background: storageWarn ? "var(--score-bad)" : "var(--accent)" }} />
-              </div>
-              {storageWarn && (
-                <p className="text-[11px] text-red-600 flex items-center gap-1 mt-1">
-                  <AlertCircle size={11} /> Storage almost full — buy more to keep saving reports and backups.
-                </p>
-              )}
-              <p className="text-[11px] text-muted-foreground">Extra storage never expires and is applied on top of your plan allowance.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {storagePkgList.length > 0 ? storagePkgList.map(({ key, bytes, price_cents, label }) => (
-                <div key={key} className="rounded-xl border border-border bg-white p-4 flex flex-col gap-3">
-                  <div>
-                    <p className="text-lg font-bold text-foreground">{fmtCents(price_cents)}</p>
-                    <p className="text-sm font-semibold text-foreground mt-0.5">{formatBytes(bytes)}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-                  </div>
-                  <Button className="w-full mt-auto" onClick={() => handleAddonCheckout("storage", key)}
-                    loading={addonLoading === key} disabled={addonLoading !== null && addonLoading !== key}>Buy</Button>
-                </div>
-              )) : [1,2,3].map(i => (
-                <div key={i} className="rounded-xl border border-border bg-white p-4 h-28 animate-pulse bg-muted/30" />
-              ))}
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* ── Purchase History ───────────────────────────────────────────────── */}
-      <section id="billing-history" className="scroll-mt-16 rounded-xl border border-border bg-muted/20 p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <Receipt size={15} className="text-[var(--accent)]" />
-          <p className="text-sm font-semibold text-foreground">Purchase History</p>
-        </div>
-        {!historyLoaded ? (
-          <p className="text-xs text-muted-foreground">Loading…</p>
-        ) : history.length === 0 ? (
-          <div className="text-center py-6">
-            <Receipt size={26} className="text-muted-foreground/25 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No purchase history yet — plan upgrades, token top-ups, and storage add-ons will appear here.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 text-xs font-semibold text-muted-foreground">Type</th>
-                  <th className="text-left py-2 text-xs font-semibold text-muted-foreground">Details</th>
-                  <th className="text-right py-2 text-xs font-semibold text-muted-foreground">Amount</th>
-                  <th className="text-right py-2 text-xs font-semibold text-muted-foreground">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((tx) => {
-                  const meta = TX_META[tx.type] ?? TX_META.subscription;
-                  const Icon = meta.icon;
-                  return (
-                    <tr key={tx.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${meta.color}`}>
-                          <Icon size={10} />{meta.label}
-                        </span>
-                      </td>
-                      <td className="py-2.5 text-xs text-muted-foreground">
-                        {tx.type === "token_topup"   && tx.tokens && `+${fmtTokens(tx.tokens)} tokens`}
-                        {tx.type === "storage_addon"  && tx.bytes  && `+${formatBytes(tx.bytes)} storage`}
-                        {tx.type === "subscription"   && tx.plan   && `${PLAN_LABELS[tx.plan] ?? tx.plan} plan`}
-                      </td>
-                      <td className="py-2.5 text-right text-xs font-semibold text-foreground">
-                        {fmtCents(tx.amount_cents, tx.currency)}
-                      </td>
-                      <td className="py-2.5 text-right text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(tx.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      <div className="space-y-5 p-4 sm:p-6">
+        {checkoutError && (
+          <div className="relative">
+            <McAlert variant="error" title="Checkout failed">
+              {checkoutError}
+            </McAlert>
+            <button
+              type="button"
+              onClick={() => setCheckoutError(null)}
+              className="absolute right-3 top-3 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Dismiss"
+            >
+              <X size={14} />
+            </button>
           </div>
         )}
-      </section>
 
-      {/* ── Coupon ─────────────────────────────────────────────────────────── */}
-      <section id="billing-coupon" className="scroll-mt-16 rounded-xl border border-border bg-muted/20 p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <Tag size={15} className="text-[var(--accent)]" />
-          <p className="text-sm font-semibold text-foreground">Redeem Coupon</p>
-        </div>
-        <p className="text-xs text-muted-foreground">Have a coupon code? Enter it below to upgrade your plan or unlock features.</p>
-        <div className="flex gap-3 items-start max-w-md">
-          <div className="relative flex-1">
-            <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              placeholder="ENTER-COUPON-CODE"
-              className="pl-8 font-mono uppercase tracking-widest"
-              onKeyDown={(e) => e.key === "Enter" && handleCouponRedeem()}
-            />
-          </div>
-          <Button onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>Apply</Button>
-        </div>
-      </section>
-    </div>
+        {billingTab === "plans" && (
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <McCard bodyClassName="p-4 space-y-3">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Current plan</p>
+                <div>
+                  <p className="text-xl font-bold text-foreground">{PLAN_LABELS[currentPlan]}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {PLAN_PRICES[currentPlan].monthly === 0
+                      ? "Free forever"
+                      : `$${PLAN_PRICES[currentPlan].monthly}/month`}
+                  </p>
+                </div>
+                {currentPlan !== "free" && (
+                  <McPill tone="accent" dot>
+                    Active
+                  </McPill>
+                )}
+              </McCard>
+              <McCard bodyClassName="p-4 space-y-4 sm:col-span-2" className="sm:col-span-2">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Usage</p>
+                <UsageBar used={sites.length} total={sitesLimit} label="Sites" />
+                {!isIndividual && <UsageBar used={seatsUsed} total={seatsLimit} label="Team seats" />}
+              </McCard>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-sm font-bold text-foreground">Available plans</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {PLANS.map((plan) => {
+                  const isCurrent = plan === currentPlan;
+                  const price = PLAN_PRICES[plan].monthly;
+                  const isDowngrade = PLANS.indexOf(plan) < PLANS.indexOf(currentPlan);
+                  const limits = planLimits[plan];
+                  return (
+                    <div
+                      key={plan}
+                      className={cn(
+                        "flex flex-col gap-4 rounded-[4px] border p-5 shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
+                        isCurrent
+                          ? "border-accent/35 bg-accent-light/25 ring-1 ring-inset ring-accent/10"
+                          : "border-border bg-white"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{PLAN_LABELS[plan]}</p>
+                          <p className="mt-1 text-2xl font-bold text-foreground">
+                            {price === 0 ? "Free" : `$${price}`}
+                            {price > 0 && (
+                              <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                            )}
+                          </p>
+                        </div>
+                        {isCurrent && (
+                          <McTag tone="accent">Current</McTag>
+                        )}
+                      </div>
+                      {limits && (
+                        <div className="flex flex-wrap gap-1.5">
+                          <McTag tone="accent">{fmtTokens(limits.tokens)} tokens/mo</McTag>
+                          <McTag tone="neutral">{formatBytes(limits.storage)} storage</McTag>
+                        </div>
+                      )}
+                      <ul className="flex-1 space-y-2">
+                        {PLAN_FEATURES[plan].map((f) => (
+                          <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <Check size={12} className="mt-0.5 shrink-0 text-[var(--score-good)]" strokeWidth={2.5} />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {!isCurrent && !isDowngrade && plan !== "free" && (
+                        <Button className="w-full" onClick={() => handleUpgrade(plan)} loading={checkoutLoading === plan}>
+                          Upgrade
+                        </Button>
+                      )}
+                      {isCurrent && (
+                        <p className="py-1 text-center text-xs font-medium text-muted-foreground">Your current plan</p>
+                      )}
+                      {isDowngrade && !isCurrent && (
+                        <p className="py-1 text-center text-xs text-muted-foreground">Lower tier</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                { icon: Globe, title: `${sitesLimit >= 9999 ? "Unlimited" : sitesLimit} site${sitesLimit === 1 ? "" : "s"}`, sub: "Monitored and audited", show: true },
+                { icon: Users, title: `${seatsLimit >= 9999 ? "Unlimited" : seatsLimit} seats`, sub: "Team members included", show: !isIndividual },
+                { icon: Zap, title: "Scheduled audits", sub: currentPlan === "free" ? "Upgrade to enable" : "Weekly & monthly", show: true },
+              ]
+                .filter((s) => s.show)
+                .map(({ icon: Icon, title, sub }) => (
+                  <div
+                    key={title}
+                    className="flex items-center gap-3 rounded-[4px] border border-border bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]"
+                  >
+                    <McIconBox icon={<Icon size={16} strokeWidth={2} />} tone="neutral" size="sm" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-foreground">{title}</p>
+                      <p className="text-xs text-muted-foreground">{sub}</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {isIndividual && (
+              <McCard
+                icon={<Users size={16} strokeWidth={2} />}
+                title="Need to manage clients or add team members?"
+                bodyClassName="space-y-3 p-4"
+              >
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Switch your account to Agency to unlock multi-site management, white-label branding, client portals, and team collaboration.
+                </p>
+                <a
+                  href="mailto:support@brandbees.io?subject=Switch to Agency account"
+                  className="mt-3 inline-flex items-center rounded-[4px] border border-border bg-white px-3 py-1.5 text-xs font-bold text-foreground shadow-[0_1px_2px_rgb(26_29_35/0.04)] transition-colors hover:bg-[#f7f9fc]"
+                >
+                  Contact us
+                </a>
+              </McCard>
+            )}
+          </>
+        )}
+
+        {billingTab === "tokens" && (
+          currentPlan === "free" ? (
+            <McAlert variant="info" title="Upgrade to buy tokens">
+              AI token top-ups are available on paid plans. Choose a plan in the Plans tab to get started.
+            </McAlert>
+          ) : (
+            <McCard
+              title="AI assistant tokens"
+              icon={<Zap size={16} strokeWidth={2} />}
+              bodyClassName="space-y-5 p-4 sm:p-5"
+            >
+              {tokenState && (() => {
+                const monthlyBase = tokenState.monthly_limit ?? tokenState.tokens_limit;
+                const planUsed = Math.min(tokenState.tokens_used, monthlyBase);
+                const planPct = Math.min(100, (planUsed / Math.max(monthlyBase, 1)) * 100);
+                const extraTotal = tokenState.tokens_extra;
+                const extraLeft = Math.max(0, tokenState.extra_remaining ?? (extraTotal - (tokenState.extra_used ?? 0)));
+                const extraPct = extraTotal > 0 ? Math.min(100, ((extraTotal - extraLeft) / extraTotal) * 100) : 0;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          Plan allowance <span className="opacity-70">· refills monthly</span>
+                        </span>
+                        <span className="font-bold tabular-nums text-foreground">
+                          {fmtTokens(planUsed)} / {fmtTokens(monthlyBase)}
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
+                        <div
+                          className="h-full rounded-[2px] bg-accent transition-all duration-300"
+                          style={{ width: `${planPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {extraTotal > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>
+                            Top-up balance <span className="opacity-70">· one-time, does not refill</span>
+                          </span>
+                          <span className="font-bold tabular-nums text-foreground">
+                            {fmtTokens(extraLeft)} left of {fmtTokens(extraTotal)}
+                          </span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
+                          <div
+                            className={cn(
+                              "h-full rounded-[2px] transition-all duration-300",
+                              extraLeft <= extraTotal * 0.2 ? "bg-[var(--score-warn)]" : "bg-accent"
+                            )}
+                            style={{ width: `${extraPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      Your plan allowance refills at the start of each month. Top-up tokens never expire and are used only after the monthly allowance runs out.
+                    </p>
+                  </div>
+                );
+              })()}
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {tokenPkgList.length > 0
+                  ? tokenPkgList.map(({ key, tokens, price_cents, label }) => (
+                      <div
+                        key={key}
+                        className="flex flex-col gap-3 rounded-[4px] border border-border bg-[#f7f9fc] p-4"
+                      >
+                        <div>
+                          <p className="text-lg font-bold text-foreground">{fmtCents(price_cents)}</p>
+                          <p className="mt-0.5 text-sm font-bold text-foreground">{fmtTokens(tokens)} tokens</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+                        </div>
+                        <Button
+                          className="mt-auto w-full"
+                          onClick={() => handleAddonCheckout("tokens", key)}
+                          loading={addonLoading === key}
+                          disabled={addonLoading !== null && addonLoading !== key}
+                        >
+                          Buy
+                        </Button>
+                      </div>
+                    ))
+                  : [1, 2, 3].map((i) => (
+                      <div key={i} className="h-28 animate-pulse rounded-[4px] border border-border bg-[#eef1f6]" />
+                    ))}
+              </div>
+            </McCard>
+          )
+        )}
+
+        {billingTab === "storage" && (
+          currentPlan === "free" ? (
+            <McAlert variant="info" title="Upgrade to buy storage">
+              Storage add-ons are available on paid plans. Choose a plan in the Plans tab to get started.
+            </McAlert>
+          ) : (
+            (() => {
+              const storageExtra = agency?.storage_extra_bytes ?? 0;
+              const storageUsed = agency?.storage_used_bytes ?? 0;
+              const storageTotal = dynStorageLimit + storageExtra;
+              const storagePct = Math.min(100, (storageUsed / Math.max(storageTotal, 1)) * 100);
+              const storageWarn = storagePct >= 80;
+              return (
+                <McCard
+                  title="Storage"
+                  icon={<HardDrive size={16} strokeWidth={2} />}
+                  bodyClassName="space-y-5 p-4 sm:p-5"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Used</span>
+                      <span className="font-bold tabular-nums text-foreground">
+                        {formatBytes(storageUsed)} / {formatBytes(storageTotal)}
+                        {storageExtra > 0 && (
+                          <span className="ml-2 font-bold text-accent">+{formatBytes(storageExtra)} extra</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
+                      <div
+                        className="h-full rounded-[2px] transition-all duration-300"
+                        style={{
+                          width: `${storagePct}%`,
+                          background: storageWarn ? "var(--score-bad)" : "var(--accent)",
+                        }}
+                      />
+                    </div>
+                    {storageWarn && (
+                      <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--score-bad)]">
+                        <AlertCircle size={11} />
+                        Storage almost full — buy more to keep saving reports and backups.
+                      </p>
+                    )}
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      Extra storage never expires and is applied on top of your plan allowance.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {storagePkgList.length > 0
+                      ? storagePkgList.map(({ key, bytes, price_cents, label }) => (
+                          <div
+                            key={key}
+                            className="flex flex-col gap-3 rounded-[4px] border border-border bg-[#f7f9fc] p-4"
+                          >
+                            <div>
+                              <p className="text-lg font-bold text-foreground">{fmtCents(price_cents)}</p>
+                              <p className="mt-0.5 text-sm font-bold text-foreground">{formatBytes(bytes)}</p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+                            </div>
+                            <Button
+                              className="mt-auto w-full"
+                              onClick={() => handleAddonCheckout("storage", key)}
+                              loading={addonLoading === key}
+                              disabled={addonLoading !== null && addonLoading !== key}
+                            >
+                              Buy
+                            </Button>
+                          </div>
+                        ))
+                      : [1, 2, 3].map((i) => (
+                          <div key={i} className="h-28 animate-pulse rounded-[4px] border border-border bg-[#eef1f6]" />
+                        ))}
+                  </div>
+                </McCard>
+              );
+            })()
+          )
+        )}
+
+        {billingTab === "history" && (
+          <McCard
+            title="Purchase history"
+            icon={<Receipt size={16} strokeWidth={2} />}
+            bodyClassName="p-0 sm:p-0"
+            flush
+          >
+            {!historyLoaded ? (
+              <p className="p-4 text-xs text-muted-foreground">Loading…</p>
+            ) : history.length === 0 ? (
+              <EmptyState
+                icon={<Receipt size={26} className="text-muted-foreground/25" />}
+                title="No purchases yet"
+                description="Plan upgrades, token top-ups, and storage add-ons will appear here."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-[#f7f9fc] text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                      <th className="px-4 py-2.5 text-left">Type</th>
+                      <th className="px-4 py-2.5 text-left">Details</th>
+                      <th className="px-4 py-2.5 text-right">Amount</th>
+                      <th className="px-4 py-2.5 text-right">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((tx) => {
+                      const meta = TX_META[tx.type] ?? TX_META.subscription;
+                      const Icon = meta.icon;
+                      return (
+                        <tr key={tx.id} className="border-b border-border/60 transition-colors hover:bg-[#f7f9fc]/80">
+                          <td className="px-4 py-3">
+                            <McTag tone={meta.tone} icon={<Icon size={10} strokeWidth={2.5} />}>
+                              {meta.label}
+                            </McTag>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">
+                            {tx.type === "token_topup" && tx.tokens && `+${fmtTokens(tx.tokens)} tokens`}
+                            {tx.type === "storage_addon" && tx.bytes && `+${formatBytes(tx.bytes)} storage`}
+                            {tx.type === "subscription" && tx.plan && `${PLAN_LABELS[tx.plan] ?? tx.plan} plan`}
+                          </td>
+                          <td className="px-4 py-3 text-right text-xs font-bold tabular-nums text-foreground">
+                            {fmtCents(tx.amount_cents, tx.currency)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-xs text-muted-foreground">
+                            {new Date(tx.created_at).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </McCard>
+        )}
+
+        {billingTab === "coupon" && (
+          <McCard
+            title="Redeem coupon"
+            icon={<Tag size={16} strokeWidth={2} />}
+            bodyClassName="space-y-4 p-4 sm:p-5"
+          >
+            <p className="text-xs text-muted-foreground">
+              Have a coupon code? Enter it below to upgrade your plan or unlock features.
+            </p>
+            <div className="flex max-w-md items-start gap-3">
+              <div className="relative flex-1">
+                <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="ENTER-COUPON-CODE"
+                  className="rounded-[4px] pl-8 font-mono uppercase tracking-widest"
+                  onKeyDown={(e) => e.key === "Enter" && handleCouponRedeem()}
+                />
+              </div>
+              <Button onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>
+                Apply
+              </Button>
+            </div>
+          </McCard>
+        )}
+      </div>
     </div>
   );
 }
@@ -1658,20 +1762,19 @@ function SettingsPageInner() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <Settings size={22} className="text-accent" strokeWidth={2} />
+        <McIconBox icon={<Settings size={18} strokeWidth={2.25} />} tone="accent" />
         <div>
           <h1 className="font-portal-display text-[1.75rem] font-bold leading-none tracking-tight text-foreground">
             Settings
           </h1>
-          <p className="mt-2 text-sm font-medium text-accent">
+          <p className="mt-2 text-sm text-muted-foreground">
             Customize branding and account settings.
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface lg:flex-row">
-        {/* Vertical tabs */}
-        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border p-3 lg:w-56 lg:flex-col lg:overflow-x-visible lg:border-b-0 lg:border-r">
+      <div className="flex flex-col overflow-hidden rounded-[4px] border border-border bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)] lg:flex-row">
+        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border p-3 lg:w-56 lg:flex-col lg:overflow-x-visible lg:border-b-0 lg:border-r lg:bg-[#f7f9fc]">
           {visibleTabs.map(({ id, label, icon: Icon }) => {
             const active = activeTab === id;
             return (
@@ -1680,11 +1783,12 @@ function SettingsPageInner() {
                 type="button"
                 data-tab={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex items-center gap-2.5 whitespace-nowrap rounded-[4px] px-3 py-2.5 text-left text-[13px] font-semibold transition-colors ${
+                className={cn(
+                  "flex items-center gap-2.5 whitespace-nowrap rounded-[4px] px-3 py-2.5 text-left text-[13px] font-semibold transition-colors",
                   active
-                    ? "bg-accent text-white"
-                    : "text-foreground/80 hover:bg-muted"
-                }`}
+                    ? "bg-accent-light text-accent ring-1 ring-inset ring-accent/15"
+                    : "text-muted-foreground hover:bg-white hover:text-foreground"
+                )}
               >
                 <Icon size={15} strokeWidth={active ? 2.25 : 1.75} />
                 {label}
@@ -1693,8 +1797,7 @@ function SettingsPageInner() {
           })}
         </div>
 
-        {/* Content */}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 bg-white">
           {activeTab === "billing" ? (
             <BillingTab />
           ) : (

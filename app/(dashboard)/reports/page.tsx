@@ -1,154 +1,108 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { FileText, TrendingUp, Search, Shield, Bug, ChevronRight, Globe } from "lucide-react";
-import { useSites } from "@/hooks/useSites";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { scoreHex, truncateUrl, timeAgo } from "@/lib/utils";
-import type { Site } from "@/types";
-import { Badge } from "@/components/ui/Badge";
+import { useCallback, useEffect, useRef, useState } from "react";
+import api from "@/lib/api";
+import { mapReportRow, type RawReportRow, type ReportCategoryFilter, type ReportListItem } from "@/lib/reports";
+import {
+  ReportsPageShell,
+  ReportsPagination,
+  ReportsTable,
+  useFilteredReports,
+} from "@/components/reports/MalCareReportsUI";
+import { SendReportModal } from "@/components/reports/SendReportModal";
+import { McAlert } from "@/components/shared/MalCareUI";
 
-const PILLARS = [
-  { key: "performance" as const, label: "Perf" },
-  { key: "seo" as const, label: "SEO" },
-  { key: "security" as const, label: "Sec" },
-  { key: "malware" as const, label: "Mal" },
-];
-
-const AVATAR_COLORS = ["#1a56db", "#0ea5e9", "#16a34a", "#d97706", "#dc2626", "#475569"];
-function avatarColor(id: string) {
-  return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length];
-}
-
-function ScoreCell({ score }: { score: number | undefined }) {
-  if (score === undefined) {
-    return <span className="text-sm font-bold text-muted-foreground/40">—</span>;
-  }
-  return (
-    <span className="text-sm font-bold tabular-nums" style={{ color: scoreHex(score) }}>
-      {score}
-    </span>
-  );
-}
+const PAGE_SIZE = 25;
 
 export default function ReportsPage() {
-  const router = useRouter();
-  const { sites, loading, error } = useSites();
+  const [reports, setReports] = useState<ReportListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<ReportCategoryFilter>("all");
+  const [page, setPage] = useState(1);
+  const [sendTarget, setSendTarget] = useState<ReportListItem | null>(null);
+  const [sentSuccess, setSentSuccess] = useState(false);
 
-  const sitesWithAudits = sites.filter((s) => !!s.last_audit_at);
-  const sitesWithout = sites.filter((s) => !s.last_audit_at);
-  const ordered = [...sitesWithAudits, ...sitesWithout];
+  const reportsRef = useRef(reports);
+  reportsRef.current = reports;
+
+  const fetchReports = useCallback(async () => {
+    try {
+      const { data } = await api.get<{ reports: RawReportRow[] }>("/reports");
+      setReports((data.reports ?? []).map(mapReportRow));
+    } catch {
+      /* ignore */
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (reportsRef.current.some((r) => r.status === "pending")) fetchReports();
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [fetchReports]);
+
+  const filtered = useFilteredReports(reports, search, category);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, category]);
+
+  const subtitle =
+    reports.length === 0
+      ? "You have 0 reports"
+      : `You have ${reports.length} report${reports.length === 1 ? "" : "s"}`;
 
   return (
-    <div className="space-y-5">
-      <PageHeader
+    <>
+      <ReportsPageShell
         title="Reports"
-        description="Generate and send branded PDF reports to clients."
-        icon={<FileText size={22} />}
-        action={
-          sites.length > 0 ? (
-            <Badge variant="muted">{sitesWithAudits.length} ready</Badge>
-          ) : undefined
-        }
-      />
-
-      {loading && (
-        <div className="flex justify-center py-16">
-          <LoadingSpinner size="lg" />
-        </div>
-      )}
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      {!loading && !error && sites.length === 0 && (
-        <div className="rounded-xl border border-border bg-surface">
-          <EmptyState
-            icon={<FileText size={20} />}
-            title="No sites yet"
-            description="Add a site and run an audit before generating reports."
-          />
-        </div>
-      )}
-
-      {!loading && !error && sites.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-border bg-muted/20 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3">Site</th>
-                  {PILLARS.map((p) => (
-                    <th key={p.key} className="px-3 py-3 text-center">
-                      {p.label}
-                    </th>
-                  ))}
-                  <th className="px-4 py-3">Last audit</th>
-                  <th className="px-4 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordered.map((site) => {
-                  const ready = !!site.last_audit_at;
-                  return (
-                    <tr
-                      key={site.id}
-                      className={`border-b border-border last:border-0 ${
-                        ready
-                          ? "cursor-pointer hover:bg-muted/40"
-                          : "opacity-60"
-                      }`}
-                      onClick={
-                        ready ? () => router.push(`/reports/${site.id}`) : undefined
-                      }
-                    >
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] text-xs font-bold text-white"
-                            style={{ background: avatarColor(site.id) }}
-                          >
-                            {site.name[0].toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-foreground">
-                              {site.name}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {truncateUrl(site.url)}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      {PILLARS.map((p) => (
-                        <td key={p.key} className="px-3 py-3.5 text-center">
-                          <ScoreCell score={site.latest_scores?.[p.key]} />
-                        </td>
-                      ))}
-                      <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">
-                        {ready ? timeAgo(site.last_audit_at!) : "Needs audit"}
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
-                        {ready ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-accent">
-                            View <ChevronRight size={14} />
-                          </span>
-                        ) : (
-                          <Globe size={14} className="ml-auto text-muted-foreground" />
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        subtitle={subtitle}
+        search={search}
+        onSearchChange={setSearch}
+        category={category}
+        onCategoryChange={setCategory}
+      >
+        {sentSuccess && (
+          <div className="mb-4">
+            <McAlert variant="success" title="Report sent">
+              The client portal link was emailed successfully.
+            </McAlert>
           </div>
-          <div className="border-t border-border px-4 py-3 text-xs font-medium text-muted-foreground">
-            {sitesWithAudits.length} ready · {sitesWithout.length} need an audit first
-          </div>
-        </div>
+        )}
+
+        <ReportsTable
+          reports={paged}
+          loading={loading}
+          showSiteColumn
+          onSend={setSendTarget}
+          detailHref={(r) => `/reports/${r.site_id}/${r.id}`}
+        />
+
+        <ReportsPagination page={page} totalPages={totalPages} total={filtered.length} />
+      </ReportsPageShell>
+
+      {sendTarget && (
+        <SendReportModal
+          report={sendTarget}
+          clientEmail={sendTarget.client_email}
+          onClose={() => setSendTarget(null)}
+          onSent={() => {
+            setSendTarget(null);
+            setSentSuccess(true);
+            fetchReports();
+            setTimeout(() => setSentSuccess(false), 4000);
+          }}
+        />
       )}
-    </div>
+    </>
   );
 }

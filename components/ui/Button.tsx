@@ -10,25 +10,22 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-/** Match marketing ButtonLink: sharp 4px radius, solid accent, uppercase CTAs */
+/** MalCare-style buttons — rounded-md, medium weight, blue primary */
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-[4px] font-bold uppercase tracking-[0.08em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap transition-all duration-200";
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap transition-colors duration-150";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-white hover:bg-accent-hover",
-  secondary:
-    "bg-surface text-foreground ring-1 ring-border-strong hover:ring-accent/30",
-  outline:
-    "bg-transparent text-accent ring-1 ring-accent hover:bg-accent-light",
-  ghost:
-    "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted normal-case tracking-normal font-semibold",
+  primary: "bg-accent text-white hover:bg-accent-hover shadow-sm",
+  secondary: "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50",
+  outline: "border border-zinc-200 bg-transparent text-zinc-900 hover:bg-zinc-50",
+  ghost: "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
   danger: "bg-destructive text-white hover:bg-red-700",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-4 text-[11px]",
-  md: "h-11 px-6 text-xs",
-  lg: "h-[52px] px-8 text-[13px]",
+  sm: "h-9 px-3 text-xs",
+  md: "h-10 px-4 text-sm",
+  lg: "h-11 px-5 text-sm",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

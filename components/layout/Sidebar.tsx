@@ -1,26 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Globe,
   Search,
-  Zap,
-  Shield,
-  Bug,
-  Activity,
-  FileText,
-  Bot,
   Settings,
-  LogOut,
   Wifi,
   Users,
   Sparkles,
   Bell,
-  ChevronLeft,
-  ChevronRight,
   LifeBuoy,
   Plus,
 } from "lucide-react";
@@ -29,8 +20,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBranding } from "@/contexts/BrandingContext";
 import { useRole } from "@/hooks/useRole";
 import { ChangelogModal } from "@/components/shared/ChangelogModal";
+import { SiteSidebarNav, SiteSidebarNavFallback } from "@/components/sites/SiteSidebarNav";
+import { SiteSidebarFooter } from "@/components/sites/SiteSidebarFooter";
+import { useSiteContextOptional } from "@/components/sites/SiteContext";
 import api from "@/lib/api";
-import { clearToken } from "@/lib/auth";
 
 type NavItem = {
   href: string;
@@ -48,29 +41,38 @@ const MANAGE_NAV: NavItem[] = [
   { href: "/notifications", label: "Notifications", icon: Bell, clientVisible: false },
 ];
 
-const INSIGHTS_NAV: NavItem[] = [
-  { href: "/performance", label: "Performance", icon: Zap, clientVisible: true },
-  { href: "/seo", label: "SEO", icon: Search, clientVisible: true },
-  { href: "/security", label: "Security", icon: Shield, clientVisible: true },
-  { href: "/malware", label: "Malware", icon: Bug, clientVisible: true },
-  { href: "/uptime", label: "Uptime", icon: Activity, clientVisible: true },
-  { href: "/reports", label: "Reports", icon: FileText, clientVisible: false },
-  { href: "/agent", label: "AI Agent", icon: Bot, clientVisible: false },
-];
+const SETTINGS_NAV: NavItem[] = [{ href: "/settings", label: "Settings", icon: Settings }];
 
-const SETTINGS_NAV: NavItem[] = [
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-function filterNav(
-  items: NavItem[],
-  isClientPortal: boolean,
-  isIndividual: boolean
-) {
+function filterNav(items: NavItem[], isClientPortal: boolean, isIndividual: boolean) {
   return items.filter(
     (item) =>
-      (!isClientPortal || item.clientVisible) &&
-      (!isIndividual || !item.agencyOnly)
+      (!isClientPortal || item.clientVisible) && (!isIndividual || !item.agencyOnly)
+  );
+}
+
+function QuickAddButton({ active }: { active?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors",
+        active ? "text-white/90 hover:bg-white/15" : "text-zinc-500 hover:bg-zinc-200"
+      )}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent("bb:open-add-site"));
+      }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent("bb:open-add-site"));
+        }
+      }}
+    >
+      <Plus size={14} strokeWidth={1.5} />
+    </span>
   );
 }
 
@@ -84,45 +86,42 @@ function NavLink({
   collapsed: boolean;
 }) {
   const Icon = item.icon;
+
+  if (active) {
+    return (
+      <Link
+        href={item.href}
+        title={collapsed ? item.label : undefined}
+        className={cn(
+          "group flex items-center rounded-lg bg-accent text-white transition-colors",
+          collapsed ? "mx-auto w-fit gap-0 p-2" : "h-8 w-full gap-2 px-3"
+        )}
+      >
+        <Icon size={16} strokeWidth={2} className="shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate text-sm font-medium">{item.label}</span>
+            {item.quickAdd && <QuickAddButton active />}
+          </>
+        )}
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={item.href}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-[4px] text-[13px] font-semibold transition-colors",
-        collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2",
-        active
-          ? "bg-accent text-white"
-          : "text-foreground/80 hover:bg-muted hover:text-foreground"
+        "flex items-center rounded-lg text-sm font-normal text-zinc-700 transition-colors hover:bg-zinc-100",
+        collapsed ? "mx-auto w-fit p-2" : "h-8 gap-2 px-3"
       )}
     >
-      <Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="shrink-0" />
+      <Icon size={16} strokeWidth={1.5} className="shrink-0 text-zinc-950" />
       {!collapsed && (
         <>
           <span className="flex-1 truncate">{item.label}</span>
-          {item.quickAdd && (
-            <span
-              className={cn(
-                "flex h-5 w-5 items-center justify-center rounded-[3px] opacity-0 transition-opacity group-hover:opacity-100",
-                active ? "bg-white/20 text-white" : "bg-accent/10 text-accent"
-              )}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                window.dispatchEvent(new CustomEvent("bb:open-add-site"));
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  window.dispatchEvent(new CustomEvent("bb:open-add-site"));
-                }
-              }}
-            >
-              <Plus size={12} strokeWidth={2.5} />
-            </span>
-          )}
+          {item.quickAdd && <QuickAddButton />}
         </>
       )}
     </Link>
@@ -142,20 +141,23 @@ function NavSection({
 }) {
   if (!items.length) return null;
   return (
-    <div className="mb-5">
-      {!collapsed ? (
-        <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+    <div className="mb-2">
+      {!collapsed && (
+        <p className="mb-1 flex h-8 shrink-0 items-center px-3 text-xs font-medium text-zinc-500/80">
           {label}
         </p>
-      ) : (
-        <div className="mx-auto mb-2 h-px w-6 bg-border" />
       )}
+      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-zinc-200" />}
       <div className="space-y-0.5">
         {items.map((item) => (
           <NavLink
             key={item.href}
             item={item}
-            active={pathname === item.href || pathname.startsWith(item.href + "/")}
+            active={
+              item.href === "/sites"
+                ? pathname === "/sites"
+                : pathname === item.href || pathname.startsWith(item.href + "/")
+            }
             collapsed={collapsed}
           />
         ))}
@@ -164,24 +166,25 @@ function NavSection({
   );
 }
 
-export function Sidebar() {
+export function Sidebar({
+  collapsed,
+}: {
+  collapsed: boolean;
+}) {
   const pathname = usePathname();
-  const { agency, logout } = useAuth();
+  const siteCtx = useSiteContextOptional();
+  const siteDetailMatch = pathname?.match(/^\/sites\/([^/]+)$/);
+  const isSiteDetail = !!siteDetailMatch;
+  const siteIdFromPath = siteDetailMatch?.[1];
+  const { agency } = useAuth();
   const { logoUrl } = useBranding();
   const { roleCanDo } = useRole();
-  const router = useRouter();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [navQuery, setNavQuery] = useState("");
-  const [collapsed, setCollapsed] = useState(false);
 
   const isClientPortal = agency?.is_client_portal ?? false;
   const isIndividual = agency?.account_type === "individual";
-
-  // Read collapse preference after mount to avoid SSR/client hydration mismatch
-  useEffect(() => {
-    setCollapsed(localStorage.getItem("bb_sidebar_collapsed") === "1");
-  }, []);
+  const brand = agency?.brand_name || "Site Armor";
 
   useEffect(() => {
     if (isClientPortal) return;
@@ -192,165 +195,81 @@ export function Sidebar() {
   }, [isClientPortal]);
 
   const manageItems = filterNav(MANAGE_NAV, isClientPortal, isIndividual);
-  const insightsItems = filterNav(INSIGHTS_NAV, isClientPortal, isIndividual);
-  const settingsItems = filterNav(SETTINGS_NAV, isClientPortal, isIndividual).filter(
-    ({ href }) => (href === "/billing" ? roleCanDo("access_billing") : true)
+  const globalItems = isSiteDetail
+    ? manageItems.filter((item) => item.href === "/sites")
+    : manageItems;
+  const settingsItems = filterNav(SETTINGS_NAV, isClientPortal, isIndividual).filter(({ href }) =>
+    href === "/billing" ? roleCanDo("access_billing") : true
   );
-
-  const allItems = useMemo(
-    () => [...manageItems, ...insightsItems, ...settingsItems],
-    [manageItems, insightsItems, settingsItems]
-  );
-
-  const filtered = useMemo(() => {
-    const q = navQuery.trim().toLowerCase();
-    if (!q) return null;
-    return allItems.filter((i) => i.label.toLowerCase().includes(q));
-  }, [allItems, navQuery]);
-
-  const displayName = agency?.member_name ?? agency?.name ?? "";
-  const displayEmail = agency?.email ?? "";
-  const brand = agency?.brand_name || "Site Armor";
-
-  function handleLogout() {
-    if (isClientPortal) {
-      clearToken();
-      router.push("/client-portal/login");
-    } else {
-      logout();
-    }
-  }
-
-  function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem("bb_sidebar_collapsed", next ? "1" : "0");
-      return next;
-    });
-  }
+  const activeSiteId = siteCtx?.siteId ?? siteIdFromPath;
 
   return (
     <>
       <aside
         className={cn(
-          "hidden min-h-screen shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 lg:flex",
-          collapsed ? "w-[68px]" : "w-[260px]"
+          "hidden shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width] duration-200 ease-linear md:flex",
+          collapsed ? "w-[4rem]" : "w-[280px]"
         )}
       >
-        {/* Brand */}
-        <div
-          className={cn(
-            "flex h-16 shrink-0 items-center border-b border-border",
-            collapsed ? "justify-center px-2" : "gap-3 px-4"
-          )}
-        >
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt=""
-              className={cn("object-contain", collapsed ? "h-7 w-7" : "h-8 max-w-[130px]")}
-            />
-          ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-accent">
-              <Wifi size={15} className="text-white" />
-            </div>
-          )}
-          {!collapsed && !logoUrl && (
-            <div className="min-w-0 flex-1">
-              <p className="font-portal-display truncate text-sm font-bold text-foreground">
-                {brand}
-              </p>
-            </div>
-          )}
-          {!collapsed && logoUrl && <div className="flex-1" />}
+        {/* Search trigger — MalCare pill */}
+        <div className={cn("shrink-0", collapsed ? "px-2 py-2" : "p-2 px-3")}>
           <button
             type="button"
-            onClick={toggleCollapsed}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-muted hover:text-foreground"
-            title={collapsed ? "Expand" : "Collapse"}
+            className={cn(
+              "flex w-full items-center rounded-lg bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200/80",
+              collapsed ? "h-9 justify-center" : "h-9 gap-2 px-3"
+            )}
+            title="Search (Ctrl+K)"
           >
-            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {!collapsed && (
+              <>
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl} alt="" className="h-5 w-5 shrink-0 object-contain" />
+                ) : (
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-accent">
+                    <Wifi size={11} className="text-white" />
+                  </div>
+                )}
+                <span className="flex-1 truncate text-left text-xs font-extralight text-zinc-600">
+                  Search or press Ctrl+K / ⌘K
+                </span>
+              </>
+            )}
+            <Search size={16} strokeWidth={1.5} className="shrink-0 text-zinc-950" />
           </button>
+          {!collapsed && !logoUrl && (
+            <p className="mt-2 truncate px-1 text-[11px] font-semibold text-zinc-400">{brand}</p>
+          )}
         </div>
 
-        {/* Search */}
-        {!collapsed && (
-          <div className="px-3 pt-3">
-            <div className="relative">
-              <Search
-                size={14}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                value={navQuery}
-                onChange={(e) => setNavQuery(e.target.value)}
-                placeholder="Search…"
-                className="h-9 w-full rounded-[4px] border border-border bg-background pl-9 pr-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none"
-              />
-            </div>
-          </div>
-        )}
-
         {/* Nav */}
-        <nav
-          className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden py-4",
-            collapsed ? "px-2" : "px-3"
-          )}
-        >
-          {filtered ? (
-            <div className="space-y-0.5">
-              {filtered.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-muted-foreground">No matches</p>
-              ) : (
-                filtered.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    active={
-                      pathname === item.href || pathname.startsWith(item.href + "/")
-                    }
-                    collapsed={collapsed}
-                  />
-                ))
-              )}
-            </div>
-          ) : (
-            <>
-              <NavSection
-                label="Manage"
-                items={manageItems}
-                collapsed={collapsed}
-                pathname={pathname}
-              />
-              <NavSection
-                label="Insights"
-                items={insightsItems}
-                collapsed={collapsed}
-                pathname={pathname}
-              />
-              {!isClientPortal && (
-                <NavSection
-                  label="Settings"
-                  items={settingsItems}
-                  collapsed={collapsed}
-                  pathname={pathname}
-                />
-              )}
-            </>
+        <nav className={cn("mx-2 flex-1 overflow-y-auto overflow-x-hidden py-2", collapsed ? "px-1.5" : "px-2")}>
+          <NavSection
+            label={isSiteDetail ? "Global" : "Manage"}
+            items={globalItems}
+            collapsed={collapsed}
+            pathname={pathname}
+          />
+          {isSiteDetail && activeSiteId ? (
+            <Suspense fallback={<SiteSidebarNavFallback collapsed={collapsed} />}>
+              <SiteSidebarNav siteId={activeSiteId} collapsed={collapsed} />
+            </Suspense>
+          ) : null}
+          {!isClientPortal && !isSiteDetail && (
+            <NavSection label="Settings" items={settingsItems} collapsed={collapsed} pathname={pathname} />
           )}
 
-          {!isClientPortal && !collapsed && (
+          {!isClientPortal && !isSiteDetail && !collapsed && (
             <button
               type="button"
               onClick={() => setChangelogOpen(true)}
-              className="mt-1 flex w-full items-center gap-3 rounded-[4px] px-3 py-2 text-[13px] font-semibold text-foreground/80 hover:bg-muted"
+              className="mt-1 flex h-8 w-full items-center gap-2 rounded-lg px-3 text-sm font-normal text-zinc-700 hover:bg-zinc-100"
             >
-              <Sparkles size={16} strokeWidth={1.75} />
+              <Sparkles size={16} strokeWidth={1.5} />
               What&apos;s new
               {unreadCount > 0 && (
-                <span className="ml-auto rounded-[4px] bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+                <span className="ml-auto rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {unreadCount}
                 </span>
               )}
@@ -358,56 +277,35 @@ export function Sidebar() {
           )}
         </nav>
 
-        {/* Support + user */}
-        <div className={cn("shrink-0 border-t border-border p-3", collapsed && "px-2")}>
-          {!collapsed && (
+        {isSiteDetail && (
+          <SiteSidebarFooter site={siteCtx?.site} collapsed={collapsed} />
+        )}
+
+        {/* Support footer — hidden on site detail (WP/PHP sticky footer instead) */}
+        {!isSiteDetail && (
+        <div className={cn("shrink-0 border-t border-zinc-200", collapsed ? "p-2" : "p-2 px-3")}>
+          {!collapsed ? (
             <a
               href="mailto:support@sitearmor.com"
-              className="mb-3 flex items-center gap-3 rounded-[4px] border border-border bg-background px-3 py-2.5 hover:border-accent/30"
+              className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 transition-colors hover:bg-zinc-100"
             >
-              <LifeBuoy size={16} className="shrink-0 text-accent" strokeWidth={1.75} />
+              <LifeBuoy size={16} strokeWidth={1.5} className="shrink-0 text-zinc-600" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-foreground">Support</p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  support@sitearmor.com
-                </p>
+                <p className="text-xs font-semibold text-zinc-900">Support</p>
+                <p className="truncate text-[11px] text-zinc-500">support@sitearmor.com</p>
               </div>
             </a>
-          )}
-
-          {!!agency && (
-            <div
-              className={cn(
-                "flex items-center gap-2.5",
-                collapsed ? "flex-col" : "rounded-[4px] px-1 py-1"
-              )}
+          ) : (
+            <a
+              href="mailto:support@sitearmor.com"
+              title="Support"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-white">
-                {displayName
-                  .split(" ")
-                  .filter(Boolean)
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </div>
-              {!collapsed && (
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-foreground">{displayName}</p>
-                  <p className="truncate text-[10px] text-muted-foreground">{displayEmail}</p>
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Sign out"
-                className="rounded-[4px] p-1.5 text-muted-foreground hover:bg-[var(--destructive-light)] hover:text-destructive"
-              >
-                <LogOut size={13} />
-              </button>
-            </div>
+              <LifeBuoy size={18} strokeWidth={1.5} />
+            </a>
           )}
         </div>
+        )}
 
         <ChangelogModal
           open={changelogOpen}

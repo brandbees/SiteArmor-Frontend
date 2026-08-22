@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Shield, Key, CheckCircle2, XCircle, AlertCircle,
+  Shield, ShieldAlert, ShieldCheck, Key, CheckCircle2, XCircle, AlertCircle,
 } from "lucide-react";
 import { McCard, McPill, ScoreHistoryList } from "@/components/shared/MalCareUI";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
@@ -73,7 +73,18 @@ export function SecurityTab({
         action={
           <div className="flex items-center gap-2">
             {score != null && (
-              <McPill tone={score >= 80 ? "good" : score >= 50 ? "warn" : "bad"}>
+              <McPill
+                tone={score >= 80 ? "good" : score >= 50 ? "warn" : "bad"}
+                icon={
+                  score >= 80 ? (
+                    <ShieldCheck size={11} />
+                  ) : score >= 50 ? (
+                    <Shield size={11} />
+                  ) : (
+                    <ShieldAlert size={11} />
+                  )
+                }
+              >
                 {score >= 80 ? "Protected" : score >= 50 ? "Needs work" : "At risk"}
               </McPill>
             )}

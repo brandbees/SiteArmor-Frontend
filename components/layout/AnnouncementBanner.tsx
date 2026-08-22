@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Megaphone, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import api from "@/lib/api";
 
 interface Announcement {
@@ -15,9 +15,31 @@ interface Announcement {
 
 const DISMISSED_KEY = "bb_banner_dismissed_ids";
 
+const BANNER_STYLE: Record<string, { wrap: string; icon: string }> = {
+  info: {
+    wrap: "bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500",
+    icon: "text-purple-600",
+  },
+  warning: {
+    wrap: "bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500",
+    icon: "text-amber-600",
+  },
+  success: {
+    wrap: "bg-gradient-to-r from-emerald-50 to-teal-50 border-l-4 border-emerald-500",
+    icon: "text-emerald-600",
+  },
+  danger: {
+    wrap: "bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500",
+    icon: "text-red-600",
+  },
+};
+
 function getDismissedIds(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? "[]")); }
-  catch { return new Set(); }
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? "[]"));
+  } catch {
+    return new Set();
+  }
 }
 
 function addDismissed(id: string) {
@@ -25,15 +47,10 @@ function addDismissed(id: string) {
     const s = getDismissedIds();
     s.add(id);
     localStorage.setItem(DISMISSED_KEY, JSON.stringify([...s]));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
-
-const TYPE_STYLE: Record<string, { bg: string; border: string; text: string; icon: typeof Info }> = {
-  info:    { bg: "bg-blue-50",   border: "border-blue-200",  text: "text-blue-800",  icon: Info          },
-  warning: { bg: "bg-amber-50",  border: "border-amber-200", text: "text-amber-800", icon: AlertTriangle },
-  success: { bg: "bg-green-50",  border: "border-green-200", text: "text-green-800", icon: CheckCircle   },
-  danger:  { bg: "bg-red-50",    border: "border-red-200",   text: "text-red-800",   icon: AlertTriangle },
-};
 
 export function AnnouncementBanner() {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
@@ -46,22 +63,22 @@ export function AnnouncementBanner() {
         const items: Announcement[] = data.announcements ?? [];
         if (!items.length) return;
 
-        const dismissed = getDismissedIds();
-        // Prefer pinned, then most recent
+        const dismissedIds = getDismissedIds();
         const candidate =
-          items.find(a => a.pinned && !dismissed.has(a.id)) ??
-          items.find(a => !dismissed.has(a.id)) ??
+          items.find((a) => a.pinned && !dismissedIds.has(a.id)) ??
+          items.find((a) => !dismissedIds.has(a.id)) ??
           null;
         setAnnouncement(candidate);
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
     }
     load();
   }, []);
 
   if (!announcement || dismissed) return null;
 
-  const style = TYPE_STYLE[announcement.type] ?? TYPE_STYLE.info;
-  const Icon  = style.icon;
+  const style = BANNER_STYLE[announcement.type] ?? BANNER_STYLE.info;
 
   function dismiss() {
     addDismissed(announcement!.id);
@@ -69,19 +86,28 @@ export function AnnouncementBanner() {
   }
 
   return (
-    <div className={`flex items-start gap-3 px-5 py-2.5 border-b text-sm ${style.bg} ${style.border} ${style.text}`}>
-      <Icon size={15} className="shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <span className="font-semibold">{announcement.title}:</span>{" "}
-        <span className="opacity-90">{announcement.body}</span>
+    <div className="relative w-full shrink-0 border-b border-zinc-200 bg-white" role="alert" aria-live="polite">
+      <div className={style.wrap}>
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Sparkles className={`h-5 w-5 shrink-0 stroke-1 ${style.icon}`} />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-zinc-900">{announcement.title}</p>
+              {announcement.body ? (
+                <p className="text-xs text-zinc-600">{announcement.body}</p>
+              ) : null}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Dismiss"
+            className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-700"
+          >
+            <X size={16} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
-      <button
-        onClick={dismiss}
-        aria-label="Dismiss"
-        className="p-1 rounded hover:opacity-60 transition-opacity shrink-0"
-      >
-        <X size={13} />
-      </button>
     </div>
   );
 }

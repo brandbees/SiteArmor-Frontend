@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { McAlert, McIconBox } from "@/components/shared/MalCareUI";
 import { Button } from "@/components/ui/Button";
 import { scoreHex } from "@/lib/utils";
 
@@ -220,25 +221,19 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
     <div className="space-y-4">
       {/* A blocked or truncated crawl must never read as a clean audit. */}
       {blocked && (
-        <div className="rounded-[4px] border border-red-200 bg-red-50 p-4 flex gap-3">
-          <AlertTriangle size={18} className="text-red-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-red-800">This site blocked our crawler</p>
-            <p className="text-xs text-red-700 mt-1">
-              Stopped after {crawl.pages_crawled} page{crawl.pages_crawled === 1 ? "" : "s"}
-              {crawl.blocked_kind ? ` (${crawl.blocked_kind})` : ""}. These findings cover only
-              what we reached — treat them as partial, not as a clean bill of health. Ask the
-              host to allowlist our crawler for a complete audit.
-            </p>
-          </div>
-        </div>
+        <McAlert variant="error" title="This site blocked our crawler">
+          Stopped after {crawl.pages_crawled} page{crawl.pages_crawled === 1 ? "" : "s"}
+          {crawl.blocked_kind ? ` (${crawl.blocked_kind})` : ""}. These findings cover only what
+          we reached — treat them as partial, not as a clean bill of health. Ask the host to
+          allowlist our crawler for a complete audit.
+        </McAlert>
       )}
       {truncated && (
-        <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+        <McAlert variant="warning" title="Partial crawl completed">
           Crawl stopped at the {crawl.stop_reason === "page_limit" ? "page limit" : "time limit"} —
-          {" "}{crawl.pages_crawled} of {crawl.pages_limit} pages. Findings are partial; anything
-          beyond that limit was not checked.
-        </div>
+          {crawl.pages_crawled} of {crawl.pages_limit} pages. Findings are partial; anything beyond
+          that limit was not checked.
+        </McAlert>
       )}
 
       {/* Scores */}

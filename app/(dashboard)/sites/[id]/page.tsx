@@ -8,19 +8,15 @@ import {
   CheckCircle2, XCircle, AlertCircle, ChevronDown, ChevronUp,
   Shield, ShieldAlert, ShieldCheck, Package, ShoppingCart, Wifi, Key, Copy, Eye, EyeOff,
   Activity, TrendingUp, Clock, Zap, Server, Database, LayoutGrid,
-  Bell, DollarSign, BarChart2, CalendarClock, HeartPulse, Search, AlertTriangle, Bot,
+  Bell, DollarSign, BarChart2, CalendarClock, HeartPulse, Search, AlertTriangle, Bot, Flame,
   Loader2, ToggleLeft, ToggleRight, Ban, ImageIcon, X, CalendarDays,
-  HardDrive, RotateCcw, Download, ListTodo,
+  HardDrive, RotateCcw, Download, ListTodo, MoreVertical,
 } from "lucide-react";
-import { useSite } from "@/hooks/useSite";
 import { useAuditStatus } from "@/hooks/useAuditStatus";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
-import { AuditHistoryTable } from "@/components/dashboard/AuditHistoryTable";
-import { TrendChart } from "@/components/dashboard/TrendChart";
-import { LoadingPage } from "@/components/shared/LoadingSpinner";
 import { UpgradeBanner } from "@/components/shared/UpgradeBanner";
-import { McCard, McPill } from "@/components/shared/MalCareUI";
+import { McCard, McPill, McAlert, McSeverityChip, McSectionHeader, McTag, McIconBox } from "@/components/shared/MalCareUI";
 import { SecurityTab } from "@/components/sites/tabs/SecurityTab";
 import { PerformanceTab } from "@/components/sites/tabs/PerformanceTab";
 import { SeoTab } from "@/components/sites/tabs/SeoTab";
@@ -30,44 +26,19 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { SSHSettingsPanel } from "@/components/sites/SSHSettingsPanel";
+import { MalCareSiteOverview } from "@/components/sites/MalCareSiteOverview";
+import { SiteHeader } from "@/components/sites/SiteHeader";
+import { AgentTab } from "@/components/sites/tabs/AgentTab";
+import { useSiteContext } from "@/components/sites/SiteContext";
+import { parseSiteTab, siteTabHref, type SiteTab } from "@/components/sites/site-nav";
 import { useSSHSettings } from "@/hooks/useSSHSettings";
 import api from "@/lib/api";
-import { timeAgo, scoreHex } from "@/lib/utils";
+import { timeAgo, scoreHex, cn } from "@/lib/utils";
 import type { Site, Audit, ScanResult, Plugin as SitePlugin, CronEvent, SiteHealth, PluginVulnerability, WooFatalError, WooGateway } from "@/types";
 
-const AVATAR_COLORS = ["#1f5fb8","#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
-function siteAvatarColor(id: string) { return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length]; }
+// ── Tab type (site sidebar nav) ───────────────────────────────────────────────
 
-// ── Tab config ────────────────────────────────────────────────────────────────
-
-type Tab =
-  | "overview"
-  | "issues"
-  | "security"
-  | "performance"
-  | "seo"
-  | "malware"
-  | "uptime"
-  | "plugins"
-  | "woocommerce"
-  | "cron"
-  | "health"
-  | "backups";
-
-const BASE_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "overview",    label: "Overview",    icon: <LayoutGrid size={13} /> },
-  { key: "issues",      label: "Issues",      icon: <ListTodo size={13} /> },
-  { key: "seo",         label: "SEO",         icon: <TrendingUp size={13} /> },
-  { key: "security",    label: "Security",    icon: <Shield size={13} /> },
-  { key: "performance", label: "Performance", icon: <Zap size={13} /> },
-  { key: "malware",     label: "Malware",     icon: <Activity size={13} /> },
-  { key: "uptime",      label: "Uptime",      icon: <Wifi size={13} /> },
-  { key: "plugins",     label: "Plugins",     icon: <Package size={13} /> },
-  { key: "backups",     label: "Backups",     icon: <HardDrive size={13} /> },
-  { key: "woocommerce", label: "WooCommerce", icon: <ShoppingCart size={13} /> },
-  { key: "cron",        label: "Cron Events", icon: <CalendarClock size={13} /> },
-  { key: "health",      label: "Site Health", icon: <HeartPulse size={13} /> },
-];
+type Tab = SiteTab;
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -221,382 +192,6 @@ function PluginDataPanel({ site }: { site: Site }) {
   );
 }
 
-// ── Overview Tab ──────────────────────────────────────────────────────────────
-
-interface Benchmarks {
-  performance: number | null;
-  seo: number | null;
-  security: number | null;
-  malware: number | null;
-}
-
-function OverviewTab({
-  site,
-  audits,
-  runAudit,
-  auditLoading,
-  canRunAudit,
-  brandColor,
-  benchmarks,
-  setTab,
-}: {
-  site: Site;
-  audits: Audit[];
-  runAudit: () => void;
-  auditLoading: boolean;
-  canRunAudit: boolean;
-  brandColor: string;
-  benchmarks: Benchmarks | null;
-  setTab: (tab: Tab) => void;
-}) {
-  void brandColor;
-  void benchmarks;
-  const scores = site.latest_scores;
-  const overallScore = scores
-    ? Math.round((scores.performance + scores.seo + scores.security + scores.malware) / 4)
-    : null;
-  const isAuditInProgress = audits.some((a) => a.status === "pending" || a.status === "running");
-  const updates = site.plugins_needing_updates ?? 0;
-  const sslDays = sslDaysRemaining(site.ssl_expiry_date);
-
-  const issues: { label: string; severity: "critical" | "warn" }[] = [];
-  if (site.xml_rpc_enabled) issues.push({ label: "XML-RPC is enabled", severity: "warn" });
-  if (site.file_editor_enabled) issues.push({ label: "File editor enabled", severity: "warn" });
-  if (site.wp_debug_enabled) issues.push({ label: "Debug mode active", severity: "critical" });
-  if (site.login_url_default) issues.push({ label: "Default /wp-login URL exposed", severity: "warn" });
-  if (site.wp_config_writable) issues.push({ label: "wp-config.php is writable", severity: "critical" });
-  if (site.htaccess_writable) issues.push({ label: ".htaccess is writable", severity: "critical" });
-  if (!site.caching_plugin) issues.push({ label: "No caching plugin installed", severity: "warn" });
-  if (site.admin_usernames?.includes("admin"))
-    issues.push({ label: 'Admin username "admin" exists', severity: "critical" });
-  if (sslDays !== null && sslDays < 30)
-    issues.push({ label: `SSL expires in ${sslDays}d`, severity: sslDays < 7 ? "critical" : "warn" });
-  if (site.uptime_status === "down") issues.push({ label: "Site is currently down", severity: "critical" });
-  if (site.malware_status === "threat")
-    issues.push({ label: "Malware threat detected", severity: "critical" });
-  if (updates > 0)
-    issues.push({
-      label: `${updates} plugin update${updates === 1 ? "" : "s"} available`,
-      severity: "warn",
-    });
-
-  const online = site.uptime_status === "up";
-  const down = site.uptime_status === "down";
-  const latestAudit = audits.find((a) => a.status === "completed");
-  const narrative = latestAudit?.ai_narrative;
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <McCard
-          className="xl:col-span-2"
-          title="Site Summary"
-          icon={<Globe size={15} />}
-          action={
-            online ? (
-              <McPill tone="good">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--score-good)]" /> Site is Online
-              </McPill>
-            ) : down ? (
-              <McPill tone="bad">Site is Down</McPill>
-            ) : (
-              <McPill tone="neutral">Status unknown</McPill>
-            )
-          }
-          flush
-        >
-          <div className="flex flex-col gap-4 px-4 pb-4 sm:flex-row sm:items-start">
-            <div className="relative shrink-0">
-              <div
-                className="flex h-[88px] w-[120px] items-center justify-center rounded-lg border border-border text-3xl font-bold text-white shadow-sm"
-                style={{ background: siteAvatarColor(site.id) }}
-              >
-                {site.name[0]?.toUpperCase()}
-              </div>
-              {site.plugin_connected && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--score-good)] text-white">
-                  <CheckCircle2 size={12} />
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1 space-y-2.5">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
-                <div>
-                  <p className="text-muted-foreground">WordPress</p>
-                  <p className="font-bold text-foreground">{site.plugin_data?.wp_version ?? "—"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">PHP</p>
-                  <p className="font-bold text-foreground">{site.plugin_data?.php_version ?? "—"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Active Plugins</p>
-                  <p className="font-bold text-foreground">
-                    {site.plugin_data?.active_plugins_count ?? "—"}
-                    {updates > 0 && (
-                      <sup className="ml-0.5 text-[10px] font-bold text-[var(--score-warn)]">
-                        {updates}
-                      </sup>
-                    )}
-                  </p>
-                </div>
-                <div className="col-span-2 sm:col-span-3">
-                  <p className="text-muted-foreground">Connection</p>
-                  <p
-                    className={`font-bold ${
-                      site.plugin_connected
-                        ? "text-[var(--score-good)]"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {site.plugin_connected ? "Plugin connected" : "Plugin not connected"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          {updates > 0 && (
-            <button
-              type="button"
-              onClick={() => setTab("plugins")}
-              className="flex w-full items-center gap-3 border-t border-[var(--score-warn-border)] bg-[var(--score-warn-bg)] px-4 py-3 text-left transition-colors hover:brightness-[0.98]"
-            >
-              <Download size={16} className="shrink-0 text-[var(--score-warn)]" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-foreground">
-                  {updates} Plugin Update{updates === 1 ? "" : "s"} Available
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {updates} plugin{updates === 1 ? "" : "s"} need updates.
-                </p>
-              </div>
-              <span className="text-xs font-bold text-accent">Manage →</span>
-            </button>
-          )}
-        </McCard>
-
-        <McCard
-          title="Health Scores"
-          icon={<Activity size={15} />}
-          action={
-            canRunAudit ? (
-              <button
-                type="button"
-                onClick={runAudit}
-                disabled={auditLoading}
-                className="text-xs font-bold text-accent hover:underline disabled:opacity-50"
-              >
-                {auditLoading ? "Running…" : "Scan now"}
-              </button>
-            ) : null
-          }
-        >
-          {scores ? (
-            <div className="grid grid-cols-2 gap-3">
-              {(
-                [
-                  { label: "Perf", score: scores.performance, tab: "performance" as Tab },
-                  { label: "SEO", score: scores.seo, tab: "seo" as Tab },
-                  { label: "Security", score: scores.security, tab: "security" as Tab },
-                  { label: "Malware", score: scores.malware, tab: "malware" as Tab },
-                ] as const
-              ).map(({ label, score, tab }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setTab(tab)}
-                  className="rounded-lg p-1 transition-colors hover:bg-[#f0f2f5]"
-                >
-                  <SiteScoreWheel score={score} caption={label} size={72} />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              {isAuditInProgress ? (
-                <>
-                  <Loader2 size={22} className="mb-2 animate-spin text-accent" />
-                  <p className="text-sm font-semibold">Audit in progress…</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm font-semibold text-foreground">No audit data</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Run an audit to see scores</p>
-                  {canRunAudit && (
-                    <Button className="mt-3" size="sm" onClick={runAudit} loading={auditLoading}>
-                      Run audit
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </McCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <McCard
-          title="Attention Needed"
-          icon={<AlertTriangle size={15} />}
-          action={
-            issues.length > 0 ? (
-              <McPill tone="bad">{issues.length}</McPill>
-            ) : (
-              <McPill tone="good">Clear</McPill>
-            )
-          }
-        >
-          {issues.length === 0 ? (
-            <div className="flex flex-col items-center py-6 text-center">
-              <CheckCircle2 size={22} className="mb-2 text-[var(--score-good)]" />
-              <p className="text-sm font-semibold">All clear</p>
-              <p className="text-xs text-muted-foreground">No critical issues detected</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {issues.slice(0, 8).map(({ label, severity }) => (
-                <li key={label} className="flex items-center gap-2.5 py-2.5 first:pt-0 last:pb-0">
-                  {severity === "critical" ? (
-                    <XCircle size={14} className="shrink-0 text-[var(--score-bad)]" />
-                  ) : (
-                    <AlertCircle size={14} className="shrink-0 text-[var(--score-warn)]" />
-                  )}
-                  <span className="min-w-0 flex-1 text-xs font-medium text-foreground">{label}</span>
-                  <span
-                    className={`text-[10px] font-bold ${
-                      severity === "critical" ? "text-[var(--score-bad)]" : "text-[var(--score-warn)]"
-                    }`}
-                  >
-                    {severity === "critical" ? "High" : "Warn"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <button
-            type="button"
-            onClick={() => setTab("issues")}
-            className="mt-3 text-xs font-bold text-accent hover:underline"
-          >
-            View all issues →
-          </button>
-        </McCard>
-
-        <McCard title="Uptime & Monitoring" icon={<Wifi size={15} />}>
-          <div className="space-y-3">
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                  30d Uptime
-                </p>
-                <p className="font-portal-display text-3xl font-bold tabular-nums text-foreground">
-                  {site.uptime_percentage != null ? `${site.uptime_percentage.toFixed(1)}%` : "—"}
-                </p>
-              </div>
-              <McPill tone={online ? "good" : down ? "bad" : "neutral"}>
-                {online ? "Online" : down ? "Down" : "Unknown"}
-              </McPill>
-            </div>
-            <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
-              <div>
-                <p className="text-muted-foreground">Last audit</p>
-                <p className="font-semibold text-foreground">
-                  {site.last_audit_at ? timeAgo(site.last_audit_at) : "Never"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Schedule</p>
-                <p className="font-semibold capitalize text-foreground">
-                  {site.scan_schedule ?? "Manual"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Avg response</p>
-                <p className="font-semibold text-foreground">
-                  {site.avg_response_ms != null ? `${site.avg_response_ms} ms` : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">SSL</p>
-                <p className="font-semibold text-foreground">
-                  {sslDays == null ? "—" : sslDays < 0 ? "Expired" : `${sslDays}d left`}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setTab("uptime")}
-              className="text-xs font-bold text-accent hover:underline"
-            >
-              Open uptime →
-            </button>
-          </div>
-        </McCard>
-
-        <McCard title="Environment" icon={<Server size={15} />}>
-          <div className="divide-y divide-border text-xs">
-            {(
-              [
-                ["Caching", site.caching_plugin ? "Enabled" : "None"],
-                ["CDN", site.cdn_plugin ? "Enabled" : "None"],
-                ["Object cache", site.object_cache_enabled ? "On" : "Off"],
-                ["Image optimization", site.image_optimization_plugin ? "On" : "Off"],
-              ] as const
-            ).map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                <span className="text-muted-foreground">{k}</span>
-                <span className="font-semibold text-foreground">{v}</span>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setTab("health")}
-            className="mt-3 text-xs font-bold text-accent hover:underline"
-          >
-            Full environment →
-          </button>
-        </McCard>
-      </div>
-
-      {narrative?.overall && (
-        <McCard title="AI Summary" icon={<Bot size={15} />}>
-          <p className="text-sm leading-relaxed text-foreground">{narrative.overall}</p>
-          <button
-            type="button"
-            onClick={() => setTab("issues")}
-            className="mt-3 text-xs font-bold text-accent hover:underline"
-          >
-            See recommended fixes →
-          </button>
-        </McCard>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <McCard
-          className="lg:col-span-3"
-          title="Health Score Trend"
-          icon={<TrendingUp size={15} />}
-          bodyClassName="p-4 pt-2"
-        >
-          <TrendChart siteId={site.id} />
-        </McCard>
-        <McCard
-          className="lg:col-span-2"
-          title="Audit History"
-          icon={<Clock size={15} />}
-          bodyClassName="p-0"
-        >
-          <div className="max-h-[320px] overflow-y-auto p-4">
-            <AuditHistoryTable audits={audits} siteId={site.id} />
-          </div>
-        </McCard>
-      </div>
-    </div>
-  );
-}
-
-
 // ── Issues Tab ────────────────────────────────────────────────────────────────
 
 interface FixItem {
@@ -610,24 +205,31 @@ interface FixItem {
 
 const PRIORITY_ORDER_LIST = ["critical", "high", "medium", "low"] as const;
 
-const PRIORITY_META: Record<string, { label: string; color: string; bg: string }> = {
-  critical: { label: "Critical", color: "text-red-700",    bg: "bg-red-50 border-red-200"       },
-  high:     { label: "High",     color: "text-orange-700", bg: "bg-orange-50 border-orange-200" },
-  medium:   { label: "Medium",   color: "text-amber-700",  bg: "bg-amber-50 border-amber-200"   },
-  low:      { label: "Low",      color: "text-blue-700",   bg: "bg-blue-50 border-blue-200"     },
+const EFFORT_TAG: Record<string, { label: string; tone: "good" | "warn" | "bad" }> = {
+  low: { label: "Quick fix", tone: "good" },
+  medium: { label: "Moderate", tone: "warn" },
+  high: { label: "Complex", tone: "bad" },
 };
 
-const EFFORT_META: Record<string, { label: string; cls: string }> = {
-  low:    { label: "Quick fix", cls: "bg-green-50 text-green-700"  },
-  medium: { label: "Moderate",  cls: "bg-amber-50 text-amber-700"  },
-  high:   { label: "Complex",   cls: "bg-red-50 text-red-700"      },
+const COMPONENT_TAG: Record<string, "purple" | "cyan" | "accent" | "pink"> = {
+  security: "cyan",
+  malware: "purple",
+  performance: "accent",
+  seo: "pink",
 };
 
-const COMPONENT_CLS: Record<string, string> = {
-  security:    "bg-cyan-50 text-cyan-700",
-  malware:     "bg-purple-50 text-purple-700",
-  performance: "bg-[var(--accent-light)] text-[var(--accent-hover)]",
-  seo:         "bg-pink-50 text-pink-700",
+const PRIORITY_ICON: Record<string, typeof ShieldAlert> = {
+  critical: ShieldAlert,
+  high: Flame,
+  medium: AlertCircle,
+  low: AlertTriangle,
+};
+
+const PRIORITY_TONE: Record<string, "bad" | "warn" | "accent"> = {
+  critical: "bad",
+  high: "warn",
+  medium: "warn",
+  low: "accent",
 };
 
 function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
@@ -671,74 +273,62 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
 
   if (activeFixes.length === 0 && resolvedFixes.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border flex items-center justify-center py-20 transition-all duration-base">
-        <div className="text-center">
-          <CheckCircle2 size={28} className="text-green-500 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-foreground">No issues found</p>
-          <p className="text-xs text-muted-foreground mt-1 mb-4">Run an audit to check for issues</p>
+      <McCard bodyClassName="py-12">
+        <div className="flex flex-col items-center text-center">
+          <McIconBox icon={<CheckCircle2 size={18} />} tone="good" size="lg" />
+          <p className="mt-3 text-sm font-bold text-foreground">No issues found</p>
+          <p className="mt-1 text-xs text-muted-foreground">Run an audit to check for issues</p>
         </div>
-      </div>
+      </McCard>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Confirmation modal */}
       {confirmFix && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-surface rounded-xl border border-border shadow-elevated-lg w-full max-w-sm p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm space-y-4 rounded-[4px] border border-border bg-white p-6 shadow-elevated-lg">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                <AlertTriangle size={18} className="text-amber-500" />
-              </div>
+              <McIconBox icon={<AlertTriangle size={17} />} tone="warn" size="md" />
               <div>
-                <p className="text-sm font-semibold text-foreground">Mark as resolved?</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm font-bold text-foreground">Mark as resolved?</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Confirm you have applied this fix before marking it resolved.
                 </p>
               </div>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3">
+            <div className="rounded-[4px] border border-border bg-[#f7f9fc] p-3">
               <p className="text-xs font-semibold text-foreground">{confirmFix.title}</p>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setConfirmFix(null)}
-                className="flex-1 text-sm px-4 py-2 rounded-lg border border-border text-foreground hover:bg-gray-50"
-              >
+              <Button variant="secondary" className="flex-1" onClick={() => setConfirmFix(null)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                className="flex-1"
                 onClick={() => resolveFix(confirmFix)}
                 disabled={resolving === confirmFix.title}
-                className="flex-1 flex items-center justify-center gap-1.5 text-sm px-4 py-2 rounded-lg text-white font-medium disabled:opacity-60"
-                style={{ background: brandColor }}
+                loading={resolving === confirmFix.title}
               >
-                {resolving === confirmFix.title
-                  ? <><Loader2 size={12} className="animate-spin" />Saving…</>
-                  : "Mark resolved"}
-              </button>
+                Mark resolved
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Summary bar */}
-      <div className="flex items-center gap-3 flex-wrap">
+      {/* Summary chips */}
+      <div className="flex flex-wrap items-center gap-2">
         {PRIORITY_ORDER_LIST.map((p) => {
           const count = activeFixes.filter((f) => f.priority === p).length;
           if (!count) return null;
-          const meta = PRIORITY_META[p];
-          return (
-            <span key={p} className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border ${meta.bg} ${meta.color}`}>
-              {meta.label} · {count}
-            </span>
-          );
+          return <McSeverityChip key={p} severity={p} count={count} />;
         })}
         {activeFixes.length === 0 && (
-          <span className="text-xs text-green-700 font-semibold flex items-center gap-1.5">
-            <CheckCircle2 size={13} className="text-green-500" /> All issues resolved
-          </span>
+          <McPill tone="good" icon={<CheckCircle2 size={11} />}>
+            All issues resolved
+          </McPill>
         )}
       </div>
 
@@ -746,37 +336,45 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
       {PRIORITY_ORDER_LIST.map((priority) => {
         const group = activeFixes.filter((f) => f.priority === priority);
         if (!group.length) return null;
-        const meta = PRIORITY_META[priority];
+        const PIcon = PRIORITY_ICON[priority];
+        const tone = PRIORITY_TONE[priority];
         return (
-          <div key={priority}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border ${meta.bg} ${meta.color}`}>
-                {meta.label} — {group.length} {group.length === 1 ? "issue" : "issues"}
-              </span>
-            </div>
-            <div className="space-y-3">
+          <div key={priority} className="space-y-3">
+            <McSectionHeader severity={priority} count={group.length} />
+            <div className="space-y-2">
               {group.map((fix) => {
-                const effort = EFFORT_META[fix.effort] ?? EFFORT_META.medium;
-                const compCls = COMPONENT_CLS[fix.component] ?? "bg-gray-100 text-gray-600";
+                const effort = EFFORT_TAG[fix.effort] ?? EFFORT_TAG.medium;
+                const compTone = COMPONENT_TAG[fix.component] ?? "accent";
                 return (
-                  <div key={fix.title} className="bg-surface rounded-xl border border-border p-5 transition-all duration-base">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground mb-1.5">{fix.title}</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed mb-3">{fix.description}</p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${effort.cls}`}>{effort.label}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${compCls}`}>{fix.component}</span>
+                  <div
+                    key={fix.title}
+                    className="rounded-[4px] border border-border bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <McIconBox
+                        icon={<PIcon size={16} strokeWidth={2.25} />}
+                        tone={tone}
+                        size="md"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground">{fix.title}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {fix.description}
+                        </p>
+                        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                          <McTag tone={effort.tone}>{effort.label}</McTag>
+                          <McTag tone={compTone}>{fix.component}</McTag>
                         </div>
                       </div>
-                      <button
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setConfirmFix(fix)}
                         disabled={!!resolving}
-                        className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
                       >
                         <CheckCircle2 size={12} />
                         Resolve
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );
@@ -789,15 +387,18 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
       {/* Resolved section */}
       {resolvedFixes.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Resolved ({resolvedFixes.length})</p>
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Resolved ({resolvedFixes.length})
+          </p>
           <div className="space-y-2">
             {resolvedFixes.map((fix) => (
-              <div key={fix.title} className="bg-surface rounded-xl border border-border p-4 opacity-50 transition-all duration-base">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 size={14} className="text-green-500 shrink-0" />
-                  <p className="text-sm text-foreground flex-1">{fix.title}</p>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Resolved</span>
-                </div>
+              <div
+                key={fix.title}
+                className="flex items-center gap-3 rounded-[4px] border border-border bg-white px-4 py-3 opacity-60"
+              >
+                <McIconBox icon={<CheckCircle2 size={14} />} tone="good" size="sm" />
+                <p className="flex-1 text-sm text-foreground">{fix.title}</p>
+                <McPill tone="good">Resolved</McPill>
               </div>
             ))}
           </div>
@@ -1893,26 +1494,24 @@ function PluginsTab({ site, audits, brandColor, onSiteRefetch, canUseAdvancedFea
 
       {/* ── Kill switch paused banner ── */}
       {updatesPaused && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-red-700">Scheduled updates paused</p>
-              <p className="text-xs text-red-600 mt-0.5">
-                The portfolio kill switch fired because the update failure rate exceeded 5% in the last 24 hours.
-                Review recent update history before resuming.
-              </p>
-            </div>
+        <McAlert variant="error" title="Scheduled updates paused">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <span>
+              The portfolio kill switch fired because the update failure rate exceeded 5% in the
+              last 24 hours. Review recent update history before resuming.
+            </span>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={resumeUpdates}
+              disabled={resumingKillSwitch}
+              loading={resumingKillSwitch}
+              className="shrink-0"
+            >
+              Resume Updates
+            </Button>
           </div>
-          <button
-            onClick={resumeUpdates}
-            disabled={resumingKillSwitch}
-            className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {resumingKillSwitch ? <Loader2 size={11} className="animate-spin" /> : null}
-            Resume Updates
-          </button>
-        </div>
+        </McAlert>
       )}
 
       {/* ── Safe Updates settings card ── */}
@@ -2549,7 +2148,8 @@ function CronTab({ site, brandColor }: { site: Site; brandColor: string }) {
               />
             </div>
           </div>
-          <div className="flex gap-0 overflow-x-auto min-w-max -mb-px">
+          <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain -mb-px scrollbar-none">
+            <div className="inline-flex w-max gap-0">
             {FILTER_TABS.map(({ key, label, count }) => (
               <button
                 key={key}
@@ -2571,6 +2171,7 @@ function CronTab({ site, brandColor }: { site: Site; brandColor: string }) {
                 )}
               </button>
             ))}
+            </div>
           </div>
         </div>
 
@@ -2817,7 +2418,7 @@ function SiteDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { site, loading, error, refetch } = useSite(id);
+  const { site, loading, error, refetch } = useSiteContext();
   const { agency } = useAuth();
   const brandColor = agency?.accent_color ?? "#1f5fb8";
   const canUseAdvancedFeatures = agency?.plan === "premium" || agency?.plan === "agency_plus";
@@ -2829,19 +2430,13 @@ function SiteDetailContent() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showSSHModal, setShowSSHModal] = useState(false);
-  const [tokenCopied, setTokenCopied] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const scanPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanInFlightRef = useRef(false); // prevents double-trigger on fast double-click
   const narrativeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [benchmarks, setBenchmarks] = useState<Benchmarks | null>(null);
-
-  useEffect(() => {
-    api.get<Benchmarks>("/benchmarks")
-      .then(({ data }) => setBenchmarks(data))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -2850,16 +2445,19 @@ function SiteDetailContent() {
     };
   }, []);
 
-  function copyToken(token: string) {
-    navigator.clipboard.writeText(token).then(() => {
-      setTokenCopied(true);
-      setTimeout(() => setTokenCopied(false), 2000);
-    });
-  }
-
-  const rawTab = searchParams.get("tab") as Tab | null;
-  const [activeTab, setActiveTab] = useState<Tab>(rawTab ?? "overview");
+  const activeTab = parseSiteTab(searchParams.get("tab"));
   const { status: sshStatus, refreshStatus: refreshSSHStatus } = useSSHSettings(id);
+
+  useEffect(() => {
+    if (!showActions) return;
+    function onDocClick(e: MouseEvent) {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
+        setShowActions(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [showActions]);
 
   useEffect(() => {
     const connected = searchParams.get("connected");
@@ -2882,8 +2480,7 @@ function SiteDetailContent() {
   }, [auditDone]);
 
   function handleTabChange(tab: Tab) {
-    setActiveTab(tab);
-    router.push(`/sites/${id}?tab=${tab}`, { scroll: false });
+    router.push(siteTabHref(id, tab), { scroll: false });
   }
 
   async function runAudit() {
@@ -2988,7 +2585,7 @@ function SiteDetailContent() {
     }
   }
 
-  if (loading) return <LoadingPage />;
+  if (loading && !site) return null;
   if (error || !site) {
     return (
       <div className="p-6">
@@ -2997,214 +2594,82 @@ function SiteDetailContent() {
     );
   }
 
-  const tabs = BASE_TABS;
-
-  const overallScore = site.latest_scores
-    ? Math.round(
-        (site.latest_scores.performance + site.latest_scores.seo +
-          site.latest_scores.security + site.latest_scores.malware) / 4
-      )
-    : null;
+  const wpAdminHref = site.url.replace(/\/$/, "") + "/wp-admin";
 
   return (
-    <div className="-m-5 flex flex-col sm:-m-6 lg:-m-8">
-
-{/* ── Site header (MalCare composition) ───────────────────────────────── */}
-      <div className="border-b border-border bg-white">
-        <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-3">
-              <button
-                type="button"
-                onClick={() => router.push("/sites")}
-                className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-border bg-[#f0f2f5] text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Back to sites"
-              >
-                <Globe size={18} />
-              </button>
-              <div className="min-w-0">
-                <h1 className="truncate text-[1.375rem] font-bold leading-tight tracking-tight text-foreground sm:text-[1.5rem]">
-                  {site.name}
-                </h1>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
-                  <a
-                    href={site.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-medium text-accent hover:underline"
-                  >
-                    {site.url.replace(/^https?:\/\//, "")}
-                    <ExternalLink size={11} />
-                  </a>
-                  <span className="text-border">·</span>
-                  <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        site.uptime_status === "up"
-                          ? "bg-[var(--score-good)]"
-                          : site.uptime_status === "down"
-                            ? "bg-[var(--score-bad)]"
-                            : "bg-muted-foreground"
-                      }`}
-                    />
-                    {site.uptime_status === "up"
-                      ? "Site is Online"
-                      : site.uptime_status === "down"
-                        ? "Site is Down"
-                        : "Status unknown"}
-                  </span>
-                  {site.last_audit_at && (
-                    <>
-                      <span className="text-border">·</span>
-                      <span className="text-muted-foreground">
-                        Last sync {timeAgo(site.last_audit_at)}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  {site.plugin_data?.wp_version && (
-                    <span className="rounded-[4px] border border-border bg-[#f0f2f5] px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      WP {site.plugin_data.wp_version}
-                    </span>
-                  )}
-                  {site.plugin_data?.php_version && (
-                    <span className="rounded-[4px] border border-border bg-[#f0f2f5] px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      PHP {site.plugin_data.php_version}
-                    </span>
-                  )}
-                  {overallScore !== null && (
-                    <span
-                      className="rounded-[4px] border px-2 py-0.5 text-[11px] font-semibold"
-                      style={{
-                        color: scoreHex(overallScore),
-                        background: scoreHex(overallScore) + "14",
-                        borderColor: scoreHex(overallScore) + "33",
-                      }}
-                    >
-                      Health {overallScore}/100
-                    </span>
-                  )}
+    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+      <SiteHeader
+        site={site}
+        wpAdminHref={wpAdminHref}
+        onSync={canRunAudit ? runAudit : undefined}
+        syncLoading={auditLoading || !!pendingAuditId}
+        menu={
+          <div className="relative" ref={actionsRef}>
+            <button
+              type="button"
+              onClick={() => setShowActions((v) => !v)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-950 shadow-xs transition-colors hover:bg-zinc-50"
+              aria-label="More actions"
+            >
+              <MoreVertical size={18} strokeWidth={1.5} />
+            </button>
+            {showActions && (
+              <div className="absolute right-0 z-30 mt-1 min-w-[180px] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSSHModal(true);
+                    setShowActions(false);
+                  }}
+                  className="flex w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                >
+                  SSH settings
+                </button>
+                {canDeleteSite && (
                   <button
                     type="button"
-                    onClick={() => copyToken(site.site_token)}
-                    className="rounded-[4px] border border-dashed border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:border-accent/40 hover:text-accent"
+                    onClick={() => {
+                      handleDelete();
+                      setShowActions(false);
+                    }}
+                    className="flex w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                   >
-                    {tokenCopied ? "Token copied" : "Copy site token"}
+                    {deleteConfirm ? "Confirm delete" : "Delete site"}
                   </button>
-                </div>
+                )}
               </div>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowSSHModal(true)}
-            >
-              {sshStatus.saved ? "SSH ✓" : "SSH"}
-            </Button>
-            {canDeleteSite && (
-              <Button
-                type="button"
-                variant={deleteConfirm ? "danger" : "secondary"}
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteLoading}
-                loading={deleteLoading}
-              >
-                <Trash2 size={13} />
-                {deleteConfirm ? "Confirm" : "Delete"}
-              </Button>
-            )}
-            {canDeleteSite && deleteConfirm && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setDeleteConfirm(false)}
-              >
-                Cancel
-              </Button>
-            )}
-            <a
-              href={site.url.replace(/\/$/, "") + "/wp-admin"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-9 items-center gap-2 rounded-[4px] bg-accent px-4 text-[11px] font-bold uppercase tracking-[0.08em] text-white hover:bg-accent-hover"
-            >
-              WP Admin
-              <ExternalLink size={12} />
-            </a>
-            {canRunAudit && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={runAudit}
-                disabled={auditLoading || !!pendingAuditId}
-                loading={auditLoading || !!pendingAuditId}
-              >
-                <RefreshCw size={14} />
-                {pendingAuditId ? "Scanning…" : "Scan Now"}
-              </Button>
             )}
           </div>
-        </div>
+        }
+      />
 
-        {pendingAuditId && (
-          <div className="mx-4 mb-4 flex items-center gap-2 rounded-lg border border-accent/20 bg-accent-light px-4 py-2.5 sm:mx-6">
+      {pendingAuditId && (
+        <div className="border-b border-accent/20 bg-accent-light px-4 py-2 sm:px-6">
+          <div className="flex items-center gap-2">
             <RefreshCw size={13} className="shrink-0 animate-spin text-accent" />
             <p className="text-xs font-medium text-accent">
               Audit running — results will update automatically
             </p>
           </div>
-        )}
-      </div>
-
-      {/* ── Tabs — MalCare Advanced Monitoring style ───────────────────────── */}
-      <div className="border-b border-border bg-white px-2 sm:px-4">
-        <div className="flex min-w-max items-stretch gap-0 overflow-x-auto">
-          {tabs.map(({ key, label, icon }) => {
-            const isActive = activeTab === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleTabChange(key)}
-                className={[
-                  "relative flex items-center gap-2 whitespace-nowrap px-3.5 py-3.5 text-[13px] font-semibold transition-colors",
-                  isActive
-                    ? "text-accent"
-                    : "text-muted-foreground hover:text-foreground",
-                ].join(" ")}
-              >
-                <span className={isActive ? "text-accent" : "text-muted-foreground/80"}>{icon}</span>
-                {label}
-                {isActive && (
-                  <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-accent" />
-                )}
-              </button>
-            );
-          })}
         </div>
-      </div>
+      )}
 
-      {/* ── Tab content on soft canvas ─────────────────────────────────────── */}
-      <div className="flex-1 bg-[var(--background)] p-4 sm:p-5 lg:p-6">
-
+      <div
+        className={cn(
+          "min-h-0 w-full flex-1",
+          activeTab === "overview" || activeTab === "agent"
+            ? "flex flex-col overflow-hidden p-0"
+            : "overflow-y-auto bg-[#f4f4f5] p-4 sm:p-5"
+        )}
+      >
         {activeTab === "overview" && (
-          <OverviewTab
+          <MalCareSiteOverview
             site={site}
             audits={site.audits}
             runAudit={runAudit}
             auditLoading={auditLoading}
             canRunAudit={canRunAudit}
-            brandColor={brandColor}
-            benchmarks={benchmarks}
-            setTab={setActiveTab}
+            setTab={handleTabChange}
           />
         )}
         {activeTab === "issues"      && <IssuesTab site={site} brandColor={brandColor} />}
@@ -3227,6 +2692,7 @@ function SiteDetailContent() {
         {activeTab === "cron"        && <CronTab site={site} brandColor={brandColor} />}
         {activeTab === "health"      && <SiteHealthTab site={site} />}
         {activeTab === "backups"     && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseAdvancedFeatures} />}
+        {activeTab === "agent"       && <AgentTab site={site} />}
       </div>
 
       {/* SSH Modal */}

@@ -267,7 +267,7 @@ export function PerformanceTab({
 
   const optimizePSIWithAgent = () => {
     const prompt = `Optimize PSI for ${site.name} using low risk fixes. Show me the improvements step by step.`;
-    router.push(`/agent?site_id=${site.id}&prompt=${encodeURIComponent(prompt)}`);
+    router.push(`/sites/${site.id}?tab=agent&prompt=${encodeURIComponent(prompt)}`);
   };
 
   const ttfb: number | null = perf?.ttfb_ms ?? null;
@@ -376,7 +376,10 @@ export function PerformanceTab({
         action={
           <div className="flex items-center gap-3">
             {score != null && (
-              <McPill tone={score >= 80 ? "good" : score >= 50 ? "warn" : "bad"}>
+              <McPill
+                tone={score >= 80 ? "good" : score >= 50 ? "warn" : "bad"}
+                icon={<Zap size={11} />}
+              >
                 {score >= 80 ? "Good" : score >= 50 ? "Needs Improvement" : "Poor"}
               </McPill>
             )}
