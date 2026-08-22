@@ -2598,6 +2598,7 @@ function SiteDetailContent() {
 
   return (
     <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+      {activeTab !== "agent" && (
       <SiteHeader
         site={site}
         wpAdminHref={wpAdminHref}
@@ -2642,8 +2643,9 @@ function SiteDetailContent() {
           </div>
         }
       />
+      )}
 
-      {pendingAuditId && (
+      {activeTab !== "agent" && pendingAuditId && (
         <div className="border-b border-accent/20 bg-accent-light px-4 py-2 sm:px-6">
           <div className="flex items-center gap-2">
             <RefreshCw size={13} className="shrink-0 animate-spin text-accent" />
