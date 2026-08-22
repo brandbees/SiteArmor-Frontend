@@ -39,12 +39,15 @@ const OPTIMIZE_PROMPT =
 const UNDO_PROMPT =
   "Undo the optimization changes you made and restore the site to how it was before.";
 
+// Two independent balances, deliberately never summed into one figure for display:
+// the plan allowance refills every month, the purchased top-up never does.
 interface TokenState {
-  tokens_used:      number;
+  tokens_used:      number;   // this month's usage against the plan allowance
   tokens_limit:     number;   // base + total purchased (e.g. 270k)
   tokens_extra:     number;   // total extra purchased (e.g. 250k)
+  extra_used?:      number;   // lifetime top-up consumed — never resets
   extra_remaining?: number;   // extra still available (e.g. 43k)
-  monthly_limit?:   number;   // plan base limit (e.g. 20k)
+  monthly_limit?:   number;   // plan base limit, refilled monthly (e.g. 20k)
 }
 
 interface ToolCall {
@@ -61,6 +64,7 @@ interface AgentReply {
   tokens_used?:     number;
   tokens_limit?:    number;
   tokens_extra?:    number;
+  extra_used?:      number;
   extra_remaining?: number;
   monthly_limit?:   number;
 }
@@ -644,33 +648,49 @@ function ToolCallsSummary({ calls }: { calls: ToolCall[] }) {
 function TokenBar({ state, onTopup }: { state: TokenState; onTopup?: () => void }) {
   const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n);
 
-  // Compute actual remaining using server-supplied extra_remaining + base headroom.
-  // tokens_used is a monthly counter (resets each month) — it does NOT represent
-  // total lifetime consumption. extra_remaining comes from the server and already
-  // accounts for all months of extra usage, so combining them gives the true picture.
-  const monthlyBase    = state.monthly_limit ?? state.tokens_limit;
-  const baseHeadroom   = Math.max(0, monthlyBase - state.tokens_used);
-  const extraHeadroom  = Math.max(0, state.extra_remaining ?? 0);
-  const actualRemaining = baseHeadroom + extraHeadroom;
-  const effectiveUsed  = Math.max(0, state.tokens_limit - actualRemaining);
+  // Shown as two separate meters on purpose. Adding them together produced a single
+  // "1802k / 2100k" in which a monthly refill of the plan allowance moved the bar by
+  // under 5% — so a rollover that had genuinely happened looked like it never did.
+  const monthlyBase   = state.monthly_limit ?? state.tokens_limit;
+  const planUsed      = Math.min(state.tokens_used, monthlyBase);   // overflow is billed to top-up
+  const planPct       = monthlyBase > 0 ? Math.min(100, (planUsed / monthlyBase) * 100) : 0;
+  const planWarn      = planPct >= 80;
 
-  const pct  = state.tokens_limit > 0 ? Math.min(100, (effectiveUsed / state.tokens_limit) * 100) : 0;
-  const warn = pct >= 80;
+  const extraTotal    = state.tokens_extra;
+  const extraLeft     = Math.max(0, state.extra_remaining ?? (extraTotal - (state.extra_used ?? 0)));
+  const extraPct      = extraTotal > 0 ? Math.min(100, ((extraTotal - extraLeft) / extraTotal) * 100) : 0;
+  const extraWarn     = extraTotal > 0 && extraLeft <= extraTotal * 0.2;
+
+  const meter = (pct: number, warn: boolean) => (
+    <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
+      <div className="h-full rounded-full transition-all"
+        style={{ width: `${pct}%`, background: warn ? "#ef4444" : "var(--accent)" }} />
+    </div>
+  );
 
   return (
     <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-border bg-muted/20 text-[11px] shrink-0">
       <Zap size={11} className="text-muted-foreground shrink-0" />
-      <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: warn ? "#ef4444" : "var(--accent)" }} />
-      </div>
-      <span className="text-muted-foreground tabular-nums whitespace-nowrap">
-        {fmt(effectiveUsed)} / {fmt(state.tokens_limit)}
-      </span>
-      {state.tokens_extra > 0 && (
-        <span className={extraHeadroom <= 0 ? "text-red-500 font-medium" : "text-green-600 font-medium"}>
-          +{fmt(state.tokens_extra)} extra
+
+      <div className="flex items-center gap-1.5" title="Plan allowance — refills at the start of each month">
+        <span className="text-muted-foreground">Plan</span>
+        {meter(planPct, planWarn)}
+        <span className="text-muted-foreground tabular-nums whitespace-nowrap">
+          {fmt(planUsed)} / {fmt(monthlyBase)}
         </span>
+      </div>
+
+      {extraTotal > 0 && (
+        <>
+          <span className="text-border select-none">·</span>
+          <div className="flex items-center gap-1.5" title="One-time top-up — a fixed balance that does not refill">
+            <span className="text-muted-foreground">Top-up</span>
+            {meter(extraPct, extraWarn)}
+            <span className={`tabular-nums whitespace-nowrap font-medium ${extraLeft <= 0 ? "text-red-500" : extraWarn ? "text-amber-600" : "text-green-600"}`}>
+              {fmt(extraLeft)} left
+            </span>
+          </div>
+        </>
       )}
       {onTopup && (
         <button onClick={onTopup} title="Add tokens"
@@ -1137,7 +1157,7 @@ function AgentInner() {
         setToolCallsMap(prev => ({ ...prev, [msgIndex]: data.tool_calls! }));
       }
       if (data.tokens_used != null) {
-        setTokenState({ tokens_used: data.tokens_used, tokens_limit: data.tokens_limit ?? 0, tokens_extra: data.tokens_extra ?? 0, extra_remaining: data.extra_remaining, monthly_limit: data.monthly_limit });
+        setTokenState({ tokens_used: data.tokens_used, tokens_limit: data.tokens_limit ?? 0, tokens_extra: data.tokens_extra ?? 0, extra_used: data.extra_used, extra_remaining: data.extra_remaining, monthly_limit: data.monthly_limit });
       }
       stopWork();
     };
@@ -1204,13 +1224,13 @@ function AgentInner() {
       finishDelivery(data);
     } catch (err: unknown) {
       if (delivered) return;
-      const resp = (err as { response?: { status?: number; data?: { error?: string; message?: string; tokens_used?: number; tokens_limit?: number; tokens_extra?: number; extra_remaining?: number; monthly_limit?: number } } })?.response;
+      const resp = (err as { response?: { status?: number; data?: { error?: string; message?: string; tokens_used?: number; tokens_limit?: number; tokens_extra?: number; extra_used?: number; extra_remaining?: number; monthly_limit?: number } } })?.response;
       const errCode = resp?.data?.error;
       const errMsg  = resp?.data?.message;
       if (resp?.data?.tokens_used != null) {
         // Re-fetch from DB so the bar matches billing page (avoids showing stale limit-reached state)
         api.get<TokenState>("/agent/tokens").then(({ data }) => setTokenState(data)).catch(() => {
-          setTokenState({ tokens_used: resp!.data!.tokens_used!, tokens_limit: resp!.data!.tokens_limit ?? 0, tokens_extra: resp!.data!.tokens_extra ?? 0, extra_remaining: resp!.data!.extra_remaining, monthly_limit: resp!.data!.monthly_limit });
+          setTokenState({ tokens_used: resp!.data!.tokens_used!, tokens_limit: resp!.data!.tokens_limit ?? 0, tokens_extra: resp!.data!.tokens_extra ?? 0, extra_used: resp!.data!.extra_used, extra_remaining: resp!.data!.extra_remaining, monthly_limit: resp!.data!.monthly_limit });
         });
         setError("Token limit reached. Purchase more tokens to continue.");
         pendingRetryRef.current = { text, siteId };

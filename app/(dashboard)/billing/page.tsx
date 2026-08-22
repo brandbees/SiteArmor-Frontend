@@ -288,15 +288,18 @@ function BillingPage() {
         const tokenExtra     = liveTokenState?.tokens_extra  ?? agency?.ai_tokens_extra      ?? 0;
         const tokenUsed      = liveTokenState?.tokens_used   ?? agency?.ai_tokens_used       ?? 0;
         const monthlyBase    = liveTokenState?.monthly_limit ?? dynTokenLimit;
-        const tokenTotal     = liveTokenState?.tokens_limit  ?? (monthlyBase + tokenExtra);
-        const baseHeadroom   = Math.max(0, monthlyBase - tokenUsed);
+        // Reported as two balances rather than one total: the plan allowance refills every
+        // month, the purchased top-up never does. A single combined bar made a monthly
+        // refill invisible whenever a large top-up dominated the total.
+        const planUsed       = Math.min(tokenUsed, monthlyBase);
+        const planPct        = monthlyBase > 0 ? Math.min(100, (planUsed / monthlyBase) * 100) : 0;
+        const planWarn       = planPct >= 80;
         const extraHeadroom  = liveTokenState
           ? Math.max(0, liveTokenState.extra_remaining)
           : Math.max(0, tokenExtra - (agency?.ai_tokens_extra_used ?? 0));
-        const actualRemaining = baseHeadroom + extraHeadroom;
-        const effectiveUsed   = Math.max(0, tokenTotal - actualRemaining);
-        const tokenPct        = tokenTotal > 0 ? Math.min(100, (effectiveUsed / tokenTotal) * 100) : 0;
-        const tokenWarn       = tokenPct >= 80;
+        const extraPct       = tokenExtra > 0 ? Math.min(100, ((tokenExtra - extraHeadroom) / tokenExtra) * 100) : 0;
+        const extraWarn      = tokenExtra > 0 && extraHeadroom <= tokenExtra * 0.2;
+        const tokenWarn      = planWarn && (tokenExtra === 0 || extraWarn);
         const resetAt    = agency?.ai_tokens_reset_at
           ? new Date(agency.ai_tokens_reset_at).toLocaleDateString("en-GB", { month: "short", day: "numeric" })
           : null;
@@ -308,30 +311,47 @@ function BillingPage() {
                   <Brain size={15} className="text-muted-foreground" />
                   <CardTitle>AI Tokens</CardTitle>
                 </div>
-                {resetAt && <span className="text-xs text-muted-foreground">Resets monthly · last reset {resetAt}</span>}
+                {resetAt && <span className="text-xs text-muted-foreground">Allowance last refilled {resetAt}</span>}
               </div>
             </CardHeader>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between mb-1.5">
                   <span className="text-xs text-muted-foreground">
-                    {fmtTokens(effectiveUsed)} used of {fmtTokens(tokenTotal)} tokens
-                    {tokenExtra > 0 && <span className={`ml-1 ${extraHeadroom <= 0 ? "text-red-500" : "text-[var(--accent)]"}`}>(+{fmtTokens(tokenExtra)} extra)</span>}
+                    Plan allowance <span className="opacity-70">· refills monthly</span>
                   </span>
-                  <span className={`text-xs font-semibold ${tokenWarn ? "text-red-600" : "text-foreground"}`}>
-                    {tokenPct.toFixed(0)}%
+                  <span className={`text-xs font-semibold ${planWarn ? "text-red-600" : "text-foreground"}`}>
+                    {fmtTokens(planUsed)} / {fmtTokens(monthlyBase)}
                   </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all"
-                    style={{ width: `${tokenPct}%`, background: tokenWarn ? "var(--score-bad)" : "var(--accent)" }} />
+                    style={{ width: `${planPct}%`, background: planWarn ? "var(--score-bad)" : "var(--accent)" }} />
                 </div>
-                {tokenWarn && (
-                  <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
-                    <AlertCircle size={11} /> Running low — buy more to keep generating narratives.
-                  </p>
-                )}
               </div>
+
+              {tokenExtra > 0 && (
+                <div>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-xs text-muted-foreground">
+                      Top-up balance <span className="opacity-70">· one-time, never expires</span>
+                    </span>
+                    <span className={`text-xs font-semibold ${extraHeadroom <= 0 ? "text-red-600" : "text-foreground"}`}>
+                      {fmtTokens(extraHeadroom)} left of {fmtTokens(tokenExtra)}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all"
+                      style={{ width: `${extraPct}%`, background: extraWarn ? "var(--score-bad)" : "var(--accent)" }} />
+                  </div>
+                </div>
+              )}
+
+              {tokenWarn && (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                  <AlertCircle size={11} /> Running low — buy more to keep generating narratives.
+                </p>
+              )}
 
               {tokenPackageList.length > 0 ? (
                 <div className={`grid gap-3 ${tokenPackageList.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>

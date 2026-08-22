@@ -1088,7 +1088,7 @@ interface BillingEvent  {
   plan: string | null; tokens: number | null; bytes: number | null;
   amount_cents: number; currency: string; created_at: string; stripe_session_id: string | null;
 }
-interface TokenState { tokens_used: number; tokens_limit: number; tokens_extra: number; monthly_limit: number; extra_remaining?: number; }
+interface TokenState { tokens_used: number; tokens_limit: number; tokens_extra: number; monthly_limit: number; extra_used?: number; extra_remaining?: number; }
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -1427,34 +1427,47 @@ function BillingContent() {
             <p className="text-sm font-semibold text-foreground">AI Assistant Tokens</p>
           </div>
           {tokenState && (() => {
-            // tokens_used is a monthly counter (resets each month) — it does NOT represent
-            // total lifetime consumption of purchased extra tokens. extra_remaining comes
-            // from the server and already accounts for all months of extra usage, so
-            // combining them gives the true picture. Must match TokenBar in agent/page.tsx
-            // exactly, otherwise this widget and the AI Agent panel show different numbers
-            // (most visible right after a top-up, when tokens_extra jumps but tokens_used doesn't).
-            const monthlyBase     = tokenState.monthly_limit ?? tokenState.tokens_limit;
-            const baseHeadroom    = Math.max(0, monthlyBase - tokenState.tokens_used);
-            const extraHeadroom   = Math.max(0, tokenState.extra_remaining ?? 0);
-            const actualRemaining = baseHeadroom + extraHeadroom;
-            const effectiveUsed   = Math.max(0, tokenState.tokens_limit - actualRemaining);
+            // Two meters, matching TokenBar in agent/page.tsx. The plan allowance refills
+            // monthly; the purchased top-up is a fixed lifetime balance. Summing them into
+            // one bar hid the monthly refill, which reads as "the tokens never renewed".
+            const monthlyBase = tokenState.monthly_limit ?? tokenState.tokens_limit;
+            const planUsed    = Math.min(tokenState.tokens_used, monthlyBase);
+            const planPct     = Math.min(100, (planUsed / Math.max(monthlyBase, 1)) * 100);
+
+            const extraTotal  = tokenState.tokens_extra;
+            const extraLeft   = Math.max(0, tokenState.extra_remaining ?? (extraTotal - (tokenState.extra_used ?? 0)));
+            const extraPct    = extraTotal > 0 ? Math.min(100, ((extraTotal - extraLeft) / extraTotal) * 100) : 0;
 
             return (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Monthly usage</span>
-                  <span className="font-medium text-foreground">
-                    {fmtTokens(effectiveUsed)} / {fmtTokens(tokenState.tokens_limit)}
-                    {tokenState.tokens_extra > 0 && (
-                      <span className="ml-2 text-[var(--accent)] font-semibold">+{fmtTokens(tokenState.tokens_extra)} extra</span>
-                    )}
-                  </span>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Plan allowance <span className="opacity-70">· refills monthly</span></span>
+                    <span className="font-medium text-foreground">
+                      {fmtTokens(planUsed)} / {fmtTokens(monthlyBase)}
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${planPct}%` }} />
+                  </div>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-[var(--accent)] transition-all"
-                    style={{ width: `${Math.min(100, (effectiveUsed / Math.max(tokenState.tokens_limit, 1)) * 100)}%` }} />
-                </div>
-                <p className="text-[11px] text-muted-foreground">Extra tokens never expire and are used after your monthly allowance runs out.</p>
+
+                {extraTotal > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Top-up balance <span className="opacity-70">· one-time, does not refill</span></span>
+                      <span className="font-medium text-foreground">
+                        {fmtTokens(extraLeft)} left of {fmtTokens(extraTotal)}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${extraLeft <= extraTotal * 0.2 ? "bg-amber-500" : "bg-[var(--accent)]"}`}
+                        style={{ width: `${extraPct}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-[11px] text-muted-foreground">Your plan allowance refills at the start of each month. Top-up tokens never expire and are used only after the monthly allowance runs out.</p>
               </div>
             );
           })()}
