@@ -32,6 +32,7 @@ import { useSites } from "@/hooks/useSites";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { SiteQuickViewDrawer } from "@/components/sites/SiteQuickViewDrawer";
+import { SiteScreenshot } from "@/components/sites/SiteScreenshot";
 import { WordPressIcon } from "@/components/shared/WordPressIcon";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -71,15 +72,6 @@ function matchesQuick(site: Site, filter: QuickFilter): boolean {
       return (site.plugin_vuln_count ?? 0) > 0;
     default:
       return true;
-  }
-}
-
-function faviconSrc(url: string) {
-  try {
-    const host = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
-    return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
-  } catch {
-    return null;
   }
 }
 
@@ -333,9 +325,7 @@ function SiteRow({
   const overflow = alerts.length - visible.length;
   const updates = site.plugins_needing_updates ?? 0;
   const coreUpdates = site.site_health?.wp_update_available ? 1 : 0;
-  const fav = faviconSrc(site.url);
   const isHacked = site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0;
-  const isUnlinked = !site.plugin_connected;
   const siteUrl = site.url.startsWith("http") ? site.url : `https://${site.url}`;
 
   return (
@@ -357,34 +347,13 @@ function SiteRow({
             onClick={(e) => e.stopPropagation()}
             className="relative h-16 w-[105px] shrink-0 cursor-pointer overflow-hidden rounded-sm border border-zinc-200 bg-zinc-100 shadow-sm"
           >
-            {fav ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={fav} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <Globe size={20} className="text-zinc-400" strokeWidth={1.5} />
-              </div>
-            )}
-            {(isHacked || isUnlinked) && (
-              <div
-                className={cn(
-                  "absolute inset-0 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-white",
-                  isHacked ? "bg-red-600/90" : "bg-zinc-600/90"
-                )}
-              >
-                {isHacked ? (
-                  <>
-                    <ShieldAlert size={14} strokeWidth={1.5} />
-                    Hacked
-                  </>
-                ) : (
-                  <>
-                    <Unplug size={14} strokeWidth={1.5} />
-                    Unlinked
-                  </>
-                )}
-              </div>
-            )}
+            <SiteScreenshot
+              url={site.url}
+              connected={site.plugin_connected}
+              hacked={isHacked}
+              width={280}
+              className="h-full w-full"
+            />
           </Link>
           <div className="min-w-0">
             <Link

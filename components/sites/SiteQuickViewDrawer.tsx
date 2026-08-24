@@ -1,11 +1,12 @@
 "use client";
 
-import { X, ExternalLink, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { scoreHex } from "@/lib/utils";
+import Link from "next/link";
+import { ChevronDown, ExternalLink, X } from "lucide-react";
+import { cn, scoreHex, truncateUrl } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/Button";
-import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
+import { SiteScreenshot } from "@/components/sites/SiteScreenshot";
 import type { Site } from "@/types";
 
 interface Props {
@@ -13,28 +14,23 @@ interface Props {
   onClose: () => void;
 }
 
-const AVATAR_COLORS = ["#1f5fb8", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
-
-function avatarColor(id: string): string {
-  return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length];
-}
-
-function ScoreChip({ score, label }: { score: number; label: string }) {
-  const hex = scoreHex(score);
-  const bgMap: Record<string, string> = {
-    "#16a34a": "#f0fdf4",
-    "#d97706": "#fffbeb",
-    "#dc2626": "#fef2f2",
-  };
+function ScoreBar({ label, score }: { label: string; score: number | null | undefined }) {
+  const n = score ?? 0;
+  const hex = score != null ? scoreHex(score) : "#a1a1aa";
   return (
-    <div
-      className="flex flex-col items-center rounded-[4px] border px-2 py-2"
-      style={{ background: bgMap[hex] ?? "#f9fafb", borderColor: hex + "33" }}
-    >
-      <span className="text-base font-bold tabular-nums" style={{ color: hex }}>
-        {score}
-      </span>
-      <span className="mt-0.5 text-[10px] font-medium text-muted-foreground">{label}</span>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-zinc-500">{label}</span>
+        <span className="text-xs font-semibold tabular-nums" style={{ color: hex }}>
+          {score != null ? score : "—"}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+        <div
+          className="h-full rounded-full transition-[width] duration-500"
+          style={{ width: `${n}%`, background: hex }}
+        />
+      </div>
     </div>
   );
 }
@@ -49,130 +45,134 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
   const overallScore = scores
     ? Math.round((scores.performance + scores.seo + scores.security + scores.malware) / 4)
     : null;
-
-  const cleanUrl = site.url.replace(/^https?:\/\//, "");
+  const isHacked = site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0;
+  const siteUrl = site.url.startsWith("http") ? site.url : `https://${site.url}`;
 
   return (
     <>
       <button
         type="button"
         aria-label="Close drawer"
-        className="fixed inset-0 z-40 bg-[#0f172a]/40 backdrop-blur-[1px]"
+        className="fixed inset-0 z-40 bg-zinc-950/30"
         onClick={onClose}
       />
 
-      <div className="fixed top-0 right-0 z-50 flex h-full w-[420px] max-w-[100vw] flex-col overflow-hidden border-l border-border bg-white shadow-[0_24px_64px_-16px_rgb(15_23_42/0.28)] animate-slide-in-right">
-        <div className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-4">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-base font-bold text-white"
-            style={{ background: avatarColor(site.id) }}
-          >
-            {site.name[0].toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-foreground">{site.name}</p>
-            <a
-              href={site.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-accent hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {cleanUrl}
-              <ExternalLink size={10} className="shrink-0" />
-            </a>
-          </div>
+      <div className="fixed top-0 right-0 z-50 flex h-full w-[420px] max-w-[100vw] flex-col overflow-hidden border-l border-zinc-200 bg-[#f4f4f5] shadow-lg animate-slide-in-right">
+        <div className="relative h-44 shrink-0 overflow-hidden bg-zinc-200">
+          <SiteScreenshot
+            url={site.url}
+            connected={site.plugin_connected}
+            hacked={isHacked}
+            width={840}
+            className="h-full w-full"
+          />
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-[4px] p-1.5 text-muted-foreground transition-colors hover:bg-[#f0f2f5] hover:text-foreground"
+            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-white/90 text-zinc-600 shadow-xs hover:bg-white hover:text-zinc-900"
           >
-            <X size={16} />
+            <X size={16} strokeWidth={1.75} />
           </button>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto bg-[#f0f2f5] px-4 py-4">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-200 bg-white px-5 py-4">
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold text-zinc-950">{site.name}</p>
+            <a
+              href={siteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-0.5 inline-flex items-center gap-1 truncate text-xs font-medium text-accent hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {truncateUrl(site.url, 40)}
+              <ExternalLink size={11} className="shrink-0" />
+            </a>
+          </div>
+          {overallScore != null && (
+            <div className="shrink-0 text-right">
+              <p className="text-[11px] font-medium text-zinc-400">Health</p>
+              <p className="text-xl font-bold tabular-nums" style={{ color: scoreHex(overallScore) }}>
+                {overallScore}
+                <span className="text-xs font-medium text-zinc-400">/100</span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 scrollbar-none">
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-[4px] border border-border bg-white p-3.5">
-              <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">Status</p>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-3.5">
+              <p className="mb-1.5 text-[11px] font-medium text-zinc-400">Status</p>
               <div className="flex items-center gap-1.5">
                 <span
-                  className={`h-2 w-2 rounded-full ${isOnline ? "bg-[var(--score-good)]" : "bg-[var(--score-bad)]"}`}
+                  className={cn(
+                    "h-2 w-2 rounded-full",
+                    isOnline ? "bg-emerald-500" : site.uptime_status === "down" ? "bg-red-500" : "bg-zinc-300"
+                  )}
                 />
                 <span
-                  className={`text-sm font-bold ${
-                    isOnline ? "text-[var(--score-good)]" : "text-[var(--score-bad)]"
-                  }`}
+                  className={cn(
+                    "text-sm font-semibold",
+                    isOnline
+                      ? "text-emerald-700"
+                      : site.uptime_status === "down"
+                        ? "text-red-600"
+                        : "text-zinc-500"
+                  )}
                 >
                   {isOnline ? "Online" : site.uptime_status === "down" ? "Down" : "Unknown"}
                 </span>
               </div>
             </div>
-            <div className="rounded-[4px] border border-border bg-white p-3.5">
-              <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">Health</p>
-              {overallScore !== null ? (
-                <p className="text-sm font-semibold text-foreground">
-                  <span className="text-xl font-bold" style={{ color: scoreHex(overallScore) }}>
-                    {overallScore}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/100</span>
-                </p>
-              ) : (
-                <p className="text-sm font-semibold text-muted-foreground">No data</p>
-              )}
+            <div className="rounded-2xl border border-zinc-200 bg-white p-3.5">
+              <p className="mb-1.5 text-[11px] font-medium text-zinc-400">Uptime</p>
+              <p className="text-sm font-semibold tabular-nums text-zinc-900">
+                {uptime.toFixed(1)}%
+                <span className="ml-1 text-[11px] font-normal text-zinc-400">30d</span>
+              </p>
             </div>
           </div>
 
-          {scores && (
-            <div className="rounded-[4px] border border-border bg-white p-3.5">
-              <p className="mb-2.5 text-[13px] font-bold text-foreground">Audit Scores</p>
-              <div className="grid grid-cols-4 gap-2">
-                <ScoreChip score={scores.performance} label="Perf" />
-                <ScoreChip score={scores.seo} label="SEO" />
-                <ScoreChip score={scores.security} label="Sec" />
-                <ScoreChip score={scores.malware} label="Malware" />
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <p className="mb-3 text-sm font-semibold text-zinc-900">Audit scores</p>
+            {scores ? (
+              <div className="flex flex-col gap-3">
+                <ScoreBar label="Performance" score={scores.performance} />
+                <ScoreBar label="SEO" score={scores.seo} />
+                <ScoreBar label="Security" score={scores.security} />
+                <ScoreBar label="Malware" score={scores.malware} />
               </div>
-            </div>
-          )}
-
-          <div className="rounded-[4px] border border-border bg-white p-3.5">
-            <p className="mb-1 text-[13px] font-bold text-foreground">Uptime</p>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-2xl font-bold tabular-nums text-foreground">{uptime.toFixed(1)}%</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">30-day window</p>
-              </div>
-              <SiteScoreWheel score={Math.round(uptime)} caption="" size={72} />
-            </div>
+            ) : (
+              <p className="text-sm text-zinc-400">Run an audit to see pillar scores.</p>
+            )}
           </div>
 
-          <div className="overflow-hidden rounded-[4px] border border-border bg-white">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             <button
               type="button"
               onClick={() => setDetailsOpen((v) => !v)}
-              className="flex w-full items-center justify-between px-3.5 py-3 text-[13px] font-bold text-foreground transition-colors hover:bg-[#f0f2f5]"
+              className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-900"
             >
-              Site Details
+              Site details
               <ChevronDown
-                size={14}
-                className={`text-muted-foreground transition-transform duration-200 ${detailsOpen ? "rotate-180" : ""}`}
+                size={16}
+                className={cn("text-zinc-400 transition-transform", detailsOpen && "rotate-180")}
               />
             </button>
             {detailsOpen && (
-              <div className="space-y-2 border-t border-border px-3.5 pb-3.5 pt-3">
+              <div className="space-y-2.5 border-t border-zinc-100 px-4 pb-4 pt-3">
                 <DetailRow label="Plugin" value={site.plugin_connected ? "Connected" : "Not connected"} />
                 {site.plugin_data?.wp_version && (
-                  <DetailRow label="WP Version" value={site.plugin_data.wp_version} />
+                  <DetailRow label="WP version" value={site.plugin_data.wp_version} />
                 )}
                 {site.plugin_data?.php_version && (
-                  <DetailRow label="PHP Version" value={site.plugin_data.php_version} />
+                  <DetailRow label="PHP version" value={site.plugin_data.php_version} />
                 )}
-                {site.scan_schedule && (
-                  <DetailRow label="Scan Schedule" value={site.scan_schedule} />
-                )}
+                {site.scan_schedule && <DetailRow label="Scan schedule" value={site.scan_schedule} />}
                 {site.last_audit_at && (
                   <DetailRow
-                    label="Last Audit"
+                    label="Last audit"
                     value={new Date(site.last_audit_at).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
@@ -185,37 +185,25 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-2 border-t border-border bg-white px-4 py-3">
+        <div className="flex shrink-0 gap-2 border-t border-zinc-200 bg-white px-4 py-3">
           {isClientPortal ? (
-            <Button
-              className="flex-1"
-              size="sm"
-              onClick={() => {
-                window.location.href = `/sites/${site.id}`;
-              }}
-            >
-              View Site Details
-            </Button>
+            <Link href={`/sites/${site.id}`} className="flex-1">
+              <Button className="w-full" size="sm">
+                View site
+              </Button>
+            </Link>
           ) : (
             <>
-              <Button
-                className="flex-1"
-                size="sm"
-                onClick={() => {
-                  window.location.href = `/sites/${site.id}`;
-                }}
-              >
-                Run Audit Now
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  window.location.href = `/reports/${site.id}`;
-                }}
-              >
-                View Reports
-              </Button>
+              <Link href={`/sites/${site.id}`} className="flex-1">
+                <Button className="w-full" size="sm">
+                  Open site
+                </Button>
+              </Link>
+              <Link href={`/reports/${site.id}`} className="flex-1">
+                <Button variant="secondary" className="w-full" size="sm">
+                  View reports
+                </Button>
+              </Link>
             </>
           )}
         </div>
@@ -227,8 +215,8 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xs font-semibold capitalize text-foreground">{value}</span>
+      <span className="text-xs text-zinc-400">{label}</span>
+      <span className="text-xs font-medium capitalize text-zinc-800">{value}</span>
     </div>
   );
 }
