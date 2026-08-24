@@ -48,7 +48,7 @@ export function SiteScreenshot({
         />
       ) : fav ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={fav} alt="" className="h-full w-full object-cover" />
+        <img src={fav} alt="" className="h-full w-full object-contain p-4" />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
           <Globe size={22} className="text-zinc-400" strokeWidth={1.5} />

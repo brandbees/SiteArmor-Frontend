@@ -28,6 +28,7 @@ import {
 import { McCard, McIconBox, McPill } from "@/components/shared/MalCareUI";
 import { WordPressIcon } from "@/components/shared/WordPressIcon";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
+import { SiteScreenshot } from "@/components/sites/SiteScreenshot";
 import { Button } from "@/components/ui/Button";
 import api from "@/lib/api";
 import { scoreHex, timeAgo } from "@/lib/utils";
@@ -45,15 +46,6 @@ export type SiteOverviewTab =
   | "health";
 
 const CARD = "rounded-xl border-zinc-200 shadow-sm";
-
-function faviconSrc(url: string) {
-  try {
-    const host = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
-    return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
-  } catch {
-    return null;
-  }
-}
 
 function sslDaysRemaining(date: string | null | undefined): number | null {
   if (!date) return null;
@@ -109,7 +101,6 @@ function SiteSummaryCard({
   updates: number;
   setTab: (tab: SiteOverviewTab) => void;
 }) {
-  const fav = faviconSrc(site.url);
   const online = site.uptime_status === "up";
   const down = site.uptime_status === "down";
   const wpVersion = site.plugin_data?.wp_version ?? "—";
@@ -141,14 +132,13 @@ function SiteSummaryCard({
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           <div className="shrink-0">
             <div className="relative h-[88px] w-[140px] overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 shadow-sm">
-              {fav ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={fav} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Globe size={28} className="text-zinc-400" />
-                </div>
-              )}
+              <SiteScreenshot
+                url={site.url}
+                connected={site.plugin_connected}
+                hacked={site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0}
+                width={280}
+                className="h-full w-full"
+              />
               {online && (
                 <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded bg-[var(--score-good)] text-white shadow-sm">
                   <Lock size={10} strokeWidth={2.5} />

@@ -539,7 +539,7 @@ export default function SitesPage() {
       )}
 
       {/* Page header — separate bar, no border-radius (MalCare page-header) */}
-      <header className="sticky top-0 z-20 flex shrink-0 flex-col gap-8 border-b border-zinc-200 bg-white p-4 pr-6 sm:flex-row sm:items-center">
+      <header className="sticky top-0 z-10 flex shrink-0 flex-col gap-8 border-b border-zinc-200 bg-white p-4 pr-6 sm:flex-row sm:items-center">
         <div className="flex min-w-[222px] max-w-[50%] items-start gap-4 overflow-hidden">
           <AppWindow
             size={24}

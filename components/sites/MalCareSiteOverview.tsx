@@ -37,6 +37,7 @@ import {
 import { DASHBOARD_GRADIENT } from "@/components/dashboard/MalCareDashboard";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { WordPressIcon } from "@/components/shared/WordPressIcon";
+import { SiteScreenshot } from "@/components/sites/SiteScreenshot";
 import type { SiteTab } from "@/components/sites/site-nav";
 import api from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
@@ -196,15 +197,6 @@ function WidgetSlot({
   );
 }
 
-function faviconSrc(url: string) {
-  try {
-    const host = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
-    return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
-  } catch {
-    return null;
-  }
-}
-
 function sslDaysRemaining(date: string | null | undefined): number | null {
   if (!date) return null;
   return Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
@@ -347,7 +339,6 @@ export function MalCareSiteOverview({
   const down = site.uptime_status === "down";
   const sslDays = sslDaysRemaining(site.ssl_expiry_date);
   const latestAudit = audits.find((a) => a.status === "completed");
-  const fav = faviconSrc(site.url);
   const wpVersion = site.plugin_data?.wp_version ?? "—";
   const phpVersion = site.plugin_data?.php_version ?? "—";
   const pluginCount =
@@ -493,19 +484,18 @@ export function MalCareSiteOverview({
 
                 <div className="flex gap-6">
                   <div className="relative shrink-0">
-                    <div className="h-[112px] w-[184px] overflow-hidden rounded-xl border border-zinc-100">
-                      {fav ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={fav} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-zinc-100">
-                          <Globe size={32} className="text-zinc-400" />
-                        </div>
-                      )}
+                    <div className="h-[112px] w-[184px] overflow-hidden rounded-xl border border-zinc-100 bg-zinc-100">
+                      <SiteScreenshot
+                        url={site.url}
+                        connected={site.plugin_connected}
+                        hacked={site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0}
+                        width={368}
+                        className="h-full w-full"
+                      />
                     </div>
                     <button
                       type="button"
-                      className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover"
+                      className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover"
                       aria-label="Site lock status"
                     >
                       {online ? <LockOpen size={12} /> : <Lock size={12} />}

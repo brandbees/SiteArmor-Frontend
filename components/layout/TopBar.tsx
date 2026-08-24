@@ -233,7 +233,7 @@ function TopBarFallback({
   onToggleSidebar: () => void;
 }) {
   return (
-    <header className="sticky z-20 flex h-20 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background p-4">
+    <header className="sticky z-40 flex h-20 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background p-4">
       <button
         type="button"
         onClick={onToggleSidebar}
@@ -364,7 +364,7 @@ function TopBarInner({
 
   return (
     <>
-      <header className="sticky z-20 flex h-20 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background p-4">
+      <header className="sticky z-40 flex h-20 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background p-4">
         {/* Left: collapse + breadcrumbs */}
         <button
           type="button"
