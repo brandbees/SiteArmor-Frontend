@@ -19,8 +19,8 @@ import {
   PlayCircle,
   ShieldX,
   FileChartColumnIncreasing,
+  Plug,
   SlidersHorizontal,
-  Tag,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -32,6 +32,7 @@ import { cn, timeAgo } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { Agency, Site } from "@/types";
 import type { PortfolioStats } from "@/hooks/useSites";
+import { mapReportRow, type RawReportRow, type ReportListItem } from "@/lib/reports";
 
 export const DASHBOARD_GRADIENT =
   "linear-gradient(180deg, rgba(209, 250, 229, 0.15) 0%, rgba(236, 253, 245, 0.70) 0.98%, #F4F4F5 4.16%)";
@@ -253,9 +254,11 @@ export function MalCareDashboard({
   const router = useRouter();
   const [auditLoading, setAuditLoading] = useState<string | null>(null);
   const [alertFilter, setAlertFilter] = useState<AlertFilter>("hacked");
-  const [reportsTab, setReportsTab] = useState<"all" | "active" | "paused">("all");
+  const [reportsTab, setReportsTab] = useState<"all" | "sent" | "pending">("all");
   const [teamCount, setTeamCount] = useState(1);
   const [clientCount, setClientCount] = useState(0);
+  const [reports, setReports] = useState<ReportListItem[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
 
   const sitesUp = sites.filter((s) => s.uptime_status !== "down").length;
   const sitesDown = sites.filter((s) => s.uptime_status === "down").length;
@@ -266,11 +269,6 @@ export function MalCareDashboard({
   const sitesUsed = sites.length;
   const planAvailable = Math.max(0, planLimit - sitesUsed);
   const planPct = planLimit > 0 ? Math.min(100, (sitesUsed / planLimit) * 100) : 0;
-
-  const allTags = useMemo(
-    () => Array.from(new Set(sites.flatMap((s) => s.tags ?? []))).sort(),
-    [sites]
-  );
 
   const hackedSites = sites.filter((s) => s.malware_status === "threat");
   const criticalSites = sites.filter(
@@ -384,7 +382,20 @@ export function MalCareDashboard({
       .slice(0, 6);
   }, [sites]);
 
-  const sitesWithAudits = sites.filter((s) => !!s.last_audit_at).length;
+  const filteredReports = useMemo(() => {
+    if (reportsTab === "sent") return reports.filter((r) => !!r.sent_to);
+    if (reportsTab === "pending") return reports.filter((r) => r.status === "pending");
+    return reports;
+  }, [reports, reportsTab]);
+
+  const reportCounts = useMemo(
+    () => ({
+      all: reports.length,
+      sent: reports.filter((r) => !!r.sent_to).length,
+      pending: reports.filter((r) => r.status === "pending").length,
+    }),
+    [reports]
+  );
 
   const perfGood = sites.filter((s) => (s.latest_scores?.performance ?? 0) >= 90).length;
   const perfMid = sites.filter((s) => {
@@ -409,6 +420,14 @@ export function MalCareDashboard({
       .then(({ data }) => setClientCount(data.total ?? data.clients?.length ?? 0))
       .catch(() => {});
   }, [agency, isIndividual]);
+
+  useEffect(() => {
+    api
+      .get<{ reports: RawReportRow[] }>("/reports")
+      .then(({ data }) => setReports((data.reports ?? []).map(mapReportRow)))
+      .catch(() => setReports([]))
+      .finally(() => setReportsLoading(false));
+  }, []);
 
   async function runAudit(siteId: string) {
     setAuditLoading(siteId);
@@ -528,20 +547,16 @@ export function MalCareDashboard({
               </div>
             </McStatCard>
 
-            <McStatCard label="Tags" href="/sites" icon={<Tag size={24} strokeWidth={1.5} />}>
-              <div className="flex flex-wrap gap-2">
-                {allTags.length === 0 ? (
-                  <span className="text-xs text-muted-foreground">No tags created till now</span>
-                ) : (
-                  allTags.slice(0, 4).map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600"
-                    >
-                      {tag}
-                    </span>
-                  ))
-                )}
+            <McStatCard label="Updates" href="/sites" icon={<Plug size={24} strokeWidth={1.5} />}>
+              <div className="flex gap-10">
+                <div className="flex grow flex-col gap-1">
+                  <p className="text-2xl font-normal text-zinc-700">{totalUpdates}</p>
+                  <p className="text-xs text-muted-foreground">Plugin updates</p>
+                </div>
+                <div className="flex grow flex-col gap-1">
+                  <p className="text-2xl font-normal text-zinc-700">{sitesWithUpdates.length}</p>
+                  <p className="text-xs text-muted-foreground">Sites with updates</p>
+                </div>
               </div>
             </McStatCard>
           </div>
@@ -953,9 +968,9 @@ export function MalCareDashboard({
                   <div className="flex flex-wrap items-center gap-2">
                     {(
                       [
-                        { id: "all" as const, label: "All", count: sitesWithAudits },
-                        { id: "active" as const, label: "Active", count: 0 },
-                        { id: "paused" as const, label: "Paused", count: 0 },
+                        { id: "all" as const, label: "All", count: reportCounts.all },
+                        { id: "sent" as const, label: "Sent", count: reportCounts.sent },
+                        { id: "pending" as const, label: "Processing", count: reportCounts.pending },
                       ] as const
                     ).map(({ id, label, count }) => {
                       const selected = reportsTab === id;
@@ -976,32 +991,61 @@ export function MalCareDashboard({
                       );
                     })}
                   </div>
-                  <button
-                    type="button"
-                    className="relative flex h-8 min-w-[9rem] items-center justify-between gap-2 whitespace-nowrap rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-xs text-zinc-900 shadow-xs"
-                  >
-                    <span className="truncate">Last Sent Status</span>
-                    <ChevronDown size={16} strokeWidth={1} className="opacity-50" />
-                  </button>
                 </div>
 
-                <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-                  <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-zinc-100/80">
-                    <FileChartColumnIncreasing size={36} strokeWidth={1} className="text-zinc-300" />
+                {reportsLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 size={20} className="animate-spin text-zinc-400" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Send Reports on Auto-Pilot</p>
-                    <p className="text-xs text-muted-foreground">
-                      Choose a frequency, select a client, and hit go!
-                    </p>
+                ) : filteredReports.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
+                    <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-zinc-100/80">
+                      <FileChartColumnIncreasing size={36} strokeWidth={1} className="text-zinc-300" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {reports.length === 0 ? "No reports yet" : "No reports in this filter"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Generate a report from any site after an audit.
+                      </p>
+                    </div>
+                    <Link
+                      href="/reports"
+                      className="inline-flex h-8 items-center rounded-md border border-zinc-200 bg-white px-4 text-xs font-medium text-zinc-900 shadow-xs hover:bg-zinc-50"
+                    >
+                      View reports
+                    </Link>
                   </div>
-                  <Link
-                    href="/reports"
-                    className="inline-flex h-8 items-center rounded-md border border-zinc-200 bg-white px-4 text-xs font-medium text-zinc-900 shadow-xs hover:bg-zinc-50"
-                  >
-                    Set up reports
-                  </Link>
-                </div>
+                ) : (
+                  <div className="flex max-h-[280px] flex-col gap-1 overflow-y-auto">
+                    {filteredReports.slice(0, 8).map((report) => (
+                      <Link
+                        key={report.id}
+                        href={`/reports/${report.site_id}/${report.id}`}
+                        className="flex items-center gap-2.5 rounded-[10px] py-2 transition-colors hover:bg-zinc-50"
+                      >
+                        <FileText size={16} strokeWidth={1.5} className="shrink-0 text-zinc-400" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium leading-none text-zinc-800">
+                            {report.site_name ?? "Site report"}
+                          </p>
+                          <p className="mt-1 truncate text-xs font-normal text-zinc-400">
+                            {report.status === "pending"
+                              ? "Generating…"
+                              : report.sent_to
+                                ? `Sent to ${report.sent_to}`
+                                : report.overall_score != null
+                                  ? `Score ${report.overall_score}`
+                                  : "Completed"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-xs text-zinc-400">{timeAgo(report.created_at)}</span>
+                        <ChevronRight size={16} strokeWidth={1} className="shrink-0 text-zinc-400" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </McWidgetCard>
             </div>
 
