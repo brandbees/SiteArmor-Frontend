@@ -186,7 +186,7 @@ function SlideCard({ id, active }: { id: SnapshotId; active: boolean }) {
             alt={snap.alt}
             fill
             sizes="540px"
-            className="object-cover object-top"
+            className="object-contain object-top"
           />
         </div>
       </div>

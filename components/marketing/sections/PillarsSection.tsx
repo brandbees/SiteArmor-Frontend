@@ -95,6 +95,7 @@ export function PillarsSection({ cms = {} }: { cms?: Record<string, string> }) {
                       src={snap.src}
                       alt={snap.alt}
                       fill
+                      quality={95}
                       sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-contain object-top"
                     />

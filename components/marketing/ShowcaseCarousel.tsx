@@ -152,7 +152,7 @@ export function ShowcaseCarousel({
                       alt={snap.alt}
                       fill
                       sizes="520px"
-                      className="object-cover object-top"
+                      className="object-contain object-top"
                     />
                   </div>
                 </div>
