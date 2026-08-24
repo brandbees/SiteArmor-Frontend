@@ -1,61 +1,33 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Loader2, ArrowRight, SkipForward, Globe, LayoutDashboard, AlertCircle, Download } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  Download,
+  Globe,
+  LayoutDashboard,
+  Loader2,
+  SkipForward,
+} from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/Button";
 import api from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/constants";
-
-const STEPS = ["Welcome", "Add site", "Install plugin", "First scan"];
-
-// ── Step 1 — Welcome ──────────────────────────────────────────────────────────
-
-function StepWelcome({ onNext, isIndividual }: { onNext: () => void; isIndividual: boolean }) {
-  return (
-    <div className="flex flex-col items-center text-center gap-6 max-w-md mx-auto">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/site-armor-icon.png" alt="Site Armor" className="w-16 h-16 object-contain" />
-      <div>
-        <h1 className="font-portal-display mb-2 text-2xl font-bold tracking-tight text-foreground">
-          Welcome to Site Armor
-        </h1>
-        {isIndividual ? (
-          <>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Keep your WordPress site healthy, secure, and fast — without
-              needing to be a developer. We&apos;ll monitor your site around the
-              clock and alert you before small issues become big problems.
-            </p>
-            <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
-              Let&apos;s connect your site now. It only takes a few minutes.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Monitor your clients&apos; WordPress sites, catch threats early, and
-              deliver beautiful audit reports — all from one dashboard.
-            </p>
-            <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
-              Let&apos;s get your first site set up. It only takes a few minutes.
-            </p>
-          </>
-        )}
-      </div>
-      <Button
-        onClick={onNext}
-        className="px-8 h-11 rounded-xl font-bold text-sm flex items-center gap-2"
-      >
-        Get started <ArrowRight size={15} />
-      </Button>
-    </div>
-  );
-}
-
-// ── Step 2 — Add site ─────────────────────────────────────────────────────────
+import { cacheClear } from "@/lib/dataCache";
+import { parseSiteUrl } from "@/lib/setupUrl";
+import { cn } from "@/lib/utils";
+import { SetupWizard } from "@/components/setup/SetupWizard";
+import {
+  AgencyWelcomePreview,
+  IndividualWelcomePreview,
+  OnboardingScanPreview,
+  SitePluginPreview,
+  SiteUrlPreview,
+} from "@/components/setup/SetupPreview";
 
 interface NewSite {
   id: string;
@@ -64,426 +36,50 @@ interface NewSite {
   url: string;
 }
 
-function StepAddSite({ onNext, isIndividual }: { onNext: (site: NewSite) => void; isIndividual: boolean }) {
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const inputCls =
-    "w-full px-3.5 py-2.5 text-sm rounded-xl border border-border bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:bg-surface focus:border-transparent transition-all";
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const { data } = await api.post<{ site: NewSite }>("/sites", { name, url });
-      onNext(data.site);
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Failed to add site. Please try again.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="text-center mb-8">
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow"
-          style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)" }}
-        >
-          <Globe size={20} style={{ color: "var(--accent)" }} />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">
-          {isIndividual ? "Add your site" : "Add your first client site"}
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isIndividual
-            ? "Enter your WordPress site URL so we can start monitoring it."
-            : "Enter the WordPress site you want to monitor for your client."}
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
-            {isIndividual ? "Site name" : "Client site name"}
-          </label>
-          <input
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={inputCls}
-            placeholder={isIndividual ? "My Business Website" : "Acme Corp Website"}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground uppercase tracking-wide">
-            Site URL
-          </label>
-          <input
-            type="url"
-            required
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className={inputCls}
-            placeholder={isIndividual ? "https://mybusiness.com" : "https://acme.com"}
-          />
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        <Button
-          type="submit"
-          loading={loading}
-          className="w-full h-11 rounded-xl font-bold text-sm mt-1"
-        >
-          {isIndividual ? "Add my site" : "Add site"}
-        </Button>
-      </form>
-    </div>
-  );
-}
-
-// ── Step 3 — Install plugin ────────────────────────────────────────────────────
-
-function StepInstallPlugin({
-  site,
-  onConnected,
-  onSkip,
-  isIndividual,
-}: {
-  site: NewSite;
-  onConnected: () => void;
-  onSkip: () => void;
-  isIndividual: boolean;
-}) {
-  const [copied, setCopied]         = useState(false);
-  const [status, setStatus]         = useState<"waiting" | "checking" | "connected">("waiting");
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const checkConnection = useCallback(async (manual = false) => {
-    if (manual) setStatus("checking");
-    try {
-      const { data } = await api.get<{ plugin_connected: boolean }>(
-        `/sites/${site.id}/connection-status`
-      );
-      if (data.plugin_connected) {
-        setStatus("connected");
-        if (pollRef.current) clearInterval(pollRef.current);
-        setTimeout(onConnected, 1200);
-      } else if (manual) {
-        setStatus("waiting");
-      }
-    } catch {
-      if (manual) setStatus("waiting");
-    }
-  }, [site.id, onConnected]);
-
-  useEffect(() => {
-    pollRef.current = setInterval(() => checkConnection(false), 5000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [checkConnection]);
-
-  function copyToken() {
-    navigator.clipboard.writeText(site.site_token);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  if (status === "connected") {
-    return (
-      <div className="flex flex-col items-center text-center gap-5 py-6">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
-          style={{ background: "color-mix(in srgb, #22c55e 15%, transparent)" }}>
-          <Check size={30} className="text-green-500" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground mb-1">Plugin connected!</h2>
-          <p className="text-sm text-muted-foreground">
-            Running your first audit on{" "}
-            <span className="font-medium text-foreground">{site.name}</span>…
-          </p>
-        </div>
-        <Loader2 size={18} className="animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-foreground">Install the plugin</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isIndividual
-            ? <>Install the Site Armor plugin on your site <span className="font-medium text-foreground">{site.name}</span> — no coding required.</>
-            : <>Install and activate the Site Armor plugin on <span className="font-medium text-foreground">{site.name}</span>, then paste your token.</>
-          }
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {/* Plugin download */}
-        <a
-          href={`${API_BASE_URL}/plugin/download`}
-          download="site-armor.zip"
-          className="flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border-2 text-sm font-semibold hover:opacity-90 transition-opacity"
-          style={{ borderColor: "var(--accent)", color: "var(--accent)", background: "color-mix(in srgb, var(--accent) 6%, transparent)" }}
-        >
-          <span>Download Site Armor Plugin (.zip)</span>
-          <Download size={16} />
-        </a>
-
-        {/* Step instructions */}
-        <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
-          {(isIndividual ? [
-            "Log in to your WordPress dashboard (yoursite.com/wp-admin)",
-            "Go to Plugins → Add New → Upload Plugin",
-            "Upload the downloaded zip file and click Install Now",
-            "Activate the plugin, then go to Settings → Site Armor",
-            "Paste your site token and click Save & Connect — that's it!",
-          ] : [
-            "In WordPress admin go to Plugins → Add New → Upload Plugin",
-            "Upload the downloaded zip file and click Install Now",
-            "Activate the plugin, then go to Settings → Site Armor",
-            "Paste your site token below and click Save & Connect",
-          ]).map((step, i) => (
-            <div key={i} className="flex items-start gap-3 text-sm">
-              <span
-                className="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5 text-white"
-                style={{ background: "var(--accent)" }}
-              >
-                {i + 1}
-              </span>
-              <span className="text-foreground leading-snug">{step}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Token copy */}
-        <div className="bg-muted border border-border rounded-2xl p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            Your site token
-          </p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 text-xs text-foreground font-mono bg-surface border border-border rounded-lg px-3 py-2 truncate">
-              {site.site_token}
-            </code>
-            <button
-              onClick={copyToken}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-border bg-surface text-foreground hover:bg-muted transition-colors shrink-0"
-            >
-              {copied ? (
-                <><Check size={12} className="text-green-500" /> Copied</>
-              ) : (
-                <><Copy size={12} /> Copy</>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Manual check button — primary action after pasting token */}
-        <button
-          onClick={() => checkConnection(true)}
-          disabled={status === "checking"}
-          className="w-full flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-bold border-2 transition-colors disabled:opacity-60"
-          style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
-        >
-          {status === "checking" ? (
-            <><Loader2 size={15} className="animate-spin" /> Checking…</>
-          ) : (
-            <><Check size={15} /> I&apos;ve connected it — verify now</>
-          )}
-        </button>
-
-        <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center py-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse shrink-0" />
-          Also checking automatically every 5 seconds
-        </div>
-
-        {/* Skip */}
-        <button
-          onClick={onSkip}
-          className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-        >
-          <SkipForward size={13} />
-          {isIndividual
-            ? "Skip for now — I'll do this later"
-            : "Skip for now — I'll connect later"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 4 — First scan ───────────────────────────────────────────────────────
-
 type ScanState = "scanning" | "slow" | "ready" | "failed";
 
 const SLOW_THRESHOLD_MS = 90_000;
 
-function StepFirstScan({
-  site,
-  onComplete,
-}: {
-  site: NewSite;
-  onComplete: () => void;
-}) {
-  const [state, setState] = useState<ScanState>("scanning");
-  const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const AGENCY_HEADLINES = [
+  { lead: "Welcome aboard,", accent: "your agency dashboard." },
+  { lead: "Begin by adding", accent: "your first client site." },
+  { lead: "Connect the plugin", accent: "to start watching." },
+  { lead: "Running your first", accent: "portfolio scan." },
+] as const;
 
-  const checkAudit = useCallback(async () => {
-    try {
-      const { data } = await api.get<{ audits: { status: string }[] }>(`/sites/${site.id}`);
-      const audits = data.audits ?? [];
-      if (audits.some((a) => a.status === "completed")) {
-        setState("ready");
-        if (pollRef.current)    clearInterval(pollRef.current);
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      } else if (audits.length > 0 && audits.every((a) => a.status === "failed")) {
-        setState("failed");
-        if (pollRef.current)    clearInterval(pollRef.current);
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      }
-    } catch {
-      // silently ignore poll errors
-    }
-  }, [site.id]);
-
-  useEffect(() => {
-    // The audit is already queued automatically when the site was created —
-    // no need to fire another one here.
-    pollRef.current    = setInterval(checkAudit, 3000);
-    timeoutRef.current = setTimeout(() => setState("slow"), SLOW_THRESHOLD_MS);
-    return () => {
-      if (pollRef.current)    clearInterval(pollRef.current);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [checkAudit]);
-
-  return (
-    <div className="flex flex-col items-center text-center gap-6 max-w-sm mx-auto">
-      {state === "ready" && (
-        <>
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
-            style={{ background: "color-mix(in srgb, #22c55e 15%, transparent)" }}
-          >
-            <Check size={28} className="text-green-500" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Your first report is ready!
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Head to your dashboard to see the full audit results for{" "}
-              <span className="font-medium text-foreground">{site.name}</span>.
-            </p>
-          </div>
-          <Button
-            onClick={onComplete}
-            className="px-8 h-11 rounded-xl font-bold text-sm flex items-center gap-2"
-          >
-            <LayoutDashboard size={15} /> Go to dashboard
-          </Button>
-        </>
-      )}
-
-      {state === "failed" && (
-        <>
-          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center shadow-lg">
-            <AlertCircle size={28} className="text-amber-500" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Audit couldn&apos;t complete
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              We couldn&apos;t reach{" "}
-              <span className="font-medium text-foreground">{site.name}</span> right now.
-              You can run a manual audit from your dashboard once the site is live.
-            </p>
-          </div>
-          <Button
-            onClick={onComplete}
-            className="px-8 h-11 rounded-xl font-bold text-sm flex items-center gap-2"
-          >
-            <LayoutDashboard size={15} /> Go to dashboard
-          </Button>
-        </>
-      )}
-
-      {(state === "scanning" || state === "slow") && (
-        <>
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
-            style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)" }}
-          >
-            <Loader2 size={28} className="animate-spin" style={{ color: "var(--accent)" }} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Running your first audit…
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              We&apos;re scanning{" "}
-              <span className="font-medium text-foreground">{site.name}</span>.
-              {state === "slow"
-                ? " This is taking a little longer than usual."
-                : " This usually takes 30–60 seconds."}
-            </p>
-          </div>
-
-          {state === "scanning" && (
-            <div className="flex gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full animate-bounce"
-                  style={{ background: "var(--accent)", animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
-          )}
-
-          {state === "slow" && (
-            <Button
-              onClick={onComplete}
-              className="px-8 h-11 rounded-xl font-bold text-sm flex items-center gap-2"
-            >
-              <LayoutDashboard size={15} /> Go to dashboard
-            </Button>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Main wizard ───────────────────────────────────────────────────────────────
+const INDIVIDUAL_HEADLINES = [
+  { lead: "Welcome aboard,", accent: "your site dashboard." },
+  { lead: "Begin by adding", accent: "your site." },
+  { lead: "Connect the plugin", accent: "to start watching." },
+  { lead: "Running your first", accent: "health scan." },
+] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { agency, updateAgency } = useAuth();
-  const [step, setStep] = useState(0);
-  const [site, setSite] = useState<NewSite | null>(null);
   const isIndividual = agency?.account_type === "individual";
 
+  const [step, setStep] = useState(1);
+  const [site, setSite] = useState<NewSite | null>(null);
+  const [url, setUrl] = useState("");
+  const [siteName, setSiteName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [connStatus, setConnStatus] = useState<"waiting" | "checking" | "connected">("waiting");
+  const [scanState, setScanState] = useState<ScanState>("scanning");
+
+  const pollConnRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollScanRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const parsed = parseSiteUrl(url);
+  const urlOk = parsed.ok;
+  const headlines = isIndividual ? INDIVIDUAL_HEADLINES : AGENCY_HEADLINES;
+  const copy = headlines[step - 1];
+
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.replace("/login");
-    }
+    if (!isLoggedIn()) router.replace("/login");
   }, [router]);
 
   async function markComplete() {
@@ -493,93 +89,372 @@ export default function OnboardingPage() {
     } catch {
       // proceed anyway
     }
+    cacheClear("sites");
     router.replace("/dashboard");
   }
 
-  const progress = ((step + 1) / STEPS.length) * 100;
+  async function handleAddSite(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    const result = parseSiteUrl(url);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setLoading(true);
+    try {
+      const name = siteName.trim() || result.name;
+      const { data } = await api.post<{ site: NewSite }>("/sites", { name, url: result.url });
+      setSite(data.site);
+      cacheClear("sites");
+      setStep(3);
+      toast.success("Site added");
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        "Failed to add site. Please try again.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const checkConnection = useCallback(
+    async (manual = false) => {
+      if (!site) return;
+      if (manual) setConnStatus("checking");
+      try {
+        const { data } = await api.get<{ plugin_connected: boolean }>(
+          `/sites/${site.id}/connection-status`
+        );
+        if (data.plugin_connected) {
+          setConnStatus("connected");
+          if (pollConnRef.current) clearInterval(pollConnRef.current);
+          setTimeout(() => setStep(4), 900);
+        } else if (manual) {
+          setConnStatus("waiting");
+        }
+      } catch {
+        if (manual) setConnStatus("waiting");
+      }
+    },
+    [site]
+  );
+
+  useEffect(() => {
+    if (step !== 3 || !site) return;
+    pollConnRef.current = setInterval(() => checkConnection(false), 5000);
+    return () => {
+      if (pollConnRef.current) clearInterval(pollConnRef.current);
+    };
+  }, [step, site, checkConnection]);
+
+  const checkAudit = useCallback(async () => {
+    if (!site) return;
+    try {
+      const { data } = await api.get<{ audits: { status: string }[] }>(`/sites/${site.id}`);
+      const audits = data.audits ?? [];
+      if (audits.some((a) => a.status === "completed")) {
+        setScanState("ready");
+        if (pollScanRef.current) clearInterval(pollScanRef.current);
+        if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+      } else if (audits.length > 0 && audits.every((a) => a.status === "failed")) {
+        setScanState("failed");
+        if (pollScanRef.current) clearInterval(pollScanRef.current);
+        if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+      }
+    } catch {
+      // ignore poll errors
+    }
+  }, [site]);
+
+  useEffect(() => {
+    if (step !== 4 || !site) return;
+    setScanState("scanning");
+    pollScanRef.current = setInterval(checkAudit, 3000);
+    scanTimeoutRef.current = setTimeout(() => setScanState((s) => (s === "scanning" ? "slow" : s)), SLOW_THRESHOLD_MS);
+    return () => {
+      if (pollScanRef.current) clearInterval(pollScanRef.current);
+      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    };
+  }, [step, site, checkAudit]);
+
+  function copyToken() {
+    if (!site?.site_token) return;
+    navigator.clipboard.writeText(site.site_token);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const preview =
+    step === 1 ? (
+      isIndividual ? (
+        <IndividualWelcomePreview />
+      ) : (
+        <AgencyWelcomePreview />
+      )
+    ) : step === 2 ? (
+      <SiteUrlPreview />
+    ) : step === 3 ? (
+      <SitePluginPreview />
+    ) : (
+      <OnboardingScanPreview />
+    );
+
+  const footer =
+    step === 1 ? (
+      <button
+        type="button"
+        onClick={() => setStep(2)}
+        className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover"
+      >
+        Get started
+        <ArrowRight size={16} strokeWidth={1.5} />
+      </button>
+    ) : step === 2 ? (
+      <button
+        type="submit"
+        form="onboarding-add-site"
+        disabled={!urlOk || loading}
+        className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:pointer-events-none disabled:opacity-50"
+      >
+        {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+        Continue
+        <ArrowRight size={16} strokeWidth={1.5} />
+      </button>
+    ) : step === 3 ? (
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void markComplete()}
+          className="inline-flex h-10 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+        >
+          <SkipForward size={14} />
+          I&apos;ll do this later
+        </button>
+        <button
+          type="button"
+          onClick={() => checkConnection(true)}
+          disabled={connStatus === "checking" || connStatus === "connected"}
+          className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
+        >
+          {connStatus === "checking" ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Check size={16} />
+          )}
+          Verify connection
+        </button>
+      </div>
+    ) : (
+      <button
+        type="button"
+        onClick={() => void markComplete()}
+        disabled={scanState === "scanning"}
+        className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
+      >
+        {scanState === "scanning" ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <LayoutDashboard size={16} />
+        )}
+        {scanState === "ready"
+          ? "Go to dashboard"
+          : scanState === "failed" || scanState === "slow"
+            ? "Go to dashboard"
+            : "Scanning…"}
+      </button>
+    );
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface px-6">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <header className="flex h-14 shrink-0 items-center gap-2.5 border-b border-zinc-200 bg-white px-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/site-armor-icon.png" alt="Site Armor" className="h-7 w-7 object-contain" />
-        <span className="font-portal-display text-sm font-bold text-foreground">Site Armor</span>
+        <span className="font-portal-display text-sm font-bold text-zinc-900">Site Armor</span>
+        <span className="ml-auto text-xs font-medium text-zinc-400">
+          {isIndividual ? "Site setup" : "Agency setup"}
+        </span>
       </header>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-border">
-        <div
-          className="h-full transition-all duration-500 ease-in-out"
-          style={{ width: `${progress}%`, background: "var(--accent)" }}
-        />
-      </div>
-
-      {/* Step labels */}
-      <div className="flex justify-center gap-0 px-4 pt-6">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex items-center">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold transition-all ${
-                  i < step
-                    ? "bg-[var(--score-good)] text-white"
-                    : i === step
-                    ? "scale-110 text-white shadow-elevated-sm"
-                    : "border border-border bg-muted text-muted-foreground"
-                }`}
-                style={i === step ? { background: "var(--accent)" } : {}}
-              >
-                {i < step ? <Check size={12} /> : String(i + 1).padStart(2, "0")}
-              </div>
-              <span
-                className={`max-w-[64px] text-center text-xs leading-tight ${
-                  i === step
-                    ? "font-bold text-foreground"
-                    : i < step
-                    ? "font-semibold text-[var(--score-good)]"
-                    : "font-medium text-muted-foreground"
-                }`}
-              >
-                {label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div
-                className={`mx-2 mb-6 h-px w-10 transition-colors sm:w-16 ${
-                  i < step ? "bg-[var(--score-good)]" : "bg-border"
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="w-full max-w-lg rounded-xl border border-border bg-surface p-8 shadow-elevated-sm">
-          {step === 0 && <StepWelcome onNext={() => setStep(1)} isIndividual={isIndividual} />}
+      <div className="min-h-0 flex-1">
+        <SetupWizard
+          step={step}
+          total={4}
+          headline={copy.lead}
+          accent={copy.accent}
+          preview={preview}
+          footer={footer}
+        >
           {step === 1 && (
-            <StepAddSite
-              isIndividual={isIndividual}
-              onNext={(newSite) => {
-                setSite(newSite);
-                setStep(2);
-              }}
-            />
+            <div className="max-w-lg space-y-3 text-sm leading-relaxed text-zinc-500">
+              {isIndividual ? (
+                <>
+                  <p>
+                    Keep your WordPress site healthy, secure, and fast — without needing to be a
+                    developer. We watch it around the clock and alert you before small issues become
+                    big problems.
+                  </p>
+                  <p>Let&apos;s connect your site now. It only takes a few minutes.</p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Monitor client WordPress sites, catch threats early, and send branded audit
+                    reports — all from one agency dashboard.
+                  </p>
+                  <p>
+                    Next we&apos;ll add your first client site, connect the plugin, and run a scan so
+                    you can see scores land in real time.
+                  </p>
+                </>
+              )}
+            </div>
           )}
-          {step === 2 && site && (
-            <StepInstallPlugin
-              site={site}
-              isIndividual={isIndividual}
-              onConnected={() => setStep(3)}
-              onSkip={markComplete}
-            />
+
+          {step === 2 && (
+            <form id="onboarding-add-site" onSubmit={handleAddSite} className="flex max-w-lg flex-col gap-5">
+              {!isIndividual && (
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="site-name" className="text-sm font-semibold text-zinc-900">
+                    Client site name
+                  </label>
+                  <input
+                    id="site-name"
+                    type="text"
+                    value={siteName}
+                    onChange={(e) => setSiteName(e.target.value)}
+                    placeholder="Acme Corp Website"
+                    className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none placeholder:font-extralight placeholder:text-zinc-400 focus-visible:border-emerald-600 focus-visible:ring-0"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="site-url" className="text-sm font-semibold text-zinc-900">
+                  {isIndividual ? "Your WordPress Site URL" : "WordPress Site URL"}
+                  <span className="text-red-500"> *</span>
+                </label>
+                <div className="relative flex w-full items-center overflow-hidden rounded-lg bg-white">
+                  <Globe
+                    size={16}
+                    strokeWidth={1}
+                    className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-zinc-950"
+                  />
+                  <input
+                    id="site-url"
+                    type="text"
+                    autoComplete="off"
+                    value={url}
+                    onChange={(e) => {
+                      setUrl(e.target.value);
+                      if (error) setError("");
+                    }}
+                    placeholder="Eg: https://www.sample.com"
+                    className={cn(
+                      "h-10 w-full rounded-lg border border-zinc-200 bg-transparent py-2 pl-7 pr-3 text-sm outline-none placeholder:font-extralight placeholder:text-zinc-400 focus-visible:border-emerald-600 focus-visible:ring-0",
+                      error && "border-red-500"
+                    )}
+                  />
+                </div>
+                <p className="text-xs text-zinc-500">
+                  {isIndividual
+                    ? "Enter your WordPress site URL so we can start monitoring it."
+                    : "Enter the client WordPress URL you want to monitor first."}
+                </p>
+                {error ? <p className="text-xs text-red-600">{error}</p> : null}
+              </div>
+            </form>
           )}
+
           {step === 3 && site && (
-            <StepFirstScan site={site} onComplete={markComplete} />
+            <div className="flex max-w-lg flex-col gap-4">
+              {connStatus === "connected" ? (
+                <p className="text-sm text-emerald-700">Plugin connected. Starting your first scan…</p>
+              ) : (
+                <>
+                  <a
+                    href={`${API_BASE_URL}/plugin/download`}
+                    download="site-armor.zip"
+                    className="inline-flex h-10 items-center justify-between gap-3 rounded-lg border border-accent bg-accent/5 px-4 text-sm font-medium text-accent hover:opacity-90"
+                  >
+                    Download Site Armor plugin (.zip)
+                    <Download size={16} />
+                  </a>
+                  <ol className="space-y-2.5 text-sm text-zinc-600">
+                    {(isIndividual
+                      ? [
+                          "Log in to WordPress → Plugins → Add New → Upload Plugin",
+                          "Install the zip, then activate Site Armor",
+                          "Open Settings → Site Armor and paste the token below",
+                        ]
+                      : [
+                          "In the client’s WordPress: Plugins → Add New → Upload Plugin",
+                          "Install the zip, then activate Site Armor",
+                          "Open Settings → Site Armor and paste the token below",
+                        ]
+                    ).map((item, i) => (
+                      <li key={item} className="flex gap-3">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[11px] font-semibold text-zinc-700">
+                          {i + 1}
+                        </span>
+                        {item}
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Site token
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="min-w-0 flex-1 truncate font-mono text-xs text-zinc-800">
+                        {site.site_token}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={copyToken}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700"
+                      >
+                        {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                        {copied ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="flex items-center gap-2 text-xs text-zinc-400">
+                    <span className="size-1.5 animate-pulse rounded-full bg-zinc-400" />
+                    Checking automatically every 5 seconds
+                  </p>
+                </>
+              )}
+            </div>
           )}
-        </div>
+
+          {step === 4 && site && (
+            <div className="max-w-md space-y-3 text-sm leading-relaxed text-zinc-500">
+              {scanState === "ready" && (
+                <p className="text-zinc-700">
+                  Your first report for <span className="font-medium text-zinc-900">{site.name}</span> is
+                  ready. Head to the dashboard to review scores.
+                </p>
+              )}
+              {scanState === "failed" && (
+                <p>
+                  We couldn&apos;t finish the audit on{" "}
+                  <span className="font-medium text-zinc-900">{site.name}</span> right now. You can
+                  rerun it from the dashboard once the site is reachable.
+                </p>
+              )}
+              {(scanState === "scanning" || scanState === "slow") && (
+                <p>
+                  We&apos;re scanning <span className="font-medium text-zinc-900">{site.name}</span>.
+                  {scanState === "slow"
+                    ? " This is taking a little longer than usual — you can continue to the dashboard."
+                    : " This usually takes 30–60 seconds."}
+                </p>
+              )}
+            </div>
+          )}
+        </SetupWizard>
       </div>
     </div>
   );

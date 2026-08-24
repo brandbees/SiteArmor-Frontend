@@ -390,3 +390,90 @@ export function ClientSitesPreview() {
     </Stage>
   );
 }
+
+/** Post-register welcome — agency portfolio value */
+export function AgencyWelcomePreview() {
+  const scene = useLoopScene(3, 4200);
+  return (
+    <Stage>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={scene}
+          className="flex h-full flex-col justify-between"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {scene === 0 && (
+            <>
+              <Chip icon={<Users size={16} strokeWidth={1.5} />} label="Built for agencies & freelancers" />
+              <StatHero value={86} label="Client sites in one dashboard" trend="Scores, uptime, malware, SEO" />
+              {MiniStats([
+                { n: 42, label: "Clients" },
+                { n: 216, label: "Reports" },
+                { n: 12, label: "Team seats" },
+              ])}
+              <LiveBars heights={[48, 60, 55, 76, 68, 86, 92]} colorClass="bg-gradient-to-t from-accent to-[#7dd3fc]" />
+            </>
+          )}
+          {scene === 1 && (
+            <>
+              <Chip icon={<Mail size={16} strokeWidth={1.5} />} label="White-label client portals" />
+              <StatHero value={38} label="Portals active" trend="They see scores. You keep the keys." />
+              {MiniStats([
+                { n: 1480, label: "Audits/mo" },
+                { n: 99.9, label: "Uptime", decimals: 1, suffix: "%" },
+                { n: 0, label: "Hacked" },
+              ])}
+              <LiveBars heights={[40, 52, 64, 58, 74, 82, 90]} colorClass="bg-gradient-to-t from-[#102850] to-accent" />
+            </>
+          )}
+          {scene === 2 && (
+            <>
+              <Chip icon={<Shield size={16} strokeWidth={1.5} />} label="Catch issues before clients do" />
+              <StatHero value={14820} label="Issues flagged this year" trend="+18% caught earlier vs last quarter" />
+              {MiniStats([
+                { n: 326, label: "Fixes" },
+                { n: 218, label: "Updates" },
+                { n: 94, label: "Avg health" },
+              ])}
+              <LiveBars heights={[36, 48, 58, 70, 66, 84, 96]} colorClass="bg-gradient-to-t from-accent to-emerald-300" />
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </Stage>
+  );
+}
+
+/** Post-register welcome — individual site owner */
+export function IndividualWelcomePreview() {
+  return (
+    <Stage>
+      <Chip icon={<Shield size={16} strokeWidth={1.5} />} label="Your site, watched around the clock" />
+      <StatHero value={94} suffix=" / 100" label="Typical health score" trend="Alerts before small issues get big" />
+      {MiniStats([
+        { n: 52, label: "Audits" },
+        { n: 99.9, label: "Uptime", decimals: 1, suffix: "%" },
+        { n: 0, label: "Threats" },
+      ])}
+      <LiveBars heights={[44, 58, 52, 72, 66, 84, 91]} colorClass="bg-gradient-to-t from-accent to-[#7dd3fc]" />
+    </Stage>
+  );
+}
+
+export function OnboardingScanPreview() {
+  return (
+    <Stage>
+      <Chip icon={<Shield size={16} strokeWidth={1.5} />} label="First audit in progress" />
+      <PulseShield />
+      <div className="rounded-2xl bg-white/90 px-5 py-4 text-center shadow-[0_0_0_1px_rgb(26_86_219_/_0.1)]">
+        <p className="font-portal-display text-xl font-bold text-accent">Scanning pillars…</p>
+        <p className="mt-1 text-sm text-zinc-500">Performance · SEO · Security · Malware</p>
+      </div>
+      <LiveBars heights={[42, 55, 60, 68, 74, 82, 90]} colorClass="bg-gradient-to-t from-accent to-emerald-300" />
+    </Stage>
+  );
+}
+
