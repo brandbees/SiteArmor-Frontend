@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Lock, ArrowRight } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface UpgradeBannerProps {
   message: string;
@@ -7,32 +8,25 @@ interface UpgradeBannerProps {
 }
 
 export function UpgradeBanner({ message, compact = false }: UpgradeBannerProps) {
-  if (compact) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-md text-sm">
-        <Lock size={13} className="text-amber-600 shrink-0" />
-        <span className="text-amber-800 flex-1">{message}</span>
-        <Link
-          href="/settings?tab=billing"
-          className="flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-900 shrink-0"
-        >
-          Upgrade <ArrowRight size={11} />
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-amber-50 border-b border-amber-200">
-      <div className="flex items-center gap-2">
-        <Lock size={14} className="text-amber-600" />
-        <span className="text-sm text-amber-800">{message}</span>
+    <div
+      className={cn(
+        "flex w-full items-center justify-between gap-3 rounded-2xl border border-accent/15 bg-accent-light px-4 py-3",
+        compact && "rounded-xl py-2.5"
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-accent shadow-[0_0_0_1px_rgb(26_86_219_/_0.08)]">
+          <Lock size={13} strokeWidth={1.75} />
+        </span>
+        <span className={cn("text-sm text-accent", compact && "text-xs")}>{message}</span>
       </div>
       <Link
         href="/settings?tab=billing"
-        className="flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-900"
+        className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-accent hover:underline"
       >
-        Upgrade plan <ArrowRight size={13} />
+        Upgrade plan
+        <ArrowRight size={14} strokeWidth={1.75} />
       </Link>
     </div>
   );

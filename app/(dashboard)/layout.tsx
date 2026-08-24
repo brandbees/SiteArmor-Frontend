@@ -165,11 +165,11 @@ export default function DashboardLayout({
   const dashboardShell = (
     <div className="flex h-screen flex-col overflow-hidden bg-[#f4f4f5]">
       <AnnouncementBanner />
+      <TrialBanner />
       <div className="flex min-h-0 flex-1">
         <Sidebar collapsed={sidebarCollapsed} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar collapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
-          <TrialBanner />
           <main
             className={cn(
               "min-w-0 flex-1 overflow-x-auto",

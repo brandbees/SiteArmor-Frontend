@@ -21,7 +21,6 @@ export function TrialBanner() {
     setDismissed(sessionStorage.getItem(DISMISSED_KEY) === "1");
   }, []);
 
-  // Never show for agencies on a paid plan
   if (!agency?.trial_ends_at || (agency.plan && agency.plan !== "free")) return null;
 
   const days = getDaysRemaining(agency.trial_ends_at);
@@ -36,13 +35,13 @@ export function TrialBanner() {
 
   if (isExpired) {
     return (
-      <div className="flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium text-white bg-red-600">
-        <span>
+      <div className="flex w-full shrink-0 items-center justify-between gap-3 bg-red-50 px-4 py-2.5 sm:px-6">
+        <p className="text-sm font-medium text-red-800">
           Your trial has ended. Add a payment method to continue using Site Armor.
-        </span>
+        </p>
         <Link
           href="/settings?tab=billing"
-          className="underline underline-offset-2 font-semibold hover:no-underline shrink-0"
+          className="shrink-0 text-sm font-semibold text-red-700 underline underline-offset-2 hover:no-underline"
         >
           Add payment method
         </Link>
@@ -51,30 +50,28 @@ export function TrialBanner() {
   }
 
   return (
-    <div
-      className="flex items-center justify-between gap-3 px-4 py-2 text-sm"
-      style={{ background: "var(--trial-bg)", color: "var(--trial-text)" }}
-    >
-      <span>
+    <div className="flex w-full shrink-0 items-center justify-between gap-3 bg-accent-light px-4 py-2.5 sm:px-6">
+      <p className="text-sm text-accent">
         You have{" "}
-        <strong>
+        <span className="font-semibold">
           {days} day{days !== 1 ? "s" : ""}
-        </strong>{" "}
+        </span>{" "}
         left in your free trial.
-      </span>
-      <div className="flex items-center gap-3 shrink-0">
+      </p>
+      <div className="flex shrink-0 items-center gap-2">
         <Link
           href="/settings?tab=billing"
-          className="font-semibold underline underline-offset-2 hover:no-underline"
+          className="text-sm font-semibold text-accent underline underline-offset-2 hover:no-underline"
         >
-          Upgrade Now
+          Upgrade now
         </Link>
         <button
+          type="button"
           onClick={handleDismiss}
-          aria-label="Dismiss"
-          className="p-0.5 rounded hover:opacity-70 transition-opacity"
+          aria-label="Dismiss trial notice"
+          className="flex size-7 items-center justify-center rounded-full text-accent/60 transition-colors hover:bg-accent/10 hover:text-accent"
         >
-          <X size={14} />
+          <X size={14} strokeWidth={1.75} />
         </button>
       </div>
     </div>
