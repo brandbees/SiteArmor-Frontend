@@ -43,7 +43,7 @@ export function HowItWorksSection({
                       alt={shot.alt}
                       fill
                       sizes="(max-width: 1024px) 100vw, 33vw"
-                      className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                      className="object-contain object-top"
                     />
                   </div>
                   <div className="flex flex-1 flex-col p-5">

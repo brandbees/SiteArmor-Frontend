@@ -75,8 +75,9 @@ export function ProductFrame({
                 alt={snapshot.alt}
                 fill
                 priority={priority}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
-                className="object-cover object-top dark:hidden"
+                quality={95}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1100px"
+                className="object-contain object-top dark:hidden"
               />
               <Image
                 src={snapshot.darkSrc}
@@ -84,8 +85,9 @@ export function ProductFrame({
                 aria-hidden
                 fill
                 priority={priority}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
-                className="hidden object-cover object-top dark:block"
+                quality={95}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1100px"
+                className="hidden object-contain object-top dark:block"
               />
             </>
           ) : (
@@ -94,8 +96,9 @@ export function ProductFrame({
               alt={snapshot.alt}
               fill
               priority={priority}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 720px"
-              className="object-cover object-top"
+              quality={95}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1100px"
+              className="object-contain object-top"
             />
           )}
         </div>

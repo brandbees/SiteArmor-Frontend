@@ -9,13 +9,13 @@ import { SNAPSHOTS, type SnapshotId } from "@/lib/marketing/snapshots";
 
 /**
  * Multi-feature hero showcase — soft crossfade between key product screens.
- * Fixed frame aspect so slides never shift layout.
+ * Frame aspect follows the active slide's native ratio (no object-cover zoom).
  */
 export function SnapshotGif({
   ids,
   intervalMs = 4000,
   className,
-  aspect = "16 / 10",
+  aspect,
   priority,
   chrome = true,
   showLabels = true,
@@ -23,7 +23,7 @@ export function SnapshotGif({
   ids: SnapshotId[];
   intervalMs?: number;
   className?: string;
-  /** Locked media frame; defaults to 16/10 so crossfades don't reflow. */
+  /** Optional locked frame; defaults to each slide's native aspect. */
   aspect?: string;
   priority?: boolean;
   chrome?: boolean;
@@ -35,6 +35,7 @@ export function SnapshotGif({
   const [paused, setPaused] = useState(false);
   const [mounted, setMounted] = useState(false);
   const active = SNAPSHOTS[ids[index] ?? ids[0]];
+  const frameAspect = aspect ?? active.aspect ?? "1920 / 878";
 
   useEffect(() => {
     setMounted(true);
@@ -82,7 +83,7 @@ export function SnapshotGif({
 
         <div
           className="relative overflow-hidden rounded-xl bg-[var(--mkt-bg-muted)]"
-          style={{ aspectRatio: aspect }}
+          style={{ aspectRatio: frameAspect }}
         >
           {ids.length > 1 ? (
             <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex gap-1.5">
@@ -124,11 +125,9 @@ export function SnapshotGif({
                   alt={isActive ? snap.alt : ""}
                   fill
                   priority={priority && i === 0}
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  className={cn(
-                    "object-cover object-top transition-transform duration-[4500ms]",
-                    isActive ? "scale-100" : "scale-[1.03]"
-                  )}
+                  quality={95}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1100px"
+                  className="object-contain object-top"
                 />
               </div>
             );

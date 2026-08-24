@@ -96,7 +96,7 @@ export function PillarsSection({ cms = {} }: { cms?: Record<string, string> }) {
                       alt={snap.alt}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                      className="object-contain object-top"
                     />
                     <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--mkt-surface)]/90 text-[var(--mkt-muted)] opacity-0 shadow-elevated-xs backdrop-blur transition-all group-hover:opacity-100 group-hover:text-accent">
                       <ArrowUpRight size={14} />

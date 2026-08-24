@@ -74,8 +74,9 @@ export function DifferentiatorSection({
                   src={agent.src}
                   alt={agent.alt}
                   fill
-                  sizes="(max-width: 1024px) 100vw, 960px"
-                  className="object-cover object-top"
+                  quality={95}
+                  sizes="(max-width: 1024px) 100vw, 1100px"
+                  className="object-contain object-top"
                 />
               </div>
             </div>

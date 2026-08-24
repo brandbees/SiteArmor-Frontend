@@ -180,10 +180,10 @@ export const FEATURE_SNAPSHOT: Record<string, SnapshotId> = {
 };
 
 export const HERO_FEATURES: SnapshotId[] = [
-  "agent",
   "dash",
-  "sites",
   "site-dash",
+  "agent",
+  "reports",
 ];
 
 export const TOUR_SLIDES: SnapshotId[] = [
