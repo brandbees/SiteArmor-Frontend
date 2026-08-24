@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -47,7 +47,7 @@ function McWidgetCard({
   return (
     <div
       className={cn(
-        "flex w-full flex-col justify-stretch overflow-hidden rounded-3xl border border-zinc-200 bg-[#FDFDFD] p-6 shadow-xs",
+        "flex w-full flex-col justify-stretch overflow-visible rounded-3xl border border-zinc-200 bg-[#FDFDFD] p-6 shadow-xs",
         className
       )}
     >
@@ -68,18 +68,75 @@ function McStatCard({
   children: ReactNode;
 }) {
   const inner = (
-    <div className="flex h-[123px] w-full cursor-pointer flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-none transition-transform duration-150 hover:scale-[1.02]">
+    <div className="flex h-[123px] w-full cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-none transition-transform duration-150 hover:scale-[1.02]">
       <div className="flex w-full items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
         <div className="flex items-center justify-center rounded bg-zinc-50 p-0.5 text-muted-foreground">
           {icon}
         </div>
       </div>
-      <div className="flex grow flex-col justify-end">{children}</div>
+      <div className="min-h-0">{children}</div>
     </div>
   );
   if (href) return <Link href={href}>{inner}</Link>;
   return inner;
+}
+
+function McMenu({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: { id: string; label: string }[];
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const current = options.find((o) => o.id === value)?.label ?? "All";
+
+  return (
+    <div ref={ref} className="relative z-20 shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex h-8 min-w-[5.5rem] items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      >
+        <span className="truncate">{current}</span>
+        <ChevronDown size={16} className={cn("shrink-0 text-zinc-400 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-30 mt-1 min-w-[9rem] rounded-md border border-zinc-200 bg-white py-1 shadow-md">
+          {options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => {
+                onChange(opt.id);
+                setOpen(false);
+              }}
+              className={cn(
+                "flex w-full px-3 py-1.5 text-left text-xs text-zinc-700 hover:bg-zinc-50",
+                opt.id === value && "bg-zinc-50 font-medium"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function WidgetHeader({
@@ -94,8 +151,8 @@ function WidgetHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
-      <header className="flex shrink-0 items-end gap-2">
+    <div className="flex shrink-0 items-center justify-between gap-4">
+      <header className="flex min-w-0 shrink items-end gap-2">
         {icon}
         <span className="text-lg font-medium leading-tight text-zinc-900">{title}</span>
         {badge}
@@ -223,7 +280,8 @@ function MonitoringBars({
   );
 }
 
-type AlertFilter = "hacked" | "critical" | "warnings";
+type AlertFilter = "all" | "hacked" | "critical" | "warnings";
+type IssueKind = "down" | "malware" | "ssl";
 
 export function MalCareDashboard({
   sites,
@@ -253,7 +311,8 @@ export function MalCareDashboard({
 }) {
   const router = useRouter();
   const [auditLoading, setAuditLoading] = useState<string | null>(null);
-  const [alertFilter, setAlertFilter] = useState<AlertFilter>("hacked");
+  const [alertFilter, setAlertFilter] = useState<AlertFilter>("all");
+  const [issueFilter, setIssueFilter] = useState<"all" | IssueKind>("all");
   const [reportsTab, setReportsTab] = useState<"all" | "sent" | "pending">("all");
   const [teamCount, setTeamCount] = useState(1);
   const [clientCount, setClientCount] = useState(0);
@@ -298,12 +357,16 @@ export function MalCareDashboard({
       !s.plugin_connected
   );
 
-  const filteredAlerts =
-    alertFilter === "hacked"
-      ? hackedSites
-      : alertFilter === "critical"
-        ? criticalSites
-        : warningSites;
+  const filteredAlerts = useMemo(() => {
+    if (alertFilter === "hacked") return hackedSites;
+    if (alertFilter === "critical") return criticalSites;
+    if (alertFilter === "warnings") return warningSites;
+    const byId = new Map<string, Site>();
+    for (const s of [...hackedSites, ...criticalSites, ...warningSites]) {
+      if (!byId.has(s.id)) byId.set(s.id, s);
+    }
+    return [...byId.values()];
+  }, [alertFilter, hackedSites, criticalSites, warningSites]);
 
   const monitoringStats = useMemo(() => {
     let disabled = 0;
@@ -336,7 +399,7 @@ export function MalCareDashboard({
   }, [sites]);
 
   const monitorIssues = useMemo(() => {
-    const issues: { id: string; siteId: string; siteName: string; title: string; at: string }[] = [];
+    const issues: { id: string; siteId: string; siteName: string; title: string; at: string; kind: IssueKind }[] = [];
 
     for (const s of sites) {
       if (s.uptime_status === "down") {
@@ -346,6 +409,7 @@ export function MalCareDashboard({
           siteName: s.name,
           title: "Site is down",
           at: s.last_uptime_check_at ?? s.created_at,
+          kind: "down",
         });
       }
       if (s.malware_status === "threat") {
@@ -355,6 +419,7 @@ export function MalCareDashboard({
           siteName: s.name,
           title: "Malware detected",
           at: s.last_audit_at ?? s.created_at,
+          kind: "malware",
         });
       }
       const sslDays = sslDaysRemaining(s.ssl_expiry_date);
@@ -365,6 +430,7 @@ export function MalCareDashboard({
           siteName: s.name,
           title: sslDays <= 0 ? "SSL certificate expired" : "SSL expiring soon",
           at: s.ssl_expiry_date ?? s.last_audit_at ?? s.created_at,
+          kind: "ssl",
         });
       } else if (s.plugin_connected && !s.ssl_expiry_date) {
         issues.push({
@@ -373,14 +439,18 @@ export function MalCareDashboard({
           siteName: s.name,
           title: "Domain expiry date unavailable",
           at: s.last_audit_at ?? s.created_at,
+          kind: "ssl",
         });
       }
     }
 
-    return issues
-      .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-      .slice(0, 6);
+    return issues.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }, [sites]);
+
+  const filteredMonitorIssues = useMemo(() => {
+    const list = issueFilter === "all" ? monitorIssues : monitorIssues.filter((i) => i.kind === issueFilter);
+    return list.slice(0, 6);
+  }, [monitorIssues, issueFilter]);
 
   const filteredReports = useMemo(() => {
     if (reportsTab === "sent") return reports.filter((r) => !!r.sent_to);
@@ -548,14 +618,14 @@ export function MalCareDashboard({
             </McStatCard>
 
             <McStatCard label="Updates" href="/sites" icon={<Plug size={24} strokeWidth={1.5} />}>
-              <div className="flex gap-10">
-                <div className="flex grow flex-col gap-1">
-                  <p className="text-2xl font-normal text-zinc-700">{totalUpdates}</p>
-                  <p className="text-xs text-muted-foreground">Plugin updates</p>
+              <div className="flex min-w-0 gap-6">
+                <div className="min-w-0 flex-1">
+                  <p className="text-2xl font-normal leading-none text-zinc-700">{totalUpdates}</p>
+                  <p className="mt-1 truncate text-xs leading-tight text-muted-foreground">Plugin updates</p>
                 </div>
-                <div className="flex grow flex-col gap-1">
-                  <p className="text-2xl font-normal text-zinc-700">{sitesWithUpdates.length}</p>
-                  <p className="text-xs text-muted-foreground">Sites with updates</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-2xl font-normal leading-none text-zinc-700">{sitesWithUpdates.length}</p>
+                  <p className="mt-1 text-xs leading-tight text-muted-foreground">Sites with updates</p>
                 </div>
               </div>
             </McStatCard>
@@ -567,27 +637,30 @@ export function MalCareDashboard({
           <div className="flex max-w-full grow flex-wrap items-stretch gap-4">
             {/* Alerts */}
             <div className="w-full grow lg:w-[544px] lg:max-w-full">
-              <McWidgetCard className="flex max-h-[560px] flex-col gap-6">
-                <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
-                  <WidgetHeader
-                    icon={<AlertCircle size={20} strokeWidth={1} className="text-zinc-900" />}
-                    title="Alerts"
-                    badge={
-                      alertSitesWithIssues.length > 0 ? (
-                        <McBadge variant="neutral">
-                          {alertSitesWithIssues.length} Site{alertSitesWithIssues.length === 1 ? "!" : "s!"}
-                        </McBadge>
-                      ) : undefined
-                    }
-                  />
-                  <button
-                    type="button"
-                    className="relative flex h-8 w-32 items-center justify-between gap-2 whitespace-nowrap rounded-md border border-zinc-200 bg-transparent px-4 py-2 text-xs text-zinc-900 shadow-xs"
-                  >
-                    <span className="truncate">All</span>
-                    <ChevronDown size={16} strokeWidth={1} className="opacity-50" />
-                  </button>
-                </div>
+              <McWidgetCard className="flex max-h-[560px] flex-col gap-6 overflow-visible">
+                <WidgetHeader
+                  icon={<AlertCircle size={20} strokeWidth={1} className="text-zinc-900" />}
+                  title="Alerts"
+                  badge={
+                    alertSitesWithIssues.length > 0 ? (
+                      <McBadge variant="neutral">
+                        {alertSitesWithIssues.length} Site{alertSitesWithIssues.length === 1 ? "!" : "s!"}
+                      </McBadge>
+                    ) : undefined
+                  }
+                  action={
+                    <McMenu
+                      value={alertFilter}
+                      options={[
+                        { id: "all", label: "All" },
+                        { id: "hacked", label: "Hacked" },
+                        { id: "critical", label: "Critical" },
+                        { id: "warnings", label: "Warnings" },
+                      ]}
+                      onChange={(id) => setAlertFilter(id as AlertFilter)}
+                    />
+                  }
+                />
 
                 <div className="grid shrink-0 grid-cols-3 gap-2">
                   {(
@@ -652,7 +725,9 @@ export function MalCareDashboard({
                   {filteredAlerts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <AlertTriangle size={28} className="mb-2 text-zinc-300" />
-                      <p className="text-sm font-medium text-muted-foreground">No alerts in this category</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {alertFilter === "all" ? "No alerts" : "No alerts in this category"}
+                      </p>
                     </div>
                   ) : (
                     filteredAlerts.slice(0, 8).map((s) => {
@@ -913,20 +988,23 @@ export function MalCareDashboard({
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm font-medium text-zinc-900">Recent Issues</p>
-                    <button
-                      type="button"
-                      className="relative flex h-8 w-24 items-center justify-between gap-2 whitespace-nowrap rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-xs text-zinc-900 shadow-xs"
-                    >
-                      <span className="truncate">All</span>
-                      <ChevronDown size={16} strokeWidth={1} className="opacity-50" />
-                    </button>
+                    <McMenu
+                      value={issueFilter}
+                      options={[
+                        { id: "all", label: "All" },
+                        { id: "down", label: "Down" },
+                        { id: "malware", label: "Malware" },
+                        { id: "ssl", label: "SSL" },
+                      ]}
+                      onChange={(id) => setIssueFilter(id as "all" | IssueKind)}
+                    />
                   </div>
 
                   <div className="flex max-h-[280px] flex-col gap-1 overflow-y-auto">
-                    {monitorIssues.length === 0 ? (
+                    {filteredMonitorIssues.length === 0 ? (
                       <div className="py-6 text-center text-xs text-muted-foreground">No recent monitoring issues</div>
                     ) : (
-                      monitorIssues.map((issue) => (
+                      filteredMonitorIssues.map((issue) => (
                         <Link
                           key={issue.id}
                           href={`/sites/${issue.siteId}`}
