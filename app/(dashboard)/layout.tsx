@@ -177,9 +177,7 @@ export default function DashboardLayout({
               isFullBleed ? "p-0" : "p-4 md:p-5",
               isAgent || isSiteDetail || isSetup || pathname?.startsWith("/reports")
                 ? "flex flex-col overflow-hidden"
-                : isDashboard
-                  ? "overflow-hidden"
-                  : "overflow-y-auto"
+                : "overflow-y-auto"
             )}
           >
             {children}

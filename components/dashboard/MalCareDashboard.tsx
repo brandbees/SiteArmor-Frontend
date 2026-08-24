@@ -511,7 +511,7 @@ export function MalCareDashboard({
 
   return (
     <div
-      className="min-h-[calc(100vh-5rem)] overflow-auto p-4 pr-6 scrollbar-hide"
+      className="min-h-full overflow-visible p-4 pr-6 pb-10"
       style={{ background: DASHBOARD_GRADIENT }}
     >
       <div className="flex flex-col items-start gap-4" style={{ width: "min(107.125rem, 100%)" }}>
