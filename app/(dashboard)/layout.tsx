@@ -25,16 +25,22 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => pathname === "/sites");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => pathname === "/sites" || pathname === "/sites/add" || pathname === "/clients/add"
+  );
   const sidebarUserToggled = useRef(false);
   const prevPathname = useRef<string | null>(null);
   const isSitesList = pathname === "/sites";
-  const isSiteDetail = /^\/sites\/[^/]+$/.test(pathname ?? "");
-  const siteDetailId = pathname?.match(/^\/sites\/([^/]+)$/)?.[1];
+  const isSiteSetup = pathname === "/sites/add";
+  const isClientSetup = pathname === "/clients/add";
+  const isSetup = isSiteSetup || isClientSetup;
+  const isSiteDetail = /^\/sites\/[^/]+$/.test(pathname ?? "") && !isSiteSetup;
+  const siteDetailId = isSiteDetail ? pathname?.match(/^\/sites\/([^/]+)$/)?.[1] : undefined;
   const isDashboard = pathname === "/dashboard";
   const isFullBleed =
     isSiteDetail ||
     isDashboard ||
+    isSetup ||
     pathname === "/sites" ||
     pathname === "/notifications" ||
     pathname === "/reports" ||
@@ -44,8 +50,8 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const prev = prevPathname.current;
-    const enteringSites = (isSitesList || isSiteDetail) && prev !== "/sites" && !prev?.match(/^\/sites\/[^/]+$/);
-    const leavingSites = !isSitesList && !isSiteDetail && (prev === "/sites" || !!prev?.match(/^\/sites\/[^/]+$/));
+    const enteringSites = (isSitesList || isSiteDetail || isSetup) && prev !== "/sites" && !prev?.match(/^\/sites\/[^/]+$/) && prev !== "/sites/add" && prev !== "/clients/add";
+    const leavingSites = !isSitesList && !isSiteDetail && !isSetup && (prev === "/sites" || prev === "/sites/add" || prev === "/clients/add" || !!prev?.match(/^\/sites\/[^/]+$/));
 
     if (enteringSites) {
       setSidebarCollapsed(true);
@@ -53,18 +59,18 @@ export default function DashboardLayout({
     } else if (leavingSites) {
       setSidebarCollapsed(localStorage.getItem("bb_sidebar_collapsed") === "1");
       sidebarUserToggled.current = false;
-    } else if (prev === null && !isSitesList && !isSiteDetail) {
+    } else if (prev === null && !isSitesList && !isSiteDetail && !isSetup) {
       setSidebarCollapsed(localStorage.getItem("bb_sidebar_collapsed") === "1");
     }
 
     prevPathname.current = pathname ?? "";
-  }, [pathname, isSitesList, isSiteDetail]);
+  }, [pathname, isSitesList, isSiteDetail, isSetup]);
 
   function toggleSidebar() {
     sidebarUserToggled.current = true;
     setSidebarCollapsed((prev) => {
       const next = !prev;
-      if (!isSitesList && !isSiteDetail) {
+      if (!isSitesList && !isSiteDetail && !isSetup) {
         localStorage.setItem("bb_sidebar_collapsed", next ? "1" : "0");
       }
       return next;
@@ -169,7 +175,7 @@ export default function DashboardLayout({
               "min-w-0 flex-1 overflow-x-auto",
               isDashboard ? "flex flex-col bg-[#f4f4f5]" : "bg-[#f4f4f5]",
               isFullBleed ? "p-0" : "p-4 md:p-5",
-              isAgent || isSiteDetail || pathname?.startsWith("/reports")
+              isAgent || isSiteDetail || isSetup || pathname?.startsWith("/reports")
                 ? "flex flex-col overflow-hidden"
                 : isDashboard
                   ? "overflow-hidden"

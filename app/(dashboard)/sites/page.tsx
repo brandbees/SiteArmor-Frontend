@@ -36,7 +36,6 @@ import { WordPressIcon } from "@/components/shared/WordPressIcon";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
-import { AddSiteModal } from "@/components/sites/AddSiteModal";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { Site } from "@/types";
 
@@ -457,7 +456,6 @@ export default function SitesPage() {
   const { roleCanDo } = useRole();
   const searchParams = useSearchParams();
 
-  const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState("");
   const [quick, setQuick] = useState<QuickFilter>(() => {
     const p = searchParams.get("filter");
@@ -599,7 +597,7 @@ export default function SitesPage() {
             </div>
           </div>
           {canAddSite && !agency?.is_client_portal && (
-            <Button onClick={() => setShowAdd(true)} disabled={atLimit} className="h-10 shrink-0 px-4">
+            <Button onClick={() => router.push("/sites/add")} disabled={atLimit} className="h-10 shrink-0 px-4">
               <Plus size={16} strokeWidth={1.5} />
               Add Site
             </Button>
@@ -625,7 +623,7 @@ export default function SitesPage() {
               description="Get started by adding your first WordPress site."
               action={
                 canAddSite ? (
-                  <Button onClick={() => setShowAdd(true)}>
+                  <Button onClick={() => router.push("/sites/add")}>
                     <Plus size={16} />
                     Add Site
                   </Button>
@@ -808,16 +806,6 @@ export default function SitesPage() {
 
       {quickViewSite && (
         <SiteQuickViewDrawer site={quickViewSite} onClose={() => setQuickViewSiteId(null)} />
-      )}
-
-      {showAdd && (
-        <AddSiteModal
-          onClose={() => setShowAdd(false)}
-          onSuccess={(siteId) => {
-            setShowAdd(false);
-            router.push(`/sites/${siteId}`);
-          }}
-        />
       )}
     </div>
   );

@@ -195,6 +195,10 @@ button, a, input, select, textarea {
   font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
 }
 
+.font-setup-accent {
+  font-family: var(--font-setup-accent), "Fraunces", Georgia, serif;
+}
+
 /* Colored status "shadow-borders" — same hairline+glow formula as --shadow-glow,
    for status tiles/banners (malware, uptime, security) that used border-2 border-{color}-200
    instead of an actual border. Replaces the hard colored ring with a soft one. */

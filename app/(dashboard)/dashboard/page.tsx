@@ -19,7 +19,6 @@ import { McAlert } from "@/components/shared/MalCareUI";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { UpgradeBanner } from "@/components/shared/UpgradeBanner";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { AddSiteModal } from "@/components/sites/AddSiteModal";
 import { MalCareDashboard } from "@/components/dashboard/MalCareDashboard";
 import { Button } from "@/components/ui/Button";
 import { IconChip } from "@/components/ui/IconChip";
@@ -660,7 +659,6 @@ export default function DashboardPage() {
   const { sites, portfolio, loading, error, refetch } = useSites();
   const { agency } = useAuth();
   const { roleCanDo } = useRole();
-  const [showAdd, setShowAdd] = useState(false);
 
   const limit = agency ? PLAN_LIMITS[agency.plan] : 1;
   const atLimit = sites.length >= limit;
@@ -772,7 +770,7 @@ export default function DashboardPage() {
         }
         action={
           canAddSite ? (
-            <Button onClick={() => setShowAdd(true)}>
+            <Button onClick={() => router.push("/sites/add")} disabled={atLimit}>
               <Plus size={15} /> {isIndividual ? "Add my site" : "Add your first site"}
             </Button>
           ) : undefined
@@ -791,22 +789,13 @@ export default function DashboardPage() {
         isIndividual={isIndividual}
         canAddSite={canAddSite}
         atLimit={atLimit}
-        onAddSite={() => setShowAdd(true)}
+        onAddSite={() => router.push("/sites/add")}
         avgScore={avgScore}
         threatCount={threatCount}
         connectedCount={connectedCount}
         displayTrendData={displayTrendData}
         needsAuditSites={sites.filter((s) => s.plugin_connected && !s.last_audit_at)}
       />
-      {showAdd && (
-        <AddSiteModal
-          onClose={() => setShowAdd(false)}
-          onSuccess={(siteId) => {
-            setShowAdd(false);
-            router.push(`/sites/${siteId}`);
-          }}
-        />
-      )}
     </>
   );
 }

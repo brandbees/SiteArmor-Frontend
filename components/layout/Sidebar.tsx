@@ -155,7 +155,7 @@ function NavSection({
             item={item}
             active={
               item.href === "/sites"
-                ? pathname === "/sites"
+                ? pathname === "/sites" || pathname === "/sites/add"
                 : pathname === item.href || pathname.startsWith(item.href + "/")
             }
             collapsed={collapsed}
@@ -174,7 +174,7 @@ export function Sidebar({
   const pathname = usePathname();
   const siteCtx = useSiteContextOptional();
   const siteDetailMatch = pathname?.match(/^\/sites\/([^/]+)$/);
-  const isSiteDetail = !!siteDetailMatch;
+  const isSiteDetail = !!siteDetailMatch && siteDetailMatch[1] !== "add";
   const siteIdFromPath = siteDetailMatch?.[1];
   const { agency } = useAuth();
   const { logoUrl } = useBranding();

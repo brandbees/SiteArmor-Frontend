@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Plus, Users, Globe, Building2, Trash2, Link2, Search,
@@ -8,7 +9,6 @@ import {
 } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useRole } from "@/hooks/useRole";
-import { AddClientModal } from "@/components/clients/AddClientModal";
 import { AssignSitesModal } from "@/components/clients/AssignSitesModal";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -279,11 +279,11 @@ function ClientRow({
 }
 
 export default function ClientsPage() {
+  const router = useRouter();
   const { clients, loading, error, refetch } = useClients();
   const { roleCanDo } = useRole();
   const canAdd = roleCanDo("add_site");
 
-  const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState("");
 
   const totalSites = useMemo(
@@ -328,7 +328,7 @@ export default function ClientsPage() {
               />
             </div>
             {canAdd && (
-              <Button onClick={() => setShowAdd(true)}>
+              <Button onClick={() => router.push("/clients/add")}>
                 <Plus size={15} strokeWidth={2.5} />
                 Add Client
               </Button>
@@ -353,7 +353,7 @@ export default function ClientsPage() {
             description="Add your first client to group sites and send branded reports."
             action={
               canAdd ? (
-                <Button onClick={() => setShowAdd(true)}>
+                <Button onClick={() => router.push("/clients/add")}>
                   <Plus size={15} />
                   Add Client
                 </Button>
@@ -410,7 +410,7 @@ export default function ClientsPage() {
               {canAdd && (
                 <button
                   type="button"
-                  onClick={() => setShowAdd(true)}
+                  onClick={() => router.push("/clients/add")}
                   className="ml-3 font-bold text-accent hover:underline"
                 >
                   + Add client
@@ -419,17 +419,7 @@ export default function ClientsPage() {
             </div>
           </div>
         </>
-      )}
-
-      {showAdd && (
-        <AddClientModal
-          onClose={() => setShowAdd(false)}
-          onSuccess={() => {
-            setShowAdd(false);
-            refetch();
-          }}
-        />
-      )}
+        )}
     </div>
   );
 }

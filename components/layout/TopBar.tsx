@@ -7,7 +7,6 @@ import Link from "next/link";
 import { MobileNav } from "./MobileNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { AddSiteModal } from "@/components/sites/AddSiteModal";
 import { useSiteContextOptional } from "@/components/sites/SiteContext";
 import { parseSiteTab, SITE_TAB_LABELS } from "@/components/sites/site-nav";
 import { cn } from "@/lib/utils";
@@ -161,6 +160,12 @@ function useBreadcrumbs(pathname: string, siteName?: string | null, activeTab?: 
     const parts = pathname.split("/").filter(Boolean);
 
     if (parts[0] === "sites") {
+      if (parts[1] === "add") {
+        return [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Site Onboarding", href: "/sites/add" },
+        ];
+      }
       const crumbs: { label: string; href: string }[] = [{ label: "Sites", href: "/sites" }];
       if (parts.length >= 2 && /^[0-9a-f-]{8,}$/i.test(parts[1])) {
         const siteHref = `/sites/${parts[1]}`;
@@ -171,6 +176,13 @@ function useBreadcrumbs(pathname: string, siteName?: string | null, activeTab?: 
         }
       }
       return crumbs;
+    }
+
+    if (parts[0] === "clients" && parts[1] === "add") {
+      return [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Client Onboarding", href: "/clients/add" },
+      ];
     }
 
     if (parts.length === 0) return [{ label: "Dashboard", href: "/dashboard" }];
@@ -253,7 +265,6 @@ function TopBarInner({
   const isClientPortal = agency?.is_client_portal ?? false;
   const isIndividual   = agency?.account_type === "individual";
 
-  const [showAddSite,    setShowAddSite]    = useState(false);
   const [showNotif,      setShowNotif]      = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
@@ -270,11 +281,11 @@ function TopBarInner({
 
   useEffect(() => {
     function openAdd() {
-      if (!isClientPortal && !isIndividual && roleCanDo("add_site")) setShowAddSite(true);
+      if (!isClientPortal && roleCanDo("add_site")) router.push("/sites/add");
     }
     window.addEventListener("bb:open-add-site", openAdd);
     return () => window.removeEventListener("bb:open-add-site", openAdd);
-  }, [isClientPortal, isIndividual, roleCanDo]);
+  }, [isClientPortal, roleCanDo, router]);
 
   // Seed lastUpdated from cache on mount, then listen for fresh fetches
   useEffect(() => {
@@ -634,16 +645,6 @@ function TopBarInner({
           )}
         </div>
       </header>
-
-      {showAddSite && (
-        <AddSiteModal
-          onClose={() => setShowAddSite(false)}
-          onSuccess={(siteId) => {
-            setShowAddSite(false);
-            router.push(`/sites/${siteId}`);
-          }}
-        />
-      )}
     </>
   );
 }

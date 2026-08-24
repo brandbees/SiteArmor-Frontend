@@ -30,8 +30,8 @@ function buildItems(agency: Agency, sites: Site[]): ChecklistItem[] {
       id: "add_site",
       label: isIndividual ? "Add your site" : "Add your first site",
       done: sites.length > 0,
-      href: "/sites",
-      hrefLabel: "Go to Sites",
+      href: "/sites/add",
+      hrefLabel: "Add a site",
     },
     {
       id: "install_plugin",
@@ -55,8 +55,8 @@ function buildItems(agency: Agency, sites: Site[]): ChecklistItem[] {
         id: "add_client",
         label: "Add a client",
         done: false,
-        href: "/clients",
-        hrefLabel: "Go to Clients",
+        href: "/clients/add",
+        hrefLabel: "Add a client",
       }
     );
   }
