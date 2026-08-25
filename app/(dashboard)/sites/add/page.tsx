@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Copy, Download, Globe, Loader2, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
-import { API_BASE_URL } from "@/lib/constants";
 import { cacheClear } from "@/lib/dataCache";
+import { downloadPluginZip } from "@/lib/downloadPlugin";
 import { parseSiteUrl } from "@/lib/setupUrl";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +34,7 @@ export default function AddSitePage() {
   const [loading, setLoading] = useState(false);
   const [site, setSite] = useState<Site | null>(null);
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [status, setStatus] = useState<"waiting" | "checking" | "connected">("waiting");
 
   const parsed = parseSiteUrl(url);
@@ -108,6 +109,17 @@ export default function AddSitePage() {
     navigator.clipboard.writeText(site.site_token);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleDownloadPlugin() {
+    setDownloading(true);
+    try {
+      await downloadPluginZip();
+    } catch {
+      toast.error("Plugin download failed. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function finish() {
@@ -187,7 +199,7 @@ export default function AddSitePage() {
                   setNameTouched(true);
                   setSiteName(e.target.value);
                 }}
-                placeholder="Eg: Preferred Roofing"
+                placeholder="Eg: My Company Website"
                 className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none placeholder:font-extralight placeholder:text-zinc-400 focus-visible:border-emerald-600 focus-visible:ring-0"
               />
               <p className="text-xs font-normal text-zinc-500">
@@ -235,14 +247,15 @@ export default function AddSitePage() {
               <p className="text-sm text-emerald-700">Plugin connected. Wrapping up…</p>
             ) : (
               <>
-                <a
-                  href={`${API_BASE_URL}/plugin/download`}
-                  download="site-armor.zip"
-                  className="inline-flex h-10 items-center justify-between gap-3 rounded-lg border border-accent bg-accent/5 px-4 text-sm font-medium text-accent hover:opacity-90"
+                <button
+                  type="button"
+                  onClick={handleDownloadPlugin}
+                  disabled={downloading}
+                  className="inline-flex h-10 items-center justify-between gap-3 rounded-lg border border-accent bg-accent/5 px-4 text-sm font-medium text-accent hover:opacity-90 disabled:opacity-60"
                 >
-                  Download Site Armor plugin (.zip)
-                  <Download size={16} />
-                </a>
+                  {downloading ? "Downloading…" : "Download Site Armor plugin (.zip)"}
+                  {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                </button>
                 <ol className="space-y-2.5 text-sm text-zinc-600">
                   {[
                     "In WordPress go to Plugins → Add New → Upload Plugin",

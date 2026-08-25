@@ -26,7 +26,8 @@ import { useRole } from "@/hooks/useRole";
 import { useSites } from "@/hooks/useSites";
 import { setAgency } from "@/lib/auth";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES, API_BASE_URL } from "@/lib/constants";
+import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES } from "@/lib/constants";
+import { downloadPluginZip } from "@/lib/downloadPlugin";
 import { isValidEmail, cn } from "@/lib/utils";
 import type { AlertSettings, TeamMember, TeamRole, Site } from "@/types";
 
@@ -985,23 +986,12 @@ function TeamTab() {
 // ── API & INTEGRATIONS TAB ─────────────────────────────────────────────────────
 
 function IntegrationsTab() {
-  const apiBase = API_BASE_URL;
   const [downloading, setDownloading] = useState(false);
 
   async function downloadPlugin() {
     setDownloading(true);
     try {
-      const res = await fetch(`${apiBase}/plugin/download`);
-      if (!res.ok) throw new Error("Download failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "site-armor.zip";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      await downloadPluginZip();
     } catch {
       toast.error("Plugin download failed. Please try again.");
     } finally {

@@ -16,8 +16,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import { API_BASE_URL } from "@/lib/constants";
 import { cacheClear } from "@/lib/dataCache";
+import { downloadPluginZip } from "@/lib/downloadPlugin";
 import { parseSiteUrl } from "@/lib/setupUrl";
 import { cn } from "@/lib/utils";
 import { SetupWizard } from "@/components/setup/SetupWizard";
@@ -66,6 +66,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [connStatus, setConnStatus] = useState<"waiting" | "checking" | "connected">("waiting");
   const [scanState, setScanState] = useState<ScanState>("scanning");
 
@@ -185,6 +186,17 @@ export default function OnboardingPage() {
     navigator.clipboard.writeText(site.site_token);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleDownloadPlugin() {
+    setDownloading(true);
+    try {
+      await downloadPluginZip();
+    } catch {
+      toast.error("Plugin download failed. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const preview =
@@ -373,14 +385,15 @@ export default function OnboardingPage() {
                 <p className="text-sm text-emerald-700">Plugin connected. Starting your first scan…</p>
               ) : (
                 <>
-                  <a
-                    href={`${API_BASE_URL}/plugin/download`}
-                    download="site-armor.zip"
-                    className="inline-flex h-10 items-center justify-between gap-3 rounded-lg border border-accent bg-accent/5 px-4 text-sm font-medium text-accent hover:opacity-90"
+                  <button
+                    type="button"
+                    onClick={handleDownloadPlugin}
+                    disabled={downloading}
+                    className="inline-flex h-10 items-center justify-between gap-3 rounded-lg border border-accent bg-accent/5 px-4 text-sm font-medium text-accent hover:opacity-90 disabled:opacity-60"
                   >
-                    Download Site Armor plugin (.zip)
-                    <Download size={16} />
-                  </a>
+                    {downloading ? "Downloading…" : "Download Site Armor plugin (.zip)"}
+                    {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  </button>
                   <ol className="space-y-2.5 text-sm text-zinc-600">
                     {(isIndividual
                       ? [

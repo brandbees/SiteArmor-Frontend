@@ -7,8 +7,9 @@ import {
   Globe, AlertCircle, ArrowLeft,
 } from "lucide-react";
 import api from "@/lib/api";
-import { API_BASE_URL } from "@/lib/constants";
+import { downloadPluginZip } from "@/lib/downloadPlugin";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { toast } from "sonner";
 import type { Site } from "@/types";
 
 export default function ConnectPage() {
@@ -16,6 +17,7 @@ export default function ConnectPage() {
   const [loading, setLoading]           = useState(true);
   const [selectedId, setSelectedId]     = useState<string | null>(null);
   const [copied, setCopied]             = useState(false);
+  const [downloading, setDownloading]   = useState(false);
   const [connStatus, setConnStatus]     = useState<"waiting" | "checking" | "connected">("waiting");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -191,14 +193,25 @@ export default function ConnectPage() {
                   Download the Site Armor WordPress plugin zip file.
                 </p>
               </div>
-              <a
-                href={`${API_BASE_URL}/plugin/download`}
-                download="site-armor.zip"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shrink-0 hover:opacity-90 transition-opacity"
+              <button
+                type="button"
+                onClick={async () => {
+                  setDownloading(true);
+                  try {
+                    await downloadPluginZip();
+                  } catch {
+                    toast.error("Plugin download failed. Please try again.");
+                  } finally {
+                    setDownloading(false);
+                  }
+                }}
+                disabled={downloading}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shrink-0 hover:opacity-90 transition-opacity disabled:opacity-60"
                 style={{ background: "var(--accent)" }}
               >
-                <Download size={14} /> Download
-              </a>
+                {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                {downloading ? "Downloading…" : "Download"}
+              </button>
             </div>
           </div>
 
