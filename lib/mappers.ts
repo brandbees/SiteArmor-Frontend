@@ -286,14 +286,13 @@ export function mapSite(raw: RawSite): Site {
     overall_threat_score: raw.overall_threat_score ?? null,
     major_threat_count: raw.major_threat_count ?? null,
     malware_status:
-      // Backend derives malware_status from active (non-dismissed) findings.
-      // major_threat_count includes dismissed majors — do NOT treat it as "hacked".
+      // Backend derives malware_status from infection findings only (CVEs excluded).
+      // major_threat_count may still include historical majors — do NOT treat it as "hacked".
       raw.malware_status === "clean" || raw.malware_status === "threat"
         ? raw.malware_status
         : raw.is_clean === true
         ? "clean"
-        : raw.is_clean === false ||
-            (raw.overall_threat_score != null && raw.overall_threat_score > 20)
+        : raw.is_clean === false
         ? "threat"
         : raw.malware_score != null
         ? (raw.malware_score >= 80 ? "clean" : "threat")
