@@ -5,11 +5,7 @@ import { cn } from "@/lib/utils";
 function CubeVisual({ size = 56 }: { size?: number }) {
   const half = size / 2;
   return (
-    <div
-      className="sa-cube"
-      style={{ width: size, height: size }}
-      aria-hidden
-    >
+    <div className="sa-cube" style={{ width: size, height: size }} aria-hidden>
       <div className="sa-cube-inner">
         {(
           [
@@ -32,7 +28,7 @@ function CubeVisual({ size = 56 }: { size?: number }) {
   );
 }
 
-/** Rotating 3D cube loader for site detail transitions. */
+/** Full-screen cube overlay for site / tab transitions. */
 export function SiteLoadingOverlay({
   siteName,
   message = "Fetching the latest status, scores, and monitors for this site.",
@@ -41,7 +37,7 @@ export function SiteLoadingOverlay({
   message?: string;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#f4f4f5]/92 backdrop-blur-[1px]">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#f4f4f5]/95 backdrop-blur-[2px]">
       <div className="flex flex-col items-center gap-5 px-6 py-4">
         <CubeVisual size={56} />
         <div className="max-w-xs text-center">
@@ -55,7 +51,7 @@ export function SiteLoadingOverlay({
   );
 }
 
-/** Inline cube for tab/section loading states */
+/** Inline cube for section loading states */
 export function CubeLoader({
   label = "Loading…",
   sublabel,

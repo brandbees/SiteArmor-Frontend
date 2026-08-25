@@ -30,7 +30,8 @@ import { MalCareSiteOverview } from "@/components/sites/MalCareSiteOverview";
 import { SiteHeader } from "@/components/sites/SiteHeader";
 import { AgentTab } from "@/components/sites/tabs/AgentTab";
 import { useSiteContext } from "@/components/sites/SiteContext";
-import { parseSiteTab, siteTabHref, type SiteTab } from "@/components/sites/site-nav";
+import { parseSiteTab, siteTabHref, SITE_TAB_LABELS, type SiteTab } from "@/components/sites/site-nav";
+import { SiteLoadingOverlay } from "@/components/sites/SiteLoadingOverlay";
 import { useSSHSettings } from "@/hooks/useSSHSettings";
 import api from "@/lib/api";
 import { timeAgo, scoreHex, cn } from "@/lib/utils";
@@ -2447,6 +2448,16 @@ function SiteDetailContent() {
 
   const activeTab = parseSiteTab(searchParams.get("tab"));
   const { status: sshStatus, refreshStatus: refreshSSHStatus } = useSSHSettings(id);
+  const [tabLoading, setTabLoading] = useState(false);
+  const prevTab = useRef(activeTab);
+
+  useEffect(() => {
+    if (prevTab.current === activeTab) return;
+    prevTab.current = activeTab;
+    setTabLoading(true);
+    const t = window.setTimeout(() => setTabLoading(false), 420);
+    return () => window.clearTimeout(t);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!showActions) return;
@@ -2598,6 +2609,12 @@ function SiteDetailContent() {
 
   return (
     <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+      {tabLoading && (
+        <SiteLoadingOverlay
+          siteName={site.name}
+          message={`Opening ${SITE_TAB_LABELS[activeTab]}…`}
+        />
+      )}
       {activeTab !== "agent" && (
       <SiteHeader
         site={site}

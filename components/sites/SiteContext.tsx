@@ -16,6 +16,8 @@ type SiteContextValue = {
 
 const SiteContext = createContext<SiteContextValue | null>(null);
 
+const MIN_OVERLAY_MS = 500;
+
 export function SiteProvider({
   children,
   siteId: siteIdOverride,
@@ -26,21 +28,35 @@ export function SiteProvider({
   const params = useParams<{ id: string }>();
   const siteId = siteIdOverride ?? params.id ?? "";
   const { site, loading, error, refetch } = useSite(siteId);
-  const prevId = useRef(siteId);
-  const [transitioning, setTransitioning] = useState(false);
+  const prevId = useRef<string | null>(null);
+  const [transitioning, setTransitioning] = useState(Boolean(siteId));
+  const shownAt = useRef(Date.now());
 
+  // Show cube whenever we enter a site or switch sites
   useEffect(() => {
+    if (!siteId) {
+      setTransitioning(false);
+      return;
+    }
     if (prevId.current !== siteId) {
-      setTransitioning(true);
       prevId.current = siteId;
+      shownAt.current = Date.now();
+      setTransitioning(true);
     }
   }, [siteId]);
 
+  // Keep overlay up until fetch settles, with a minimum visible time
   useEffect(() => {
-    if (!loading) setTransitioning(false);
-  }, [loading]);
+    if (!transitioning) return;
+    if (loading) return;
 
-  const showLoader = transitioning || (loading && !site);
+    const elapsed = Date.now() - shownAt.current;
+    const wait = Math.max(0, MIN_OVERLAY_MS - elapsed);
+    const t = window.setTimeout(() => setTransitioning(false), wait);
+    return () => window.clearTimeout(t);
+  }, [loading, transitioning, siteId]);
+
+  const showLoader = Boolean(siteId) && (transitioning || (loading && !site));
 
   return (
     <SiteContext.Provider
