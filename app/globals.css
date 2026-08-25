@@ -277,6 +277,46 @@ button, a, input, select, textarea {
 .animate-scale-in   { animation: scale-in   0.45s ease-out forwards; }
 .animate-spin       { animation: spin 0.8s linear infinite; }
 
+@keyframes sa-cube-spin {
+  0% { transform: rotateX(-22deg) rotateY(0deg); }
+  100% { transform: rotateX(-22deg) rotateY(360deg); }
+}
+
+.sa-cube {
+  perspective: 480px;
+}
+
+.sa-cube-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: sa-cube-spin 1.55s linear infinite;
+}
+
+.sa-cube-face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 6px;
+  border: 1.5px solid rgb(var(--accent-rgb) / 0.35);
+  background: linear-gradient(
+    145deg,
+    rgb(var(--accent-rgb) / 0.16),
+    rgb(var(--accent-rgb) / 0.04)
+  );
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+.sa-cube-face-front {
+  border-color: rgb(var(--accent-rgb) / 0.55);
+  background: linear-gradient(
+    145deg,
+    rgb(var(--accent-rgb) / 0.48),
+    rgb(var(--accent-rgb) / 0.14)
+  );
+}
+
 @keyframes mkt-float {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-10px); }

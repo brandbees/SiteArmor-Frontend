@@ -55,7 +55,12 @@ export function SiteProvider({
         transitioning,
       }}
     >
-      {showLoader && <SiteLoadingOverlay siteName={site?.name} />}
+      {showLoader && (
+        <SiteLoadingOverlay
+          siteName={site?.name}
+          message="Preparing overview, monitors, and the latest audit signals."
+        />
+      )}
       {children}
     </SiteContext.Provider>
   );

@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Activity, Zap, Server, TrendingUp, CheckCircle2, AlertCircle,
-  BarChart2, ExternalLink, Bot,
+  BarChart2,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+  CircleMinus,
+  ExternalLink,
+  FileChartColumnIncreasing,
+  Gauge,
+  TriangleAlert,
 } from "lucide-react";
-import { McCard, McPill, ScoreHistoryList } from "@/components/shared/MalCareUI";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { Button } from "@/components/ui/Button";
+import { CubeLoader } from "@/components/sites/SiteLoadingOverlay";
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 import type { Site, Audit } from "@/types";
 
 interface GA4Data {
@@ -22,7 +30,56 @@ interface GA4Data {
   top_pages: { path: string; pageviews: number; sessions: number }[];
 }
 
-function GoogleAnalyticsSection({ site, brandColor }: { site: Site; brandColor: string }) {
+function AccordionBlock({
+  title,
+  count,
+  icon,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  count: number;
+  icon: ReactNode;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="my-2 overflow-hidden rounded-lg">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between bg-zinc-100 px-4 py-3 text-left text-xs font-medium text-zinc-900"
+      >
+        <span className="flex items-center gap-2">
+          {icon}
+          {title} ({count})
+        </span>
+        <ChevronDown
+          size={20}
+          strokeWidth={2}
+          className={cn("shrink-0 text-zinc-950 transition-transform", open && "rotate-180")}
+        />
+      </button>
+      {open ? (
+        <div className="rounded-b-lg border border-zinc-200 bg-white">
+          <div className="max-h-32 space-y-1 overflow-y-auto p-4">{children}</div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AuditLine({ label }: { label: string }) {
+  return (
+    <div className="flex items-start gap-2 py-1 text-xs text-gray-600">
+      <Circle size={8} strokeWidth={1} className="mt-1 shrink-0 text-zinc-950" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function GoogleAnalyticsSection({ site }: { site: Site }) {
   const [status, setStatus] = useState<{
     connected: boolean;
     ga4_connected: boolean;
@@ -95,11 +152,16 @@ function GoogleAnalyticsSection({ site, brandColor }: { site: Site; brandColor: 
     s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.round(s)}s`;
 
   return (
-    <McCard
-      title="Google Analytics"
-      icon={<BarChart2 size={15} />}
-      action={
-        status?.connected && !status.ga4_connected ? (
+    <div className="rounded-2xl border-2 border-gray-200 bg-white p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BarChart2 size={20} strokeWidth={1.5} className="text-zinc-950" />
+          <div>
+            <p className="text-lg font-semibold text-zinc-900">Google Analytics</p>
+            <p className="text-xs text-emerald-700">Traffic and engagement for this site</p>
+          </div>
+        </div>
+        {status?.connected && !status.ga4_connected ? (
           <button
             type="button"
             onClick={openPropertySelector}
@@ -113,11 +175,12 @@ function GoogleAnalyticsSection({ site, brandColor }: { site: Site; brandColor: 
             Connect Google
           </Button>
         ) : status.ga4_connected ? (
-          <McPill tone="neutral">{status.ga4_property_id}</McPill>
-        ) : null
-      }
-      bodyClassName={status?.ga4_connected && data ? "p-4" : "p-4"}
-    >
+          <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-600">
+            {status.ga4_property_id}
+          </span>
+        ) : null}
+      </div>
+
       {properties !== null && (
         <div className="mb-4 space-y-1.5 border-b border-border pb-4">
           <p className="mb-2 text-xs font-semibold text-foreground">Select your GA4 property</p>
@@ -174,12 +237,7 @@ function GoogleAnalyticsSection({ site, brandColor }: { site: Site; brandColor: 
 
       {status?.ga4_connected &&
         (loadingData ? (
-          <div className="flex items-center justify-center py-10">
-            <div
-              className="h-5 w-5 animate-spin rounded-full border-2"
-              style={{ borderColor: `${brandColor}30`, borderTopColor: brandColor }}
-            />
-          </div>
+          <CubeLoader label="Loading Analytics" sublabel="Pulling GA4 metrics…" />
         ) : data ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -242,14 +300,14 @@ function GoogleAnalyticsSection({ site, brandColor }: { site: Site; brandColor: 
             </p>
           </div>
         ))}
-    </McCard>
+    </div>
   );
 }
 
 export function PerformanceTab({
   site,
   audits,
-  brandColor,
+  brandColor: _brandColor,
   runAudit,
   canRunAudit,
 }: {
@@ -260,307 +318,235 @@ export function PerformanceTab({
   canRunAudit?: boolean;
 }) {
   const router = useRouter();
-  const score = site.latest_scores?.performance;
+  const score = site.latest_scores?.performance ?? null;
   const latestAudit = audits.find((a) => a.status === "completed");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const perf = latestAudit?.performance_data as any;
 
-  const optimizePSIWithAgent = () => {
-    const prompt = `Optimize PSI for ${site.name} using low risk fixes. Show me the improvements step by step.`;
-    router.push(`/sites/${site.id}?tab=agent&prompt=${encodeURIComponent(prompt)}`);
-  };
+  const ttfb: number | null = perf?.ttfb_ms ?? perf?.ttfb ?? null;
+  const total: number | null = perf?.total_ms ?? perf?.load_time ?? null;
+  const scripts: number | null = perf?.script_count ?? perf?.js_count ?? null;
+  const htmlKb: number | null = perf?.html_kb ?? perf?.html_size ?? null;
+  const fcp: number | null = perf?.fcp_ms ?? perf?.fcp ?? null;
+  const lcp: number | null = perf?.lcp_ms ?? perf?.lcp ?? null;
+  const cls: number | null = perf?.cls ?? null;
+  const si: number | null = perf?.speed_index_ms ?? perf?.si ?? null;
+  const tbt: number | null = perf?.tbt_ms ?? perf?.tbt ?? null;
+  const tti: number | null = perf?.tti_ms ?? perf?.tti ?? null;
 
-  const ttfb: number | null = perf?.ttfb_ms ?? null;
-  const total: number | null = perf?.total_ms ?? null;
-  const scripts: number | null = perf?.script_count ?? null;
-  const htmlKb: number | null = perf?.html_kb ?? null;
+  const fmtMs = (ms: number | null) =>
+    ms == null ? "—" : ms >= 1000 ? `${(ms / 1000).toFixed(1)}\u00a0s` : `${Math.round(ms)}\u00a0ms`;
 
-  const completed = audits.filter((a) => a.status === "completed" && a.scores);
-  const trendPts = completed.slice(-10).map((a) => ({
-    date: new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    score: a.scores!.performance,
-  }));
+  const metricRows = [
+    { label: "First Contentful Paint", value: fmtMs(fcp ?? ttfb) },
+    { label: "Speed Index", value: fmtMs(si ?? total) },
+    { label: "Largest Contentful Paint", value: fmtMs(lcp ?? total) },
+    { label: "Time to Interactive", value: fmtMs(tti ?? total) },
+    { label: "Total Blocking Time", value: fmtMs(tbt) },
+    { label: "Cumulative Layout Shift", value: cls != null ? cls.toFixed(3) : "—" },
+  ];
 
   type Rec = { title: string; detail: string; severity: "high" | "medium" | "low" };
-  const recs: Rec[] = [];
+  const diagnostics: Rec[] = [];
   if (ttfb && ttfb > 800)
-    recs.push({
+    diagnostics.push({
       title: "Optimise server response time",
       detail: `TTFB ${ttfb}ms — target <400ms`,
       severity: "high",
     });
   if (!site.caching_plugin)
-    recs.push({ title: "Install a caching plugin", detail: "No caching plugin detected", severity: "high" });
+    diagnostics.push({
+      title: "Install a caching plugin",
+      detail: "No caching plugin detected",
+      severity: "high",
+    });
   if (!site.cdn_plugin)
-    recs.push({ title: "Use a CDN for asset delivery", detail: "No CDN plugin active", severity: "medium" });
+    diagnostics.push({
+      title: "Use a CDN for asset delivery",
+      detail: "No CDN plugin active",
+      severity: "medium",
+    });
   if (!site.image_optimization_plugin)
-    recs.push({
+    diagnostics.push({
       title: "Add image optimisation",
       detail: "No image optimiser detected",
       severity: "medium",
     });
   if (scripts && scripts > 20)
-    recs.push({
+    diagnostics.push({
       title: "Reduce JavaScript files",
       detail: `${scripts} scripts found — aim for <20`,
       severity: "medium",
     });
   if (!site.object_cache_enabled)
-    recs.push({ title: "Enable object caching", detail: "Object cache is disabled", severity: "medium" });
+    diagnostics.push({
+      title: "Enable object caching",
+      detail: "Object cache is disabled",
+      severity: "medium",
+    });
   if ((site.autoloaded_options_kb ?? 0) > 800)
-    recs.push({
+    diagnostics.push({
       title: "Reduce autoloaded options",
       detail: `${site.autoloaded_options_kb}KB — target <800KB`,
       severity: "high",
     });
   if ((site.transient_count ?? 0) > 100)
-    recs.push({
+    diagnostics.push({
       title: "Clean up expired transients",
       detail: `${site.transient_count} transients stored`,
       severity: "low",
     });
   if ((site.post_revisions_count ?? 0) > 500)
-    recs.push({
+    diagnostics.push({
       title: "Limit post revisions",
       detail: `${site.post_revisions_count} revisions stored`,
       severity: "low",
     });
+  if (htmlKb && htmlKb > 100)
+    diagnostics.push({
+      title: "Reduce HTML document size",
+      detail: `${htmlKb.toFixed(1)}KB HTML payload`,
+      severity: "low",
+    });
 
-  function mStatus(
-    val: number | null,
-    good: number,
-    warn: number
-  ): "good" | "needs-work" | "poor" | null {
-    if (val === null) return null;
-    return val <= good ? "good" : val <= warn ? "needs-work" : "poor";
-  }
+  const passed: string[] = [];
+  if (ttfb != null && ttfb <= 400) passed.push("Server response time is healthy");
+  if (site.caching_plugin) passed.push(`Caching plugin active (${site.caching_plugin})`);
+  if (site.cdn_plugin) passed.push(`CDN detected (${site.cdn_plugin})`);
+  if (site.image_optimization_plugin)
+    passed.push(`Image optimisation active (${site.image_optimization_plugin})`);
+  if (site.object_cache_enabled) passed.push("Object cache enabled");
+  if (scripts != null && scripts <= 20) passed.push("JavaScript file count is within range");
+  if ((site.autoloaded_options_kb ?? 0) > 0 && (site.autoloaded_options_kb ?? 0) <= 800)
+    passed.push("Autoloaded options within budget");
+  if ((site.transient_count ?? 0) > 0 && (site.transient_count ?? 0) <= 100)
+    passed.push("Transient count looks healthy");
+  if (htmlKb != null && htmlKb <= 100) passed.push("HTML size is reasonable");
+  if (score != null && score >= 80) passed.push("Overall performance score is good");
 
-  const metricRows = [
-    {
-      title: "Time to First Byte",
-      abbr: "TTFB",
-      value: ttfb !== null ? `${ttfb.toLocaleString()}ms` : "—",
-      st: mStatus(ttfb, 400, 800),
-    },
-    {
-      title: "Page Load Time",
-      abbr: "Load",
-      value: total !== null ? `${total.toLocaleString()}ms` : "—",
-      st: mStatus(total, 1500, 3000),
-    },
-    {
-      title: "JavaScript Files",
-      abbr: "JS",
-      value: scripts !== null ? String(scripts) : "—",
-      st: mStatus(scripts, 10, 20),
-    },
-    {
-      title: "HTML Size",
-      abbr: "HTML",
-      value: htmlKb !== null ? `${htmlKb.toFixed(1)}KB` : "—",
-      st: mStatus(htmlKb, 50, 100),
-    },
+  const notApplicable = [
+    "Performance budget",
+    "Timing budget",
+    "Preload key requests",
+    "User Timing marks and measures",
+    "Lazy load third-party resources with facades",
+    "Minimize third-party usage",
   ];
 
-  const toneFor = (st: ReturnType<typeof mStatus>) =>
-    st === "good" ? "good" : st === "needs-work" ? "warn" : st === "poor" ? "bad" : "neutral";
-  const labelFor = (st: ReturnType<typeof mStatus>) =>
-    st === "good" ? "Good" : st === "needs-work" ? "Needs Work" : st === "poor" ? "Poor" : "No data";
+  const scoreColor =
+    score == null ? "#71717a" : score >= 80 ? "#059669" : score >= 50 ? "#f59e0b" : "#dc2626";
 
   return (
-    <div className="space-y-4">
-      {/* MalCare Performance card — wheel left, trend/recs right */}
-      <McCard
-        title="Performance"
-        icon={<BarChart2 size={15} />}
-        action={
-          <div className="flex items-center gap-3">
-            {score != null && (
-              <McPill
-                tone={score >= 80 ? "good" : score >= 50 ? "warn" : "bad"}
-                icon={<Zap size={11} />}
-              >
-                {score >= 80 ? "Good" : score >= 50 ? "Needs Improvement" : "Poor"}
-              </McPill>
-            )}
-            <button
-              type="button"
-              onClick={optimizePSIWithAgent}
-              className="text-xs font-semibold text-accent hover:underline"
-            >
-              Optimize with AI?
-            </button>
-          </div>
-        }
-      >
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[140px_1fr] sm:items-center">
-          <SiteScoreWheel score={score} caption="Site Score" size={118} />
+    <div className="mx-auto w-full max-w-[1323px] space-y-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <FileChartColumnIncreasing
+            size={24}
+            strokeWidth={1}
+            className="mt-1 shrink-0 rounded-full bg-zinc-300 p-1 text-zinc-950 shadow-[0_0_0_4px_rgb(244,244,245)]"
+          />
           <div className="min-w-0">
-            <p className="mb-3 text-xs font-semibold text-muted-foreground">Performance Trend</p>
-            {trendPts.length > 0 ? (
-              <ScoreHistoryList points={trendPts} />
-            ) : (
-              <p className="py-6 text-sm italic text-muted-foreground">
-                Trend data will appear after more audits
+            <h1 className="text-xl font-semibold leading-normal text-black">Performance Details</h1>
+            <p className="text-xs font-normal leading-normal text-emerald-600">
+              View performance insights and enable optimization features
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canRunAudit && runAudit ? (
+            <Button size="sm" onClick={runAudit}>
+              Run audit
+            </Button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              const prompt = `Optimize PSI for ${site.name} using low risk fixes. Show me the improvements step by step.`;
+              router.push(`/sites/${site.id}?tab=agent&prompt=${encodeURIComponent(prompt)}`);
+            }}
+            className="text-xs font-semibold text-accent hover:underline"
+          >
+            Optimize with AI?
+          </button>
+        </div>
+      </header>
+
+      <div className="rounded-2xl border-2 border-gray-200 bg-white p-6">
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            <Gauge size={24} strokeWidth={1.5} className="text-zinc-950" />
+            <p className="text-lg font-semibold text-zinc-900">Google Lighthouse Report</p>
+          </div>
+          <p className="mt-1 text-xs text-emerald-700">Performance metrics for your website</p>
+        </div>
+
+        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="flex items-center justify-center lg:col-span-1">
+            <SiteScoreWheel score={score} caption="Score" size={200} />
+          </div>
+          <div className="lg:col-span-2">
+            <p className="mb-3 text-xs font-semibold text-gray-700">Metrics</p>
+            <div className="space-y-1">
+              {metricRows.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between border-b border-gray-100 py-2 last:border-b-0"
+                >
+                  <span className="text-xs font-medium text-gray-800">{row.label}</span>
+                  <span className="text-xs font-medium tabular-nums text-gray-900">{row.value}</span>
+                </div>
+              ))}
+            </div>
+            {score != null && (
+              <p className="mt-3 text-xs text-zinc-500">
+                Score color:{" "}
+                <span className="font-semibold" style={{ color: scoreColor }}>
+                  {score >= 80 ? "Good" : score >= 50 ? "Needs improvement" : "Poor"}
+                </span>
               </p>
             )}
           </div>
         </div>
-      </McCard>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <McCard title="Core Metrics" icon={<Activity size={15} />}>
-          <div className="divide-y divide-border">
-            {metricRows.map(({ title, value, st }) => (
-              <div key={title} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div>
-                  <p className="text-xs font-semibold text-foreground">{title}</p>
-                  <p className="mt-0.5 text-sm font-bold tabular-nums text-foreground">{value}</p>
-                </div>
-                <McPill tone={toneFor(st)}>{labelFor(st)}</McPill>
-              </div>
+        <div className="border-t border-gray-200 pt-4">
+          <AccordionBlock
+            title="Diagnostics"
+            count={diagnostics.length}
+            icon={<TriangleAlert size={16} strokeWidth={1} className="text-orange-500" />}
+          >
+            {diagnostics.length === 0 ? (
+              <p className="py-2 text-xs text-zinc-500">No diagnostics flagged for this site.</p>
+            ) : (
+              diagnostics.map((d) => <AuditLine key={d.title} label={`${d.title} — ${d.detail}`} />)
+            )}
+          </AccordionBlock>
+
+          <AccordionBlock
+            title="Passed Audits"
+            count={passed.length}
+            icon={<CheckCircle2 size={16} strokeWidth={1} className="text-emerald-600" />}
+          >
+            {passed.length === 0 ? (
+              <p className="py-2 text-xs text-zinc-500">Run an audit to populate passed checks.</p>
+            ) : (
+              passed.map((p) => <AuditLine key={p} label={p} />)
+            )}
+          </AccordionBlock>
+
+          <AccordionBlock
+            title="Not Applicable"
+            count={notApplicable.length}
+            icon={<CircleMinus size={16} strokeWidth={1} className="text-gray-500" />}
+            defaultOpen={false}
+          >
+            {notApplicable.map((p) => (
+              <AuditLine key={p} label={p} />
             ))}
-          </div>
-        </McCard>
-
-        <McCard
-          title="Recommendations"
-          icon={<Zap size={15} />}
-          action={recs.length > 0 ? <McPill tone="neutral">{recs.length}</McPill> : null}
-        >
-          {recs.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <CheckCircle2 size={20} className="text-[var(--score-good)]" />
-              <p className="text-sm font-medium text-foreground">All good</p>
-              <p className="text-xs text-muted-foreground">No performance issues found</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {recs.slice(0, 7).map(({ title, detail, severity }) => (
-                <li key={title} className="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0">
-                  <Zap
-                    size={13}
-                    className={`mt-0.5 shrink-0 ${
-                      severity === "high"
-                        ? "text-[var(--score-bad)]"
-                        : severity === "medium"
-                          ? "text-[var(--score-warn)]"
-                          : "text-accent"
-                    }`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-foreground">{title}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">{detail}</p>
-                  </div>
-                  <McPill
-                    tone={severity === "high" ? "bad" : severity === "medium" ? "warn" : "accent"}
-                  >
-                    {severity}
-                  </McPill>
-                </li>
-              ))}
-            </ul>
-          )}
-        </McCard>
+          </AccordionBlock>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <McCard title="Stack & Tech" icon={<Server size={15} />}>
-          <div className="space-y-2.5">
-            {(
-              [
-                { label: "Caching Plugin", value: site.caching_plugin },
-                { label: "CDN Plugin", value: site.cdn_plugin },
-                { label: "Image Optimisation", value: site.image_optimization_plugin },
-                {
-                  label: "Object Cache",
-                  value: site.object_cache_enabled
-                    ? "Enabled"
-                    : site.object_cache_enabled === false
-                      ? null
-                      : undefined,
-                },
-              ] as const
-            ).map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between gap-2 text-xs">
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground">{label}</p>
-                  <p className="text-muted-foreground">
-                    {typeof value === "string" ? value : value ? "Active" : "Not detected"}
-                  </p>
-                </div>
-                {value ? (
-                  <CheckCircle2 size={14} className="shrink-0 text-[var(--score-good)]" />
-                ) : value === undefined ? (
-                  <span className="text-muted-foreground">—</span>
-                ) : (
-                  <AlertCircle size={14} className="shrink-0 text-[var(--score-warn)]" />
-                )}
-              </div>
-            ))}
-          </div>
-        </McCard>
-
-        <McCard title="Database Health" icon={<Server size={15} />}>
-        {(
-          [
-            { label: "Autoloaded Options", value: site.autoloaded_options_kb, unit: "KB", warnAt: 800 },
-            { label: "Transients", value: site.transient_count, unit: "", warnAt: 100 },
-            { label: "Post Revisions", value: site.post_revisions_count, unit: "", warnAt: 500 },
-            { label: "Orphaned Post Meta", value: site.orphaned_post_meta_count, unit: "", warnAt: 0 },
-          ] as const
-        )
-          .filter((r) => r.value != null)
-          .map(({ label, value, unit, warnAt }) => {
-            const v = value!;
-            const isWarn = v > warnAt;
-            return (
-              <div
-                key={label}
-                className="flex items-center justify-between border-b border-border py-2.5 text-xs last:border-0 first:pt-0 last:pb-0"
-              >
-                <span className="text-muted-foreground">{label}</span>
-                <span
-                  className={`font-bold tabular-nums ${
-                    isWarn ? "text-[var(--score-warn)]" : "text-foreground"
-                  }`}
-                >
-                  {v.toLocaleString()}
-                  {unit ? ` ${unit}` : ""}
-                  {isWarn && <AlertCircle size={11} className="ml-1 inline text-[var(--score-warn)]" />}
-                </span>
-              </div>
-            );
-          })}
-        {[
-          site.autoloaded_options_kb,
-          site.transient_count,
-          site.post_revisions_count,
-          site.orphaned_post_meta_count,
-        ].every((v) => v == null) && (
-          <p className="py-6 text-center text-xs text-muted-foreground">
-            Connect the plugin to view database health
-          </p>
-        )}
-      </McCard>
-      </div>
-
-      <McCard
-        title="AI-Powered PSI Optimization"
-        icon={<Bot size={15} />}
-        action={
-          <Button size="sm" onClick={optimizePSIWithAgent}>
-            Optimize with Agent
-          </Button>
-        }
-      >
-        <p className="text-sm text-muted-foreground">
-          Let our AI agent optimize your PageSpeed Insights score. You approve each fix before it&apos;s
-          applied.
-        </p>
-      </McCard>
-
-      <GoogleAnalyticsSection site={site} brandColor={brandColor} />
+      <GoogleAnalyticsSection site={site} />
     </div>
   );
 }

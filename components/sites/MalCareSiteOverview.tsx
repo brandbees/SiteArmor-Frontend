@@ -42,6 +42,8 @@ import type { SiteTab } from "@/components/sites/site-nav";
 import api from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
 import type { Audit, Plugin, Site } from "@/types";
+import { toast } from "sonner";
+import { CubeLoader } from "@/components/sites/SiteLoadingOverlay";
 
 export type SiteOverviewTab = Exclude<SiteTab, "overview">;
 
@@ -372,6 +374,8 @@ export function MalCareSiteOverview({
   >([]);
   const [advMonitorsLoading, setAdvMonitorsLoading] = useState(true);
   const [monitorBusy, setMonitorBusy] = useState<string | null>(null);
+  const [backupToggling, setBackupToggling] = useState(false);
+  const [gaConnecting, setGaConnecting] = useState(false);
 
   const refreshAdvMonitors = () =>
     api
@@ -449,6 +453,44 @@ export function MalCareSiteOverview({
   const lastBackup = backups.find((b) => b.status === "completed");
   const backupsEnabled = backupSchedule !== "manual";
   const perfScore = scores?.performance ?? site.overall_score ?? null;
+
+  const toggleBackups = async () => {
+    if (backupToggling) return;
+    const next = backupsEnabled ? "manual" : "daily";
+    setBackupToggling(true);
+    try {
+      await api.patch(`/backups/${site.id}/schedule`, { backup_schedule: next });
+      setBackupSchedule(next);
+      toast.success(next === "manual" ? "Scheduled backups turned off" : "Daily backups enabled");
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { error?: string; upgrade?: boolean } } })?.response
+        ?.data;
+      if (data?.upgrade) {
+        toast.error(data.error || "Upgrade required for scheduled backups");
+      } else {
+        toast.error(data?.error || "Could not update backup schedule");
+      }
+    } finally {
+      setBackupToggling(false);
+    }
+  };
+
+  const connectGoogleAnalytics = async () => {
+    if (gaConnecting) return;
+    setGaConnecting(true);
+    try {
+      const { data } = await api.get<{ url: string }>(`/analytics/${site.id}/google/auth-url`);
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error("Could not start Google Analytics connection");
+    } catch {
+      toast.error("Could not start Google Analytics connection");
+    } finally {
+      setGaConnecting(false);
+    }
+  };
 
   const pendingPlugins = useMemo(
     () => (site.plugin_data?.plugins ?? []).filter((p) => p.update_available),
@@ -663,12 +705,16 @@ export function MalCareSiteOverview({
               <WidgetHeader
                 icon={<CloudUpload size={20} strokeWidth={1} className="text-zinc-900" />}
                 title="Backups"
-                action={<McSwitch checked={backupsEnabled} onClick={() => setTab("backups")} />}
+                action={
+                  <McSwitch
+                    checked={backupsEnabled}
+                    disabled={backupToggling}
+                    onClick={() => void toggleBackups()}
+                  />
+                }
               />
               {backupsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 size={24} className="animate-spin text-accent" />
-                </div>
+                <CubeLoader label="Loading backups" sublabel="Checking schedule and history…" />
               ) : lastBackup ? (
                 <div className="space-y-2 px-2">
                   <p className="text-sm font-medium text-zinc-900">Last backup</p>
@@ -893,14 +939,7 @@ export function MalCareSiteOverview({
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setTab("plugins")}
-                  className="text-xs font-normal text-accent hover:underline"
-                >
-                  Lock Site?
-                </button>
+              <div className="flex items-center justify-end">
                 <button
                   type="button"
                   onClick={() => setTab("plugins")}
@@ -932,9 +971,7 @@ export function MalCareSiteOverview({
               />
               <div className="flex min-h-0 flex-1 flex-col gap-8">
               {reportsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 size={24} className="animate-spin text-accent" />
-                </div>
+                <CubeLoader label="Loading reports" sublabel="Fetching scheduled report history…" />
               ) : reports.length > 0 ? (
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-zinc-900">Latest report</p>
@@ -991,9 +1028,7 @@ export function MalCareSiteOverview({
               />
               <div className="flex min-h-0 flex-1 flex-col">
               {activityLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 size={24} className="animate-spin text-accent" />
-                </div>
+                <CubeLoader label="Loading activity" sublabel="Fetching recent site actions…" />
               ) : activity.length === 0 ? (
                 <EmptyWidget
                   icon={<LayoutList size={40} strokeWidth={1} className="text-zinc-300" />}
@@ -1025,9 +1060,7 @@ export function MalCareSiteOverview({
               />
               <div className="flex min-h-0 flex-1 flex-col">
               {analyticsConnected === null ? (
-                <div className="flex w-full justify-center py-12">
-                  <Loader2 size={24} className="animate-spin text-accent" />
-                </div>
+                <CubeLoader label="Checking Analytics" sublabel="Looking up GA4 connection…" />
               ) : analyticsConnected ? (
                 <div className="w-full space-y-2 text-center">
                   <p className="text-sm font-medium text-zinc-900">Google Analytics connected</p>
@@ -1048,11 +1081,16 @@ export function MalCareSiteOverview({
                   action={
                     <button
                       type="button"
-                      onClick={() => setTab("performance")}
-                      className="inline-flex h-8 items-center gap-2 rounded-md bg-zinc-100 px-4 text-sm font-medium text-accent hover:bg-zinc-200"
+                      onClick={() => void connectGoogleAnalytics()}
+                      disabled={gaConnecting}
+                      className="inline-flex h-8 items-center gap-2 rounded-md bg-zinc-100 px-4 text-sm font-medium text-accent hover:bg-zinc-200 disabled:opacity-50"
                     >
-                      <BarChart2 size={16} strokeWidth={1} />
-                      Connect Google Analytics
+                      {gaConnecting ? (
+                        <Loader2 size={16} strokeWidth={1} className="animate-spin" />
+                      ) : (
+                        <BarChart2 size={16} strokeWidth={1} />
+                      )}
+                      {gaConnecting ? "Connecting…" : "Connect Google Analytics"}
                     </button>
                   }
                 />
