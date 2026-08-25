@@ -12,6 +12,7 @@ import {
   Bug,
   Plug,
   Package,
+  Monitor,
   Star,
   ListFilter,
   RotateCcw,
@@ -324,6 +325,7 @@ function SiteRow({
   const visible = alerts.slice(0, 2);
   const overflow = alerts.length - visible.length;
   const updates = site.plugins_needing_updates ?? 0;
+  const themeUpdates = site.themes_needing_updates ?? 0;
   const coreUpdates = site.site_health?.wp_update_available ? 1 : 0;
   const isHacked = site.malware_status === "threat";
   const siteUrl = site.url.startsWith("http") ? site.url : `https://${site.url}`;
@@ -392,6 +394,16 @@ function SiteRow({
       <td className="h-16 w-[120px] p-4 align-middle">
         <div className="flex items-center gap-3 text-zinc-600">
           <UpdateChip icon={Plug} count={updates} title="Plugin updates" />
+          <UpdateChip
+            icon={Monitor}
+            count={themeUpdates}
+            title={
+              themeUpdates === 1
+                ? "1 theme update available"
+                : `${themeUpdates} theme updates available`
+            }
+            dimmed={themeUpdates === 0}
+          />
           <UpdateChip icon={Package} count={coreUpdates} title="Core updates" dimmed={coreUpdates === 0} />
         </div>
       </td>

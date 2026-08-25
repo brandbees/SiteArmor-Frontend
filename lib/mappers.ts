@@ -57,6 +57,9 @@ export interface RawSite {
   plugins_needing_updates?: number | null;
   plugins_update_list?: Array<{ name: string; current_version?: string; new_version?: string } | string>;
   plugins_outdated_12m?: unknown;
+  // Theme intelligence
+  themes_needing_updates?: number | null;
+  themes_update_list?: unknown;
   // Cron events & site health
   cron_events?: unknown;
   site_health?: unknown;
@@ -335,6 +338,12 @@ export function mapSite(raw: RawSite): Site {
     // Plugin intelligence
     plugins_needing_updates: raw.plugins_needing_updates ?? null,
     plugins_outdated_12m: parseOutdated(raw.plugins_outdated_12m),
+
+    // Theme intelligence
+    themes_needing_updates: raw.themes_needing_updates ?? null,
+    themes_update_list: Array.isArray(raw.themes_update_list)
+      ? (raw.themes_update_list as Site["themes_update_list"])
+      : null,
 
     // Content counts & DB health
     database_table_count: raw.database_table_count ?? null,

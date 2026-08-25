@@ -28,6 +28,8 @@ export default function AddSitePage() {
   const { roleCanDo } = useRole();
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState("");
+  const [siteName, setSiteName] = useState("");
+  const [nameTouched, setNameTouched] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [site, setSite] = useState<Site | null>(null);
@@ -37,6 +39,13 @@ export default function AddSitePage() {
   const parsed = parseSiteUrl(url);
   const urlOk = parsed.ok;
   const atLimit = agency != null && agency.sites_count >= (agency.sites_limit ?? 1);
+
+  useEffect(() => {
+    if (nameTouched) return;
+    const result = parseSiteUrl(url);
+    if (result.ok) setSiteName(result.name);
+    else if (!url.trim()) setSiteName("");
+  }, [url, nameTouched]);
 
   useEffect(() => {
     if (agency?.is_client_portal) router.replace("/dashboard");
@@ -78,7 +87,8 @@ export default function AddSitePage() {
     }
     setLoading(true);
     try {
-      const { data } = await api.post<{ site: Site }>("/sites", { url: result.url, name: result.name });
+      const name = siteName.trim() || result.name;
+      const { data } = await api.post<{ site: Site }>("/sites", { url: result.url, name });
       setSite(data.site);
       cacheClear("sites");
       setStep(2);
@@ -163,36 +173,59 @@ export default function AddSitePage() {
         )}
 
         {step === 1 && (
-          <div className="flex flex-col gap-2">
-            <label htmlFor="site-url" className="text-sm font-semibold text-zinc-900">
-              Your WordPress Site URL<span className="text-red-500"> *</span>
-            </label>
-            <div className="relative flex w-full items-center overflow-hidden rounded-lg bg-white">
-              <Globe
-                size={16}
-                strokeWidth={1}
-                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-zinc-950"
-              />
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="site-name" className="text-sm font-semibold text-zinc-900">
+                Site name
+              </label>
               <input
-                id="site-url"
+                id="site-name"
                 type="text"
                 autoComplete="off"
-                value={url}
+                value={siteName}
                 onChange={(e) => {
-                  setUrl(e.target.value);
-                  if (error) setError("");
+                  setNameTouched(true);
+                  setSiteName(e.target.value);
                 }}
-                placeholder="Eg: https://www.sample.com"
-                className={cn(
-                  "h-10 w-full rounded-lg border border-zinc-200 bg-transparent py-2 pl-7 pr-3 text-sm outline-none placeholder:font-extralight placeholder:text-zinc-400 focus-visible:border-emerald-600 focus-visible:ring-0",
-                  error && "border-red-500"
-                )}
+                placeholder="Eg: Preferred Roofing"
+                className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none placeholder:font-extralight placeholder:text-zinc-400 focus-visible:border-emerald-600 focus-visible:ring-0"
               />
+              <p className="text-xs font-normal text-zinc-500">
+                Display name in your dashboard. Defaults to the site hostname if left blank.
+              </p>
             </div>
-            <p className="text-xs font-normal text-zinc-500">
-              Enter your WordPress site URL. We&apos;ll check the format and save it to your account.
-            </p>
-            {error ? <p className="text-xs text-red-600">{error}</p> : null}
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="site-url" className="text-sm font-semibold text-zinc-900">
+                Your WordPress Site URL<span className="text-red-500"> *</span>
+              </label>
+              <div className="relative flex w-full items-center overflow-hidden rounded-lg bg-white">
+                <Globe
+                  size={16}
+                  strokeWidth={1}
+                  className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-zinc-950"
+                />
+                <input
+                  id="site-url"
+                  type="text"
+                  autoComplete="off"
+                  value={url}
+                  onChange={(e) => {
+                    setUrl(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Eg: https://www.sample.com"
+                  className={cn(
+                    "h-10 w-full rounded-lg border border-zinc-200 bg-transparent py-2 pl-7 pr-3 text-sm outline-none placeholder:font-extralight placeholder:text-zinc-400 focus-visible:border-emerald-600 focus-visible:ring-0",
+                    error && "border-red-500"
+                  )}
+                />
+              </div>
+              <p className="text-xs font-normal text-zinc-500">
+                Enter your WordPress site URL. We&apos;ll check the format and save it to your account.
+              </p>
+              {error ? <p className="text-xs text-red-600">{error}</p> : null}
+            </div>
           </div>
         )}
 

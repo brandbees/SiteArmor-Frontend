@@ -105,6 +105,16 @@ export interface Site {
   plugins_needing_updates?: number | null;
   plugins_outdated_12m?: PluginOutdated[] | null;
 
+  // Theme intelligence
+  themes_needing_updates?: number | null;
+  themes_update_list?: Array<{
+    slug: string;
+    name: string;
+    current_version?: string | null;
+    new_version?: string | null;
+    active?: boolean;
+  }> | null;
+
   // Content counts & DB health
   database_table_count?: number | null;
   autoloaded_options_kb?: number | null;
