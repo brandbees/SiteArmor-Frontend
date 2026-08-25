@@ -197,7 +197,7 @@ function EmptyWidget({
   bullets?: string[];
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
+    <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
       <div className="flex h-32 w-32 items-center justify-center rounded-full bg-zinc-100/80">
         <CloudUpload size={40} strokeWidth={1} className="text-zinc-300" />
       </div>
@@ -237,12 +237,19 @@ function MonitoringBars({
     countHoverClass: string;
   }[];
 }) {
-  const maxCount = Math.max(...rows.map((r) => r.count), 1);
+  const visible = rows.filter((r) => r.count > 0);
+  const maxCount = Math.max(...visible.map((r) => r.count), 1);
+
+  if (visible.length === 0) {
+    return (
+      <div className="py-4 text-center text-xs text-muted-foreground">No monitored sites yet</div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3.5">
-      {rows.map(({ label, count, barClass, barHoverClass, countClass, countHoverClass }) => {
-        const barPct = count > 0 ? (count / maxCount) * 100 : 0;
+      {visible.map(({ label, count, barClass, barHoverClass, countClass, countHoverClass }) => {
+        const barPct = (count / maxCount) * 100;
         return (
           <div
             key={label}
@@ -253,16 +260,14 @@ function MonitoringBars({
               {label}
             </span>
             <div className="flex h-8 min-w-0 items-center">
-              {count > 0 && (
-                <div
-                  className={cn(
-                    "h-8 rounded-lg transition-colors duration-150",
-                    barClass,
-                    barHoverClass
-                  )}
-                  style={{ width: `${barPct}%`, minWidth: "1.125rem" }}
-                />
-              )}
+              <div
+                className={cn(
+                  "h-8 rounded-lg transition-colors duration-150",
+                  barClass,
+                  barHoverClass
+                )}
+                style={{ width: `${barPct}%`, minWidth: "1.125rem" }}
+              />
             </div>
             <span
               className={cn(
@@ -271,7 +276,7 @@ function MonitoringBars({
                 countHoverClass
               )}
             >
-              {count} Sites
+              {count} Site{count === 1 ? "" : "s"}
             </span>
           </div>
         );
@@ -636,8 +641,8 @@ export function MalCareDashboard({
         <div className="flex w-full flex-nowrap items-start gap-4">
           <div className="flex max-w-full grow flex-wrap items-stretch gap-4">
             {/* Alerts */}
-            <div className="w-full grow lg:w-[544px] lg:max-w-full">
-              <McWidgetCard className="flex max-h-[560px] flex-col gap-6 overflow-visible">
+            <div className="flex w-full grow self-stretch lg:w-[544px] lg:max-w-full">
+              <McWidgetCard className="flex h-full max-h-none min-h-0 flex-col gap-6 overflow-visible">
                 <WidgetHeader
                   icon={<AlertCircle size={20} strokeWidth={1} className="text-zinc-900" />}
                   title="Alerts"
@@ -721,9 +726,9 @@ export function MalCareDashboard({
                   })}
                 </div>
 
-                <div className="flex max-h-[360px] flex-col gap-2 overflow-y-auto">
+                <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
                   {filteredAlerts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
                       <AlertTriangle size={28} className="mb-2 text-zinc-300" />
                       <p className="text-sm font-medium text-muted-foreground">
                         {alertFilter === "all" ? "No alerts" : "No alerts in this category"}
@@ -775,8 +780,8 @@ export function MalCareDashboard({
             </div>
 
             {/* Backups */}
-            <div className="w-full grow lg:w-[542px] lg:max-w-full">
-              <McWidgetCard className="flex flex-col gap-6">
+            <div className="flex w-full grow self-stretch lg:w-[542px] lg:max-w-full">
+              <McWidgetCard className="flex h-full flex-col gap-6">
                 <div className="flex shrink-0 items-center justify-between">
                   <WidgetHeader
                     icon={<CloudUpload size={20} strokeWidth={1} className="text-zinc-900" />}
@@ -793,15 +798,17 @@ export function MalCareDashboard({
                     </Link>
                   )}
                 </div>
-                <EmptyWidget
-                  title="Backups are turned off on all sites."
-                  description="Your sites are not protected. Enable backups to secure your content."
-                  bullets={[
-                    "Never lose data during updates",
-                    "Instant recovery from hacks or crashes",
-                    "Set it once — and forget it",
-                  ]}
-                />
+                <div className="min-h-0 flex-1">
+                  <EmptyWidget
+                    title="Backups are turned off on all sites."
+                    description="Your sites are not protected. Enable backups to secure your content."
+                    bullets={[
+                      "Never lose data during updates",
+                      "Instant recovery from hacks or crashes",
+                      "Set it once — and forget it",
+                    ]}
+                  />
+                </div>
               </McWidgetCard>
             </div>
 
@@ -856,13 +863,13 @@ export function MalCareDashboard({
             </div>
 
             {/* Performance */}
-            <div className="w-full grow lg:w-[544px] lg:max-w-full">
-              <McWidgetCard className="flex flex-col gap-6">
+            <div className="flex w-full grow self-stretch lg:w-[544px] lg:max-w-full">
+              <McWidgetCard className="flex h-full flex-col gap-6">
                 <WidgetHeader
                   icon={<FileChartColumnIncreasing size={20} strokeWidth={1} className="text-zinc-900" />}
                   title="Performance"
                 />
-                <div className="flex w-full flex-col gap-6">
+                <div className="flex min-h-0 w-full flex-1 flex-col justify-center gap-6">
                   <div className="flex items-center justify-between gap-6">
                     <div className="relative flex h-[166px] w-full max-w-[164px] items-center justify-center">
                       {perfPie.length > 0 ? (
@@ -925,16 +932,16 @@ export function MalCareDashboard({
             </div>
 
             {/* Advanced Monitoring */}
-            <div className="w-full grow lg:w-[542px] lg:max-w-full">
-              <McWidgetCard className="flex flex-col gap-6">
+            <div className="flex w-full grow self-stretch lg:w-[542px] lg:max-w-full">
+              <McWidgetCard className="flex h-full flex-col gap-6">
                 <div className="flex shrink-0 items-center justify-between gap-4">
                   <WidgetHeader
                     icon={<Activity size={20} strokeWidth={1} className="text-zinc-900" />}
                     title="Advanced Monitoring"
                     badge={
-                      sites.length > 0 ? (
+                      monitoringStats.monitored > 0 ? (
                         <McBadge variant="success">
-                          {sites.length} Site{sites.length === 1 ? "" : "s"} Monitored
+                          {monitoringStats.monitored} Site{monitoringStats.monitored === 1 ? "" : "s"} Monitored
                         </McBadge>
                       ) : undefined
                     }
@@ -985,7 +992,7 @@ export function MalCareDashboard({
                   ]}
                 />
 
-                <div className="flex flex-col gap-3">
+                <div className="flex min-h-0 flex-1 flex-col gap-3">
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm font-medium text-zinc-900">Recent Issues</p>
                     <McMenu
@@ -1000,9 +1007,11 @@ export function MalCareDashboard({
                     />
                   </div>
 
-                  <div className="flex max-h-[280px] flex-col gap-1 overflow-y-auto">
+                  <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
                     {filteredMonitorIssues.length === 0 ? (
-                      <div className="py-6 text-center text-xs text-muted-foreground">No recent monitoring issues</div>
+                      <div className="flex flex-1 items-center justify-center py-6 text-center text-xs text-muted-foreground">
+                        No recent monitoring issues
+                      </div>
                     ) : (
                       filteredMonitorIssues.map((issue) => (
                         <Link

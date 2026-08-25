@@ -16,9 +16,7 @@ import {
   FileChartColumnIncreasing,
   FileChartLine,
   FileClock,
-  FileText,
   Globe,
-  ImagePlay,
   Info,
   LayoutList,
   List,
@@ -33,6 +31,8 @@ import {
   ShieldCheck,
   SlidersVertical,
   SquareActivity,
+  Bug,
+  FileCode2,
 } from "lucide-react";
 import { DASHBOARD_GRADIENT } from "@/components/dashboard/MalCareDashboard";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
@@ -225,6 +225,7 @@ function MonitorRow({
   subtitle,
   status,
   metric,
+  insight,
   onClick,
 }: {
   href?: string;
@@ -233,6 +234,7 @@ function MonitorRow({
   subtitle: string;
   status: string;
   metric: string;
+  insight?: string;
   onClick?: () => void;
 }) {
   const inner = (
@@ -252,7 +254,9 @@ function MonitorRow({
           <p className="truncate text-xs font-normal text-zinc-700">{metric}</p>
         </div>
         <div className="flex min-w-[200px] max-w-[322px] flex-1 items-center px-2">
-          <p className="truncate text-xs font-normal text-zinc-500">Enable monitor to get insights</p>
+          <p className="truncate text-xs font-normal text-zinc-500">
+            {insight ?? "Enable monitor to get insights"}
+          </p>
         </div>
         <div className="flex w-10 min-w-[40px] max-w-[40px] shrink-0 items-center justify-end pl-2">
           <ChevronRight size={20} strokeWidth={1} className="text-zinc-700" aria-hidden />
@@ -357,6 +361,52 @@ export function MalCareSiteOverview({
   const [activityLoading, setActivityLoading] = useState(true);
   const [backups, setBackups] = useState<{ status: string; created_at: string; size_mb?: number }[]>([]);
   const [updateSearch, setUpdateSearch] = useState("");
+  const [advMonitors, setAdvMonitors] = useState<
+    {
+      monitor_type: string;
+      enabled: boolean;
+      status: string;
+      last_checked_at?: string | null;
+      last_result?: { summary?: string; days_remaining?: number | null } | null;
+    }[]
+  >([]);
+  const [advMonitorsLoading, setAdvMonitorsLoading] = useState(true);
+  const [monitorBusy, setMonitorBusy] = useState<string | null>(null);
+
+  const refreshAdvMonitors = () =>
+    api
+      .get<{ monitors: typeof advMonitors }>(`/sites/${site.id}/monitors`)
+      .then(({ data }) => setAdvMonitors(data.monitors ?? []))
+      .catch(() => setAdvMonitors([]));
+
+  useEffect(() => {
+    setAdvMonitorsLoading(true);
+    refreshAdvMonitors().finally(() => setAdvMonitorsLoading(false));
+  }, [site.id]);
+
+  const toggleMonitor = async (type: string, enabled: boolean) => {
+    setMonitorBusy(type);
+    try {
+      await api.patch(`/sites/${site.id}/monitors/${type}`, { enabled });
+      await refreshAdvMonitors();
+    } catch {
+      /* toast optional */
+    } finally {
+      setMonitorBusy(null);
+    }
+  };
+
+  const runMonitor = async (type: string) => {
+    setMonitorBusy(type);
+    try {
+      await api.post(`/sites/${site.id}/monitors/${type}/run`);
+      await refreshAdvMonitors();
+    } catch {
+      /* ignore */
+    } finally {
+      setMonitorBusy(null);
+    }
+  };
 
   useEffect(() => {
     api
@@ -1014,79 +1064,200 @@ export function MalCareSiteOverview({
           {/* Advanced Monitoring */}
           <WidgetSlot width={1104}>
             <McWidgetCard className="gap-6">
-              <WidgetHeader
-                icon={<Activity size={20} strokeWidth={1} className="text-zinc-900" />}
-                title="Advanced Monitoring"
-                badge={<McBadge variant="warn">6/6 Monitors Disabled</McBadge>}
-                action={
-                  <button
-                    type="button"
-                    onClick={() => setTab("uptime")}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
-                    aria-label="Open advanced monitoring"
-                  >
-                    <ArrowUpRight size={16} strokeWidth={1} />
-                  </button>
-                }
-              />
-              <div className="-mx-2 overflow-x-auto">
-                <div className="flex flex-col gap-1 px-2">
-                <MonitorRow
-                  onClick={() => setTab("uptime")}
-                  icon={<SquareActivity size={20} strokeWidth={1} className="text-muted-foreground" />}
-                  title="Uptime Monitor"
-                  subtitle={domain}
-                  status={online ? "Up" : down ? "Down" : "Disabled"}
-                  metric={formatLastChecked(site.last_uptime_check_at)}
-                />
-                <MonitorRow
-                  onClick={() => setTab("uptime")}
-                  icon={<ImagePlay size={20} strokeWidth={1} className="text-muted-foreground" />}
-                  title="Visual Monitor"
-                  subtitle="No monitors configured"
-                  status="Unconfigured"
-                  metric="Last checked: —"
-                />
-                <MonitorRow
-                  onClick={() => setTab("uptime")}
-                  icon={<FileText size={20} strokeWidth={1} className="text-muted-foreground" />}
-                  title="Page Content Monitor"
-                  subtitle="No monitors configured"
-                  status="Unconfigured"
-                  metric="Last checked: —"
-                />
-                <MonitorRow
-                  onClick={() => setTab("uptime")}
-                  icon={<WordPressIcon size={20} className="text-muted-foreground" />}
-                  title="PHP Error Monitor"
-                  subtitle={domain}
-                  status="Disabled"
-                  metric="Last checked: —"
-                />
-                <MonitorRow
-                  onClick={() => setTab("uptime")}
-                  icon={<Globe size={20} strokeWidth={1} className="text-muted-foreground" />}
-                  title="Domain Monitor"
-                  subtitle={domain}
-                  status="Disabled"
-                  metric="Last checked: —"
-                />
-                <MonitorRow
-                  onClick={() => setTab("uptime")}
-                  icon={<EarthLock size={20} strokeWidth={1} className="text-muted-foreground" />}
-                  title="SSL Monitor"
-                  subtitle={domain}
-                  status={sslDays != null && sslDays < 30 ? "Expiring" : "Disabled"}
-                  metric={formatLastChecked(site.ssl_expiry_date)}
-                />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-amber-400" />
-                <p className="text-xs text-zinc-700">
-                  All systems: <span className="font-semibold">Disabled</span>
-                </p>
-              </div>
+              {(() => {
+                const uptimeActive =
+                  site.uptime_status === "up" ||
+                  site.uptime_status === "down" ||
+                  Boolean(site.last_uptime_check_at);
+                const sslActive = site.ssl_expiry_date != null;
+
+                const byType = Object.fromEntries(
+                  advMonitors.map((m) => [m.monitor_type, m])
+                ) as Record<string, (typeof advMonitors)[number]>;
+
+                const statusLabel = (m?: (typeof advMonitors)[number]) => {
+                  if (!m || !m.enabled) return "Off";
+                  if (monitorBusy === m.monitor_type) return "Checking";
+                  if (m.status === "healthy") return "Healthy";
+                  if (m.status === "warning") return "Warning";
+                  if (m.status === "critical") return "Critical";
+                  if (m.status === "disabled") return "Off";
+                  return "Unknown";
+                };
+
+                const monitors = [
+                  uptimeActive
+                    ? {
+                        key: "uptime",
+                        title: "Uptime Monitor",
+                        subtitle: domain,
+                        status: online ? "Up" : down ? "Down" : "Checking",
+                        metric: formatLastChecked(site.last_uptime_check_at),
+                        insight: online
+                          ? "Site is responding normally"
+                          : down
+                            ? "Site is unreachable — investigate now"
+                            : "Waiting for the next uptime check",
+                        icon: <SquareActivity size={20} strokeWidth={1} className="text-muted-foreground" />,
+                        onClick: () => setTab("uptime"),
+                      }
+                    : null,
+                  sslActive
+                    ? {
+                        key: "ssl",
+                        title: "SSL Monitor",
+                        subtitle: domain,
+                        status:
+                          sslDays != null && sslDays < 0
+                            ? "Expired"
+                            : sslDays != null && sslDays < 30
+                              ? "Expiring"
+                              : "Valid",
+                        metric: formatLastChecked(site.ssl_expiry_date),
+                        insight:
+                          sslDays != null && sslDays < 0
+                            ? "SSL certificate has expired"
+                            : sslDays != null && sslDays < 30
+                              ? `Certificate expires in ${sslDays} day${sslDays === 1 ? "" : "s"}`
+                              : "Certificate is valid",
+                        icon: <EarthLock size={20} strokeWidth={1} className="text-muted-foreground" />,
+                        onClick: () => setTab("uptime"),
+                      }
+                    : null,
+                  {
+                    key: "domain",
+                    title: "Domain Monitor",
+                    subtitle: domain,
+                    status: statusLabel(byType.domain),
+                    metric: formatLastChecked(byType.domain?.last_checked_at),
+                    insight:
+                      byType.domain?.last_result?.summary ||
+                      (byType.domain?.enabled
+                        ? "Watching DNS and domain expiry"
+                        : "Enable to track DNS changes and expiry"),
+                    icon: <Globe size={20} strokeWidth={1} className="text-muted-foreground" />,
+                    onClick: () => {
+                      if (!byType.domain?.enabled) void toggleMonitor("domain", true);
+                      else void runMonitor("domain");
+                    },
+                  },
+                  {
+                    key: "page_content",
+                    title: "Page Content Monitor",
+                    subtitle: domain,
+                    status: statusLabel(byType.page_content),
+                    metric: formatLastChecked(byType.page_content?.last_checked_at),
+                    insight:
+                      byType.page_content?.last_result?.summary ||
+                      (byType.page_content?.enabled
+                        ? "Comparing homepage against baseline"
+                        : "Enable to detect unexpected homepage changes"),
+                    icon: <FileCode2 size={20} strokeWidth={1} className="text-muted-foreground" />,
+                    onClick: () => {
+                      if (!byType.page_content?.enabled) void toggleMonitor("page_content", true);
+                      else void runMonitor("page_content");
+                    },
+                  },
+                  {
+                    key: "php_error",
+                    title: "PHP Error Monitor",
+                    subtitle: site.plugin_connected ? "debug.log" : "Plugin required",
+                    status: statusLabel(byType.php_error),
+                    metric: formatLastChecked(byType.php_error?.last_checked_at),
+                    insight:
+                      byType.php_error?.last_result?.summary ||
+                      (!site.plugin_connected
+                        ? "Connect the Site Armor plugin to read PHP errors"
+                        : byType.php_error?.enabled
+                          ? "Scanning WordPress debug.log for PHP errors"
+                          : "Enable to watch for fatal errors and warnings"),
+                    icon: <Bug size={20} strokeWidth={1} className="text-muted-foreground" />,
+                    onClick: () => {
+                      if (!site.plugin_connected) return;
+                      if (!byType.php_error?.enabled) void toggleMonitor("php_error", true);
+                      else void runMonitor("php_error");
+                    },
+                  },
+                ].filter(Boolean) as {
+                  key: string;
+                  title: string;
+                  subtitle: string;
+                  status: string;
+                  metric: string;
+                  insight: string;
+                  icon: ReactNode;
+                  onClick: () => void;
+                }[];
+
+                const activeCount = monitors.filter((m) => {
+                  if (m.key === "uptime" || m.key === "ssl") return true;
+                  const row = byType[m.key];
+                  return Boolean(row?.enabled);
+                }).length;
+
+                return (
+                  <>
+                    <WidgetHeader
+                      icon={<Activity size={20} strokeWidth={1} className="text-zinc-900" />}
+                      title="Advanced Monitoring"
+                      badge={
+                        advMonitorsLoading ? (
+                          <McBadge variant="neutral">Loading…</McBadge>
+                        ) : activeCount > 0 ? (
+                          <McBadge variant="success">
+                            {activeCount} Monitor{activeCount === 1 ? "" : "s"} Active
+                          </McBadge>
+                        ) : (
+                          <McBadge variant="warn">No Monitors Active</McBadge>
+                        )
+                      }
+                      action={
+                        <button
+                          type="button"
+                          onClick={() => setTab("uptime")}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                          aria-label="Open advanced monitoring"
+                        >
+                          <ArrowUpRight size={16} strokeWidth={1} />
+                        </button>
+                      }
+                    />
+                    <div className="-mx-2 overflow-x-auto">
+                      <div className="flex flex-col gap-1 px-2">
+                        {monitors.map((m) => (
+                          <MonitorRow
+                            key={m.key}
+                            onClick={m.onClick}
+                            icon={m.icon}
+                            title={m.title}
+                            subtitle={m.subtitle}
+                            status={m.status}
+                            metric={m.metric}
+                            insight={m.insight}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-3 w-3 rounded-full",
+                          activeCount > 0 ? "bg-emerald-500" : "bg-amber-400"
+                        )}
+                      />
+                      <p className="text-xs text-zinc-700">
+                        Active monitors:{" "}
+                        <span className="font-semibold">
+                          {activeCount > 0 ? activeCount : "None"}
+                        </span>
+                        {monitorBusy ? (
+                          <span className="ml-2 text-zinc-500">Running {monitorBusy}…</span>
+                        ) : null}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
             </McWidgetCard>
           </WidgetSlot>
         </div>
