@@ -135,7 +135,7 @@ function SiteSummaryCard({
               <SiteScreenshot
                 url={site.url}
                 connected={site.plugin_connected}
-                hacked={site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0}
+                hacked={site.malware_status === "threat"}
                 width={280}
                 className="h-full w-full"
               />

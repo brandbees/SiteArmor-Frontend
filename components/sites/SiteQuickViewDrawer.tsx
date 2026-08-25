@@ -45,7 +45,7 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
   const overallScore = scores
     ? Math.round((scores.performance + scores.seo + scores.security + scores.malware) / 4)
     : null;
-  const isHacked = site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0;
+  const isHacked = site.malware_status === "threat";
   const siteUrl = site.url.startsWith("http") ? site.url : `https://${site.url}`;
 
   return (

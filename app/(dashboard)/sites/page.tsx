@@ -53,7 +53,7 @@ function siteAlerts(site: Site): { label: string; tone: "danger" | "warning" | "
   const out: { label: string; tone: "danger" | "warning" | "muted" }[] = [];
   if (site.uptime_status === "down") out.push({ label: "Site Unavailable", tone: "danger" });
   if (!site.plugin_connected) out.push({ label: "Plugin Disconnected", tone: "warning" });
-  if (site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0)
+  if (site.malware_status === "threat")
     out.push({ label: "Site Hacked", tone: "danger" });
   if ((site.plugin_vuln_count ?? 0) > 0)
     out.push({ label: "Vulnerabilities Found", tone: "warning" });
@@ -63,7 +63,7 @@ function siteAlerts(site: Site): { label: string; tone: "danger" | "warning" | "
 function matchesQuick(site: Site, filter: QuickFilter): boolean {
   switch (filter) {
     case "hacked":
-      return site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0;
+      return site.malware_status === "threat";
     case "disconnected":
       return !site.plugin_connected;
     case "down":
@@ -325,7 +325,7 @@ function SiteRow({
   const overflow = alerts.length - visible.length;
   const updates = site.plugins_needing_updates ?? 0;
   const coreUpdates = site.site_health?.wp_update_available ? 1 : 0;
-  const isHacked = site.malware_status === "threat" || (site.major_threat_count ?? 0) > 0;
+  const isHacked = site.malware_status === "threat";
   const siteUrl = site.url.startsWith("http") ? site.url : `https://${site.url}`;
 
   return (
