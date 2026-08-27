@@ -30,6 +30,7 @@ import { cn, truncateUrl } from "@/lib/utils";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { useSites } from "@/hooks/useSites";
+import { useClients } from "@/hooks/useClients";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { SiteQuickViewDrawer } from "@/components/sites/SiteQuickViewDrawer";
@@ -41,13 +42,13 @@ import { Button } from "@/components/ui/Button";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { Site } from "@/types";
 
-type QuickFilter = "all" | "hacked" | "disconnected" | "down" | "vulnerable";
+type QuickFilter = "all" | "malware" | "disconnected" | "down" | "updates";
 
 const QUICK: { value: QuickFilter; label: string }[] = [
-  { value: "hacked", label: "Hacked" },
+  { value: "malware", label: "Malware" },
   { value: "disconnected", label: "Disconnected" },
-  { value: "down", label: "Down" },
-  { value: "vulnerable", label: "Vulnerable" },
+  { value: "down", label: "Site Down" },
+  { value: "updates", label: "Needs Updates" },
 ];
 
 function siteAlerts(site: Site): { label: string; tone: "danger" | "warning" | "muted" }[] {
@@ -55,22 +56,28 @@ function siteAlerts(site: Site): { label: string; tone: "danger" | "warning" | "
   if (site.uptime_status === "down") out.push({ label: "Site Unavailable", tone: "danger" });
   if (!site.plugin_connected) out.push({ label: "Plugin Disconnected", tone: "warning" });
   if (site.malware_status === "threat")
-    out.push({ label: "Site Hacked", tone: "danger" });
-  if ((site.plugin_vuln_count ?? 0) > 0)
+    out.push({ label: "Malware Detected", tone: "danger" });
+  if ((site.plugins_needing_updates ?? 0) > 0 || (site.themes_needing_updates ?? 0) > 0)
+    out.push({ label: "Updates Available", tone: "warning" });
+  else if ((site.plugin_vuln_count ?? 0) > 0)
     out.push({ label: "Vulnerabilities Found", tone: "warning" });
   return out;
 }
 
 function matchesQuick(site: Site, filter: QuickFilter): boolean {
   switch (filter) {
-    case "hacked":
+    case "malware":
       return site.malware_status === "threat";
     case "disconnected":
       return !site.plugin_connected;
     case "down":
       return site.uptime_status === "down";
-    case "vulnerable":
-      return (site.plugin_vuln_count ?? 0) > 0;
+    case "updates":
+      return (
+        (site.plugins_needing_updates ?? 0) > 0 ||
+        (site.themes_needing_updates ?? 0) > 0 ||
+        (site.plugin_vuln_count ?? 0) > 0
+      );
     default:
       return true;
   }
@@ -433,6 +440,7 @@ function SiteRow({
 export default function SitesPage() {
   const router = useRouter();
   const { sites, loading, error } = useSites();
+  const { clients } = useClients();
   const { agency } = useAuth();
   const { roleCanDo } = useRole();
   const searchParams = useSearchParams();
@@ -440,10 +448,13 @@ export default function SitesPage() {
   const [search, setSearch] = useState("");
   const [quick, setQuick] = useState<QuickFilter>(() => {
     const p = searchParams.get("filter");
-    const valid: QuickFilter[] = ["all", "hacked", "disconnected", "down", "vulnerable"];
+    const valid: QuickFilter[] = ["all", "malware", "disconnected", "down", "updates"];
+    // Legacy URL params from older filter names
+    if (p === "hacked") return "malware";
+    if (p === "vulnerable") return "updates";
     return valid.includes(p as QuickFilter) ? (p as QuickFilter) : "all";
   });
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeClientId, setActiveClientId] = useState<string | null>(null);
   const [quickViewSiteId, setQuickViewSiteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -456,11 +467,7 @@ export default function SitesPage() {
   const canAddSite = roleCanDo("add_site");
   const canDeleteSite = roleCanDo("delete_site");
   const showSelect = !agency?.is_client_portal;
-
-  const allTags = useMemo(
-    () => Array.from(new Set(sites.flatMap((s) => s.tags ?? []))).sort(),
-    [sites]
-  );
+  const showClientFilter = !agency?.is_client_portal;
 
   useEffect(() => {
     setSelected(new Set());
@@ -474,10 +481,14 @@ export default function SitesPage() {
         (s) => s.name.toLowerCase().includes(q) || s.url.toLowerCase().includes(q)
       );
     }
-    if (activeTag) list = list.filter((s) => s.tags?.includes(activeTag));
+    if (activeClientId === "__unassigned__") {
+      list = list.filter((s) => !s.client_id);
+    } else if (activeClientId) {
+      list = list.filter((s) => s.client_id === activeClientId);
+    }
     if (quick !== "all") list = list.filter((s) => matchesQuick(s, quick));
     return list;
-  }, [sites, search, activeTag, quick]);
+  }, [sites, search, activeClientId, quick]);
 
   const sortedSites = useMemo(() => {
     const list = [...filteredSites];
@@ -530,7 +541,7 @@ export default function SitesPage() {
 
   function resetFilters() {
     setQuick("all");
-    setActiveTag(null);
+    setActiveClientId(null);
     setSearch("");
     setFiltersDirty(false);
   }
@@ -651,31 +662,38 @@ export default function SitesPage() {
                   <p className="text-sm font-semibold text-zinc-950">Filters</p>
                 </div>
 
-                <div className="mt-3">
-                  <label className="mb-1 block text-sm font-medium text-zinc-600">Tags</label>
-                  <select
-                    value={activeTag ?? ""}
-                    onChange={(e) => {
-                      setActiveTag(e.target.value || null);
-                      setFiltersDirty(true);
-                    }}
-                    className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                  >
-                    <option value="">All tags</option>
-                    {allTags.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {showClientFilter ? (
+                  <div className="mt-3">
+                    <label className="mb-1 block text-sm font-medium text-zinc-600">Client</label>
+                    <select
+                      value={activeClientId ?? ""}
+                      onChange={(e) => {
+                        setActiveClientId(e.target.value || null);
+                        setFiltersDirty(true);
+                      }}
+                      className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                    >
+                      <option value="">All clients</option>
+                      <option value="__unassigned__">Unassigned</option>
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-zinc-500">
+                    Use Quick Suggestions above to focus on sites that need attention.
+                  </p>
+                )}
               </div>
 
               <div className="mt-auto flex items-center gap-2 border-t border-zinc-200 px-4 py-3">
                 <button
                   type="button"
                   onClick={resetFilters}
-                  disabled={!filtersDirty && quick === "all" && !activeTag}
+                  disabled={!filtersDirty && quick === "all" && !activeClientId}
                   className="inline-flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-950 disabled:opacity-40"
                 >
                   <RotateCcw size={14} strokeWidth={1.5} />
@@ -683,7 +701,7 @@ export default function SitesPage() {
                 </button>
                 <Button
                   size="sm"
-                  disabled={!filtersDirty && quick === "all" && !activeTag}
+                  disabled={!filtersDirty && quick === "all" && !activeClientId}
                   className="flex-1"
                   onClick={() => setFiltersDirty(false)}
                 >

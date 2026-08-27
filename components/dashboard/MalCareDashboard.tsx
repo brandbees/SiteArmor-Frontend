@@ -1160,7 +1160,7 @@ export function MalCareDashboard({
                       outstanding problems.
                     </div>
                     <Link
-                      href="/sites?filter=hacked"
+                      href="/sites?filter=malware"
                       className="inline-flex h-8 shrink-0 items-center gap-2 rounded-md bg-destructive px-4 text-sm font-medium text-white hover:opacity-90"
                     >
                       Review sites
