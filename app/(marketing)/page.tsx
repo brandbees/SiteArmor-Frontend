@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getPageContent, field } from "@/lib/cms";
 import { sf } from "@/lib/marketing/cms";
 import { HeroSection } from "@/components/marketing/sections/HeroSection";
-import { TrustLogosSection } from "@/components/marketing/sections/TrustLogosSection";
 import { StatsBarSection } from "@/components/marketing/sections/StatsBarSection";
 import { ProblemSection } from "@/components/marketing/sections/ProblemSection";
 import { PlatformPillarsSection } from "@/components/marketing/sections/PlatformPillarsSection";
@@ -87,7 +86,6 @@ export default async function HomePage() {
 
       {/* Hero + social proof */}
       <HeroSection cms={sf(sections, "hero")} />
-      <TrustLogosSection />
       <StatsBarSection />
 
       {/* The problem */}
