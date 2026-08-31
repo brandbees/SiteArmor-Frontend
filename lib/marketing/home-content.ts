@@ -4,7 +4,7 @@ export const HOME_STATS = [
   { value: "5", label: "Health pillars", detail: "Performance · SEO · Security · Malware · Uptime" },
   { value: "30s", label: "URL-only setup", detail: "First audit without a plugin" },
   { value: "14", label: "Capabilities", detail: "Monitoring through white-label reports" },
-  { value: "$0", label: "Free tier", detail: "One site, forever" },
+  { value: "$0", label: "Free tier", detail: "One site" },
 ] as const;
 
 export const HOME_PROBLEMS = [

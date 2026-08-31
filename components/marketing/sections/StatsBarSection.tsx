@@ -8,7 +8,7 @@ const STATS = [
   { value: 5, suffix: "", label: "Health pillars", detail: "Performance · SEO · Security · Malware · Uptime" },
   { value: 30, suffix: "s", label: "URL-only setup", detail: "First audit without a plugin" },
   { value: 14, suffix: "", label: "Capabilities", detail: "Monitoring through white-label reports" },
-  { value: 0, suffix: "", prefix: "$", label: "Free tier", detail: "One site, forever" },
+  { value: 0, suffix: "", prefix: "$", label: "Free tier", detail: "One site" },
 ] as const;
 
 export function StatsBarSection() {
