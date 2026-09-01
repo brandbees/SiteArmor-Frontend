@@ -57,6 +57,14 @@ const PLAN_DEFS = [
 ];
 
 // Integrations groupings — keys must match platform_settings.key values in DB
+// Signup / trial — keys must match platform_settings.key values in DB
+const SIGNUP_SETTING_KEYS = [
+  "new_signup_trial_enabled",
+  "trial_duration_days",
+  "signup_ip_lockout_enabled",
+  "signup_max_per_ip_per_day",
+] as const;
+
 const INTEGRATION_GROUPS: { label: string; icon: React.ElementType; color: string; keys: string[] }[] = [
   {
     label: "Stripe",
@@ -465,6 +473,15 @@ export default function MasterSettingsPage() {
 
   const bySec = (sec: string) => settings.filter(s => s.section === sec);
   const byKey = (key: string) => settings.find(s => s.key === key);
+  const signupSettings = SIGNUP_SETTING_KEYS
+    .map(key => byKey(key))
+    .filter((s): s is Setting => Boolean(s));
+  const securitySettings = bySec("security").filter(
+    s => !SIGNUP_SETTING_KEYS.includes(s.key as typeof SIGNUP_SETTING_KEYS[number])
+  );
+  const platformSettings = bySec("platform").filter(
+    s => !SIGNUP_SETTING_KEYS.includes(s.key as typeof SIGNUP_SETTING_KEYS[number])
+  );
 
   if (loading) return (
     <div className="space-y-5">
@@ -841,7 +858,7 @@ export default function MasterSettingsPage() {
               <Sliders size={14} className="text-muted-foreground" />
               <p className="text-sm font-bold text-foreground">System Controls</p>
             </div>
-            {bySec("platform").filter(s => s.type === "boolean").map(s => (
+            {platformSettings.filter(s => s.type === "boolean").map(s => (
               <SettingRow key={s.key} s={s} {...rowProps(s.key)} />
             ))}
           </div>
@@ -851,7 +868,7 @@ export default function MasterSettingsPage() {
               <Settings2 size={14} className="text-muted-foreground" />
               <p className="text-sm font-bold text-foreground">Limits &amp; Defaults</p>
             </div>
-            {bySec("platform").filter(s => s.type !== "boolean").map(s => (
+            {platformSettings.filter(s => s.type !== "boolean").map(s => (
               <SettingRow key={s.key} s={s} {...rowProps(s.key)} />
             ))}
           </div>
@@ -923,12 +940,43 @@ export default function MasterSettingsPage() {
       {/* ── SECURITY TAB ────────────────────────────────────────────────────── */}
       {tab === "security" && (
         <div className="space-y-4">
+          {signupSettings.length > 0 && (
+            <>
+              <div className="bg-white rounded-2xl border border-border overflow-hidden">
+                <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+                  <Lock size={14} className="text-muted-foreground" />
+                  <p className="text-sm font-bold text-foreground">Signup &amp; Free Trial</p>
+                  <span className="ml-auto text-[11px] text-muted-foreground bg-gray-50 border border-border px-2 py-0.5 rounded-lg">
+                    Register + verify-email
+                  </span>
+                </div>
+                {signupSettings.map(s => (
+                  <SettingRow key={s.key} s={s} {...rowProps(s.key)} />
+                ))}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4 flex items-start gap-3">
+                <Shield size={14} className="text-blue-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-800 mb-1">How signup protection works</p>
+                  <p className="text-xs text-blue-700">
+                    When IP lockout is enabled, each IP address can complete at most{" "}
+                    <strong>{get("signup_max_per_ip_per_day") || "1"}</strong> signup
+                    {get("signup_max_per_ip_per_day") === "1" ? "" : "s"} per rolling 24 hours.
+                    The check runs on register and email verification. Localhost is exempt in development.
+                    New free accounts get a <strong>{get("trial_duration_days") || "30"}-day</strong> trial when auto-start trial is on.
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+
           <div className="bg-white rounded-2xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center gap-2">
               <Shield size={14} className="text-muted-foreground" />
               <p className="text-sm font-bold text-foreground">Authentication &amp; Sessions</p>
             </div>
-            {bySec("security").map(s => (
+            {securitySettings.map(s => (
               <SettingRow key={s.key} s={s} {...rowProps(s.key)} />
             ))}
           </div>
