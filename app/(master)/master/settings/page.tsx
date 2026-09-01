@@ -59,10 +59,11 @@ const PLAN_DEFS = [
 // Integrations groupings — keys must match platform_settings.key values in DB
 // Signup / trial — keys must match platform_settings.key values in DB
 const SIGNUP_SETTING_KEYS = [
+  "signup_ip_lockout_enabled",
+  "signup_ip_lockout_days",
+  "signup_max_per_ip_per_day",
   "new_signup_trial_enabled",
   "trial_duration_days",
-  "signup_ip_lockout_enabled",
-  "signup_max_per_ip_per_day",
 ] as const;
 
 const INTEGRATION_GROUPS: { label: string; icon: React.ElementType; color: string; keys: string[] }[] = [
@@ -962,7 +963,9 @@ export default function MasterSettingsPage() {
                   <p className="text-xs text-blue-700">
                     When IP lockout is enabled, each IP address can complete at most{" "}
                     <strong>{get("signup_max_per_ip_per_day") || "1"}</strong> signup
-                    {get("signup_max_per_ip_per_day") === "1" ? "" : "s"} per rolling 24 hours.
+                    {get("signup_max_per_ip_per_day") === "1" ? "" : "s"} per rolling{" "}
+                    <strong>{get("signup_ip_lockout_days") || "1"}</strong> day
+                    {get("signup_ip_lockout_days") === "1" ? "" : "s"}.
                     The check runs on register and email verification. Localhost is exempt in development.
                     New free accounts get a <strong>{get("trial_duration_days") || "30"}-day</strong> trial when auto-start trial is on.
                   </p>
