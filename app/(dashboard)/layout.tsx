@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import { TopBar } from "@/components/layout/TopBar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
@@ -164,6 +165,7 @@ export default function DashboardLayout({
 
   const dashboardShell = (
     <div className="flex h-screen flex-col overflow-hidden bg-[#f4f4f5]">
+      <CommandPalette />
       <AnnouncementBanner />
       <TrialBanner />
       <div className="flex min-h-0 flex-1">

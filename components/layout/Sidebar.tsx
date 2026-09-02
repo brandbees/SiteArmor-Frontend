@@ -215,6 +215,7 @@ export function Sidebar({
         <div className={cn("shrink-0", collapsed ? "px-2 py-2" : "p-2 px-3")}>
           <button
             type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("bb:open-command-palette"))}
             className={cn(
               "flex w-full items-center rounded-lg bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200/80",
               collapsed ? "h-9 justify-center" : "h-9 gap-2 px-3"
