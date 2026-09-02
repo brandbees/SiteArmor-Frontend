@@ -43,7 +43,7 @@ export default function DashboardLayout({
     isDashboard ||
     isSetup ||
     pathname === "/sites" ||
-    pathname === "/notifications" ||
+    pathname === "/billing" ||
     pathname === "/reports" ||
     pathname === "/agent" ||
     /^\/reports\/[^/]+(\/[^/]+)?$/.test(pathname ?? "");

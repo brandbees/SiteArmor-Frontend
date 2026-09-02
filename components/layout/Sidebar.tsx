@@ -14,6 +14,7 @@ import {
   Bell,
   LifeBuoy,
   Plus,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,7 +42,10 @@ const MANAGE_NAV: NavItem[] = [
   { href: "/notifications", label: "Notifications", icon: Bell, clientVisible: false },
 ];
 
-const SETTINGS_NAV: NavItem[] = [{ href: "/settings", label: "Settings", icon: Settings }];
+const SETTINGS_NAV: NavItem[] = [
+  { href: "/billing", label: "Plans & Billing", icon: CreditCard },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
 
 function filterNav(items: NavItem[], isClientPortal: boolean, isIndividual: boolean) {
   return items.filter(
@@ -258,7 +262,7 @@ export function Sidebar({
             </Suspense>
           ) : null}
           {!isClientPortal && !isSiteDetail && (
-            <NavSection label="Settings" items={settingsItems} collapsed={collapsed} pathname={pathname} />
+            <NavSection label="Account" items={settingsItems} collapsed={collapsed} pathname={pathname} />
           )}
 
           {!isClientPortal && !isSiteDetail && !collapsed && (

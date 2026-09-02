@@ -182,11 +182,11 @@ export function CommandPalette() {
     if (!isClientPortal && roleCanDo("access_billing")) {
       items.push({
         id: "billing",
-        title: "Billing & Plans",
+        title: "Plans & Billing",
         description: "View your plan, usage, and upgrade options",
         icon: Settings,
         iconClass: "bg-zinc-100 text-zinc-600",
-        href: "/settings?tab=billing",
+        href: "/billing",
         keywords: ["plan", "subscription", "invoice"],
       });
     }

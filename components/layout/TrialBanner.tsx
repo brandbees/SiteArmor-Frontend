@@ -40,7 +40,7 @@ export function TrialBanner() {
           Your trial has ended. Add a payment method to continue using Site Armor.
         </p>
         <Link
-          href="/settings?tab=billing"
+          href="/billing"
           className="shrink-0 text-sm font-semibold text-red-700 underline underline-offset-2 hover:no-underline"
         >
           Add payment method
@@ -60,7 +60,7 @@ export function TrialBanner() {
       </p>
       <div className="flex shrink-0 items-center gap-2">
         <Link
-          href="/settings?tab=billing"
+          href="/billing"
           className="text-sm font-semibold text-accent underline underline-offset-2 hover:no-underline"
         >
           Upgrade now

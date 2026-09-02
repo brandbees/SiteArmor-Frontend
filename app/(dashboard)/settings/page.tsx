@@ -1,16 +1,16 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  Settings, Bell, Users, Puzzle, CreditCard,
+  Settings, Bell, Users, Puzzle,
   Upload, X, Download, CheckCircle, Globe,
   Package, Lock, Eye, EyeOff, Palette,
   Mail, Webhook, UserPlus, Trash2, ChevronDown,
   Activity, RefreshCw, ChevronLeft, ChevronRight,
-  Check, AlertCircle, Tag, Zap, HardDrive, Receipt,
+  AlertCircle,
 } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { useBranding } from "@/contexts/BrandingContext";
@@ -26,14 +26,14 @@ import { useRole } from "@/hooks/useRole";
 import { useSites } from "@/hooks/useSites";
 import { setAgency } from "@/lib/auth";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES } from "@/lib/constants";
+import { PLAN_LABELS, PLAN_SEATS } from "@/lib/constants";
 import { downloadPluginZip } from "@/lib/downloadPlugin";
 import { isValidEmail, cn } from "@/lib/utils";
 import type { AlertSettings, TeamMember, TeamRole, Site } from "@/types";
 
-// ── Shared helpers ─────────────────────────────────────────────────────────────
+// â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-type Tab = "general" | "branding" | "notifications" | "activity" | "team" | "integrations" | "billing";
+type Tab = "general" | "branding" | "notifications" | "activity" | "team" | "integrations";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "general",       label: "General",            icon: Settings   },
@@ -42,7 +42,6 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "activity",      label: "Activity Log",       icon: Activity   },
   { id: "team",          label: "Team",               icon: Users      },
   { id: "integrations",  label: "API & Integrations", icon: Puzzle     },
-  { id: "billing",       label: "Billing",            icon: CreditCard },
 ];
 
 const ROLE_COLOR: Record<string, { bg: string; text: string }> = {
@@ -79,8 +78,6 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   plugin_connected:  { label: "Plugin Connected",  color: "bg-green-100 text-green-700"  },
 };
 
-const PLANS = ["free", "freemium", "premium", "agency_plus"] as const;
-type PlanKey = typeof PLANS[number];
 
 function initials(name: string) {
   return name.split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2);
@@ -133,7 +130,7 @@ function UsageBar({ used, total, label }: { used: number; total: number; label: 
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span className="text-xs font-bold tabular-nums text-foreground">
-          {used} / {total >= 9999 ? "∞" : total}
+          {used} / {total >= 9999 ? "âˆž" : total}
         </span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
@@ -148,7 +145,7 @@ function UsageBar({ used, total, label }: { used: number; total: number; label: 
   );
 }
 
-// ── GENERAL TAB ────────────────────────────────────────────────────────────────
+// â”€â”€ GENERAL TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function GeneralTab() {
   const { agency, updateAgency } = useAuth();
@@ -204,7 +201,7 @@ function GeneralTab() {
         </div>
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">Email Address</label>
-          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground select-all">{agency?.email ?? "—"}</div>
+          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground select-all">{agency?.email ?? "â€”"}</div>
           <p className="text-[11px] text-muted-foreground mt-1">Email cannot be changed. Contact support if needed.</p>
         </div>
         <div>
@@ -212,8 +209,7 @@ function GeneralTab() {
           <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground capitalize flex items-center justify-between">
             <span>{agency?.plan ?? "free"}</span>
             {agency?.plan !== "agency_plus" && (
-              <button onClick={() => (document.querySelector('[data-tab="billing"]') as HTMLButtonElement)?.click()}
-                className="text-xs font-medium text-accent hover:underline">Upgrade</button>
+              <Link href="/billing" className="text-xs font-medium text-accent hover:underline">Upgrade</Link>
             )}
           </div>
         </div>
@@ -260,7 +256,7 @@ function GeneralTab() {
   );
 }
 
-// ── BRANDING TAB ───────────────────────────────────────────────────────────────
+// â”€â”€ BRANDING TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface BrandPreviewProps { logoUrl: string | null; brandName: string; tagline: string; accentColor: string; }
 
@@ -280,14 +276,14 @@ function BrandPreview({ logoUrl, brandName, tagline, accentColor }: BrandPreview
           <div className="w-8 h-8 rounded-full border-4" style={{ borderColor: accentColor }} />
         </div>
         <p className="text-sm font-bold text-gray-800 mb-1">Website Performance Report</p>
-        <p className="text-[10px] text-gray-500 mb-6">example.com · {new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</p>
+        <p className="text-[10px] text-gray-500 mb-6">example.com Â· {new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</p>
         <div className="w-full bg-gray-50 rounded-lg p-4 mb-4 border border-gray-100">
           <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-2 font-semibold">Overall Health Score</p>
           <div className="text-3xl font-bold" style={{ color: accentColor }}>87</div>
           <p className="text-[9px] text-gray-400 mt-0.5">Healthy</p>
         </div>
         <div className="grid grid-cols-2 gap-1.5 w-full">
-          {["Performance · 91", "Security · 85", "SEO · 88", "Malware · 100"].map((label) => (
+          {["Performance Â· 91", "Security Â· 85", "SEO Â· 88", "Malware Â· 100"].map((label) => (
             <div key={label} className="bg-gray-50 rounded px-2 py-1.5 border border-gray-100">
               <p className="text-[8px] text-gray-500">{label}</p>
             </div>
@@ -404,7 +400,7 @@ function BrandingTab() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left — form */}
+      {/* Left â€” form */}
       <div className="space-y-5">
         {/* Logo upload */}
         <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
@@ -431,8 +427,8 @@ function BrandingTab() {
               <Upload size={24} className="text-muted-foreground" />
             )}
             <div className="text-center">
-              <p className="text-sm font-semibold text-foreground">{logoUploading ? "Uploading…" : "Drag & drop or click to upload"}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PNG, SVG or JPG — max 2MB</p>
+              <p className="text-sm font-semibold text-foreground">{logoUploading ? "Uploadingâ€¦" : "Drag & drop or click to upload"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG, SVG or JPG â€” max 2MB</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Appears on PDF report covers, client portal, and email headers.</p>
@@ -453,8 +449,8 @@ function BrandingTab() {
               )}
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{faviconUploading ? "Uploading…" : faviconPreview ? "Favicon uploaded" : "Upload a favicon"}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PNG, ICO, or SVG — max 512KB. Shown in browser tabs.</p>
+              <p className="text-sm font-medium text-foreground">{faviconUploading ? "Uploadingâ€¦" : faviconPreview ? "Favicon uploaded" : "Upload a favicon"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG, ICO, or SVG â€” max 512KB. Shown in browser tabs.</p>
             </div>
             {faviconPreview && (
               <button onClick={() => { setFaviconPreview(null); setFaviconUrl(null); }}
@@ -503,7 +499,7 @@ function BrandingTab() {
         <Button onClick={save} loading={saving} className="w-full">Save Brand Settings</Button>
       </div>
 
-      {/* Right — live preview */}
+      {/* Right â€” live preview */}
       <div className="sticky top-6">
         <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
           <div className="px-5 py-4 border-b border-border">
@@ -524,7 +520,7 @@ function BrandingTab() {
   );
 }
 
-// ── NOTIFICATIONS TAB ──────────────────────────────────────────────────────────
+// â”€â”€ NOTIFICATIONS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface ActivityLog {
   id: string; site_id: string | null; site_name: string | null; site_url: string | null;
@@ -623,7 +619,7 @@ function NotificationsTab() {
               <div className="flex items-center justify-between py-1">
                 <div>
                   <span className="text-sm font-medium text-foreground flex items-center gap-1.5">Malware <Lock size={11} className="text-muted-foreground" /></span>
-                  <p className="text-[10px] text-muted-foreground">Always on — cannot be disabled</p>
+                  <p className="text-[10px] text-muted-foreground">Always on â€” cannot be disabled</p>
                 </div>
                 <span className="text-xs text-emerald-600 font-semibold">Always On</span>
               </div>
@@ -665,7 +661,7 @@ function NotificationsTab() {
   );
 }
 
-// ── ACTIVITY LOG TAB ───────────────────────────────────────────────────────────
+// â”€â”€ ACTIVITY LOG TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ActivityTab() {
   const [logs, setLogs]         = useState<ActivityLog[]>([]);
@@ -720,7 +716,7 @@ function ActivityTab() {
                         className="text-sm font-medium text-foreground hover:text-accent hover:underline truncate block">{log.site_name}</Link>
                     ) : (
                       <p className="text-sm font-medium text-foreground">
-                        {log.details && typeof log.details === "object" && "name" in log.details ? String(log.details.name) : "—"}
+                        {log.details && typeof log.details === "object" && "name" in log.details ? String(log.details.name) : "â€”"}
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -737,7 +733,7 @@ function ActivityTab() {
         )}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-border">
-            <p className="text-xs text-muted-foreground">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}</p>
+            <p className="text-xs text-muted-foreground">{page * PAGE_SIZE + 1}â€“{Math.min((page + 1) * PAGE_SIZE, total)} of {total}</p>
             <div className="flex items-center gap-2">
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
                 className="p-1.5 rounded-lg border border-border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
@@ -756,7 +752,7 @@ function ActivityTab() {
   );
 }
 
-// ── TEAM TAB ───────────────────────────────────────────────────────────────────
+// â”€â”€ TEAM TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TeamData { members: TeamMember[]; seats_used: number; seats_limit: number; }
 
@@ -814,11 +810,10 @@ function TeamTab() {
         <p className="text-sm text-amber-700 max-w-sm">
           You&apos;re on the <strong>{PLAN_LABELS[agency?.plan ?? "free"]}</strong> plan. Upgrade to Starter or above to invite team members.
         </p>
-        <button className="mt-2 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
-          style={{ background: "var(--accent)" }}
-          onClick={() => (document.querySelector('[data-tab="billing"]') as HTMLButtonElement)?.click()}>
+        <Link href="/billing" className="mt-2 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+          style={{ background: "var(--accent)" }}>
           View Plans
-        </button>
+        </Link>
       </div>
     );
   }
@@ -860,7 +855,7 @@ function TeamTab() {
         <div className="flex items-center gap-3">
           <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">{data?.seats_used ?? 1}</span> of{" "}
-            <span className="font-semibold text-foreground">{data?.seats_limit === 9999 ? "∞" : data?.seats_limit}</span> seats used
+            <span className="font-semibold text-foreground">{data?.seats_limit === 9999 ? "âˆž" : data?.seats_limit}</span> seats used
           </p>
           {data && data.seats_limit < 9999 && (
             <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -878,8 +873,7 @@ function TeamTab() {
         <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
           <AlertCircle size={15} className="shrink-0 text-amber-600" />
           Seat limit reached.{" "}
-          <button onClick={() => (document.querySelector('[data-tab="billing"]') as HTMLButtonElement)?.click()}
-            className="underline font-semibold">Upgrade your plan</button> to invite more members.
+          <Link href="/billing" className="underline font-semibold">Upgrade your plan</Link> to invite more members.
         </div>
       )}
 
@@ -951,7 +945,7 @@ function TeamTab() {
                 )}
                 {data?.members.map(member => (
                   <tr key={member.id}>
-                    <td className="px-5 py-3.5"><p className="font-medium text-foreground">{member.name || "—"}</p><p className="text-xs text-muted-foreground">{member.email}</p></td>
+                    <td className="px-5 py-3.5"><p className="font-medium text-foreground">{member.name || "â€”"}</p><p className="text-xs text-muted-foreground">{member.email}</p></td>
                     <td className="px-5 py-3.5">
                       <div className="relative inline-block">
                         <select value={member.role} onChange={(e) => handleRoleChange(member.id, e.target.value as Exclude<TeamRole, "owner">)}
@@ -983,7 +977,7 @@ function TeamTab() {
   );
 }
 
-// ── API & INTEGRATIONS TAB ─────────────────────────────────────────────────────
+// â”€â”€ API & INTEGRATIONS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function IntegrationsTab() {
   const [downloading, setDownloading] = useState(false);
@@ -1041,13 +1035,13 @@ function IntegrationsTab() {
         <div className="rounded-xl border border-border bg-muted/20 p-5 flex flex-col gap-5">
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">How to connect a site</p>
-            <p className="text-xs text-muted-foreground">API keys and site tokens are managed per-site — no global key needed.</p>
+            <p className="text-xs text-muted-foreground">API keys and site tokens are managed per-site â€” no global key needed.</p>
           </div>
 
           <ol className="space-y-4 flex-1">
             {[
-              { title: "Add your site", desc: "Go to the Sites page and add a new site — you'll get an API key and site token." },
-              { title: "Install the plugin", desc: "Download the zip above and upload via WordPress Admin → Plugins → Add New → Upload Plugin." },
+              { title: "Add your site", desc: "Go to the Sites page and add a new site â€” you'll get an API key and site token." },
+              { title: "Install the plugin", desc: "Download the zip above and upload via WordPress Admin â†’ Plugins â†’ Add New â†’ Upload Plugin." },
               { title: "Connect in plugin settings", desc: "Enter your API key and site token in the plugin settings page, then click Save & Connect." },
               { title: "Data starts flowing", desc: "The plugin verifies the connection and begins pushing data within the hour via WP Cron." },
             ].map((step, i) => (
@@ -1074,652 +1068,7 @@ function IntegrationsTab() {
   );
 }
 
-// ── BILLING TAB ────────────────────────────────────────────────────────────────
-
-interface TokenPackage  { tokens: number; price_cents: number; label: string; }
-interface StoragePackage { bytes: number; price_cents: number; label: string; }
-interface PlanLimits    { tokens: number; storage: number; }
-interface BillingEvent  {
-  id: string; type: "subscription" | "token_topup" | "storage_addon";
-  plan: string | null; tokens: number | null; bytes: number | null;
-  amount_cents: number; currency: string; created_at: string; stripe_session_id: string | null;
-}
-interface TokenState { tokens_used: number; tokens_limit: number; tokens_extra: number; monthly_limit: number; extra_used?: number; extra_remaining?: number; }
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
-function fmtTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
-}
-function fmtCents(cents: number, currency = "usd"): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
-}
-
-const TX_META: Record<string, { label: string; tone: "accent" | "good" | "warn"; icon: React.ElementType }> = {
-  subscription:  { label: "Plan",      tone: "accent", icon: CreditCard },
-  token_topup:   { label: "AI Tokens", tone: "warn",   icon: Zap },
-  storage_addon: { label: "Storage",   tone: "good",   icon: HardDrive },
-};
-
-const BILLING_TABS = [
-  { id: "plans", label: "Plans" },
-  { id: "tokens", label: "Tokens" },
-  { id: "storage", label: "Storage" },
-  { id: "history", label: "History" },
-  { id: "coupon", label: "Coupon" },
-] as const;
-
-function BillingContent() {
-  const { agency, refreshAgency } = useAuth();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const [sites, setSites]           = useState<Site[]>([]);
-  const [seatsUsed, setSeatsUsed]   = useState(1);
-  const [couponCode, setCouponCode] = useState("");
-  const [redeemLoading, setRedeemLoading]   = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [addonLoading, setAddonLoading]       = useState<string | null>(null);
-  const [checkoutError,  setCheckoutError]    = useState<string | null>(null);
-  const [tokenState, setTokenState] = useState<TokenState | null>(null);
-
-  // Live data from backend
-  const [tokenPkgs, setTokenPkgs]     = useState<Record<string, TokenPackage>>({});
-  const [storagePkgs, setStoragePkgs] = useState<Record<string, StoragePackage>>({});
-  const [planLimits, setPlanLimits]   = useState<Record<string, PlanLimits>>({});
-  const [history, setHistory]         = useState<BillingEvent[]>([]);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
-  const [billingTab, setBillingTab] = useState("plans");
-
-  const currentPlan  = (agency?.plan ?? "free") as PlanKey;
-  const sitesLimit   = PLAN_LIMITS[currentPlan] ?? 1;
-  const seatsLimit   = PLAN_SEATS[currentPlan] ?? 1;
-  const isIndividual = agency?.account_type === "individual";
-
-  // Dynamic storage limit — live from API, fallback to constant
-  const dynStorageLimit = planLimits[currentPlan]?.storage ?? 524_288_000;
-
-  useEffect(() => {
-    api.get<{ sites: Site[] }>("/sites").then(({ data }) => setSites(data.sites ?? [])).catch(() => {});
-    api.get<{ seats_used: number }>("/team").then(({ data }) => setSeatsUsed(data.seats_used)).catch(() => {});
-    api.get<TokenState>("/agent/tokens").then(({ data }) => setTokenState(data)).catch(() => {});
-    api.get<{ packages: Record<string, TokenPackage> }>("/billing/tokens/packages")
-      .then(({ data }) => setTokenPkgs(data.packages)).catch(() => {});
-    api.get<{ packages: Record<string, StoragePackage> }>("/billing/storage/packages")
-      .then(({ data }) => setStoragePkgs(data.packages)).catch(() => {});
-    api.get<{ limits: Record<string, PlanLimits> }>("/billing/limits")
-      .then(({ data }) => setPlanLimits(data.limits)).catch(() => {});
-    const fetchHistory = () =>
-      api.get<{ history: BillingEvent[] }>("/billing/history")
-        .then(({ data }) => { setHistory(data.history); setHistoryLoaded(true); })
-        .catch(() => setHistoryLoaded(true));
-
-    fetchHistory();
-    refreshAgency();
-
-    const sessionId      = searchParams.get("session_id");
-    const tokensSuccess  = searchParams.get("tokens") === "success";
-    const storageSuccess = searchParams.get("storage") === "success";
-    const planSuccess    = searchParams.get("plan") === "success";
-
-    // Persist the originating route so we can redirect back after payment
-    const fromParam = searchParams.get("from");
-    if (fromParam) sessionStorage.setItem("bbss_checkout_from", fromParam);
-
-    function redirectAfterPurchase() {
-      const from = sessionStorage.getItem("bbss_checkout_from");
-      if (from) {
-        sessionStorage.removeItem("bbss_checkout_from");
-        setTimeout(() => router.push(from), 800);
-      }
-    }
-
-    if ((tokensSuccess || storageSuccess || planSuccess) && sessionId) {
-      // Verify the Stripe session — credits the purchase if the webhook hasn't fired yet
-      api.post("/billing/verify-session", { session_id: sessionId })
-        .then(async () => {
-          if (tokensSuccess) {
-            const { data: ts } = await api.get<TokenState>("/agent/tokens");
-            setTokenState(ts);
-          } else if (storageSuccess || planSuccess) {
-            await refreshAgency();
-          }
-
-          // A plan change moves the monthly token and storage allowances, so pull both
-          // again. Without this the new allowance only appeared after a reload or a
-          // route switch, because these are otherwise fetched once on mount.
-          if (planSuccess) {
-            await Promise.all([
-              api.get<TokenState>("/agent/tokens")
-                .then(({ data }) => setTokenState(data))
-                .catch(() => {}),
-              api.get<{ limits: Record<string, PlanLimits> }>("/billing/limits")
-                .then(({ data }) => setPlanLimits(data.limits ?? {}))
-                .catch(() => {}),
-            ]);
-          }
-          // Refresh history so new entry appears without page reload
-          await fetchHistory();
-          if (tokensSuccess)  toast.success("AI tokens added to your account! Your balance has been updated.");
-          if (storageSuccess) toast.success("Storage added to your account! Your limit has been increased.");
-          if (planSuccess)    toast.success("Plan upgraded successfully! Welcome to your new plan.");
-          redirectAfterPurchase();
-        })
-        .catch(async () => {
-          // Webhook may have already processed it — still refresh history and show confirmation
-          await fetchHistory();
-          if (tokensSuccess)  toast.success("AI tokens added to your account! Your balance has been updated.");
-          if (storageSuccess) toast.success("Storage added to your account! Your limit has been increased.");
-          if (planSuccess)    toast.success("Plan upgraded successfully! Welcome to your new plan.");
-          redirectAfterPurchase();
-        });
-    } else if (tokensSuccess) {
-      toast.success("AI tokens added to your account! Your balance has been updated.");
-    } else if (storageSuccess) {
-      toast.success("Storage added to your account! Your limit has been increased.");
-    } else if (planSuccess) {
-      toast.success("Plan upgraded successfully! Welcome to your new plan.");
-    }
-  }, []);
-
-  async function handleAddonCheckout(type: "tokens" | "storage", pkg: string) {
-    setAddonLoading(pkg); setCheckoutError(null);
-    try {
-      const endpoint = type === "tokens" ? "/billing/tokens/checkout" : "/billing/storage/checkout";
-      const { data } = await api.post<{ url: string }>(endpoint, { package: pkg });
-      window.location.href = data.url;
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-        ?? "Failed to start checkout. Please try again.";
-      setCheckoutError(msg);
-      toast.error(msg);
-      setAddonLoading(null);
-    }
-  }
-
-  async function handleUpgrade(plan: string) {
-    setCheckoutLoading(plan); setCheckoutError(null);
-    try {
-      const { data } = await api.post<{ url: string }>("/billing/checkout", { plan });
-      window.location.href = data.url;
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-        ?? "Failed to start checkout. Please try again.";
-      setCheckoutError(msg);
-      toast.error(msg);
-      setCheckoutLoading(null);
-    }
-  }
-
-  async function handleCouponRedeem() {
-    if (!couponCode.trim()) return;
-    setRedeemLoading(true);
-    try {
-      const { data } = await api.post<{ plan: string; sites_limit: number }>("/billing/coupons/redeem", { code: couponCode.trim() });
-      toast.success(`Coupon applied! Plan upgraded to ${PLAN_LABELS[data.plan]}.`);
-      setCouponCode("");
-      setTimeout(() => window.location.reload(), 1500);
-    } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Invalid coupon code.");
-    } finally { setRedeemLoading(false); }
-  }
-
-  const tokenPkgList   = Object.entries(tokenPkgs).map(([key, pkg]) => ({ key, ...pkg }));
-  const storagePkgList = Object.entries(storagePkgs).map(([key, pkg]) => ({ key, ...pkg }));
-
-  return (
-    <div className="flex min-w-0 flex-col">
-      <div className="shrink-0 border-b border-border bg-white px-4 sm:px-6">
-        <ScrollFadeRow innerClassName="flex gap-0">
-          {BILLING_TABS.map(({ id, label }) => {
-            const active = billingTab === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setBillingTab(id)}
-                className={cn(
-                  "relative shrink-0 whitespace-nowrap px-4 py-3 text-[13px] font-semibold transition-colors",
-                  active ? "text-accent" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {label}
-                {active && (
-                  <span className="absolute inset-x-0 bottom-0 h-[2px] rounded-t-[1px] bg-accent" aria-hidden />
-                )}
-              </button>
-            );
-          })}
-        </ScrollFadeRow>
-      </div>
-
-      <div className="space-y-5 p-4 sm:p-6">
-        {checkoutError && (
-          <div className="relative">
-            <McAlert variant="error" title="Checkout failed">
-              {checkoutError}
-            </McAlert>
-            <button
-              type="button"
-              onClick={() => setCheckoutError(null)}
-              className="absolute right-3 top-3 text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Dismiss"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-
-        {billingTab === "plans" && (
-          <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <McCard bodyClassName="p-4 space-y-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Current plan</p>
-                <div>
-                  <p className="text-xl font-bold text-foreground">{PLAN_LABELS[currentPlan]}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {PLAN_PRICES[currentPlan].monthly === 0
-                      ? "Free forever"
-                      : `$${PLAN_PRICES[currentPlan].monthly}/month`}
-                  </p>
-                </div>
-                {currentPlan !== "free" && (
-                  <McPill tone="accent" dot>
-                    Active
-                  </McPill>
-                )}
-              </McCard>
-              <McCard bodyClassName="p-4 space-y-4 sm:col-span-2" className="sm:col-span-2">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Usage</p>
-                <UsageBar used={sites.length} total={sitesLimit} label="Sites" />
-                {!isIndividual && <UsageBar used={seatsUsed} total={seatsLimit} label="Team seats" />}
-              </McCard>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-sm font-bold text-foreground">Available plans</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {PLANS.map((plan) => {
-                  const isCurrent = plan === currentPlan;
-                  const price = PLAN_PRICES[plan].monthly;
-                  const isDowngrade = PLANS.indexOf(plan) < PLANS.indexOf(currentPlan);
-                  const limits = planLimits[plan];
-                  return (
-                    <div
-                      key={plan}
-                      className={cn(
-                        "flex flex-col gap-4 rounded-[4px] border p-5 shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
-                        isCurrent
-                          ? "border-accent/35 bg-accent-light/25 ring-1 ring-inset ring-accent/10"
-                          : "border-border bg-white"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-bold text-foreground">{PLAN_LABELS[plan]}</p>
-                          <p className="mt-1 text-2xl font-bold text-foreground">
-                            {price === 0 ? "Free" : `$${price}`}
-                            {price > 0 && (
-                              <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                            )}
-                          </p>
-                        </div>
-                        {isCurrent && (
-                          <McTag tone="accent">Current</McTag>
-                        )}
-                      </div>
-                      {limits && (
-                        <div className="flex flex-wrap gap-1.5">
-                          <McTag tone="accent">{fmtTokens(limits.tokens)} tokens/mo</McTag>
-                          <McTag tone="neutral">{formatBytes(limits.storage)} storage</McTag>
-                        </div>
-                      )}
-                      <ul className="flex-1 space-y-2">
-                        {PLAN_FEATURES[plan].map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                            <Check size={12} className="mt-0.5 shrink-0 text-[var(--score-good)]" strokeWidth={2.5} />
-                            <span>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {!isCurrent && !isDowngrade && plan !== "free" && (
-                        <Button className="w-full" onClick={() => handleUpgrade(plan)} loading={checkoutLoading === plan}>
-                          Upgrade
-                        </Button>
-                      )}
-                      {isCurrent && (
-                        <p className="py-1 text-center text-xs font-medium text-muted-foreground">Your current plan</p>
-                      )}
-                      {isDowngrade && !isCurrent && (
-                        <p className="py-1 text-center text-xs text-muted-foreground">Lower tier</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {[
-                { icon: Globe, title: `${sitesLimit >= 9999 ? "Unlimited" : sitesLimit} site${sitesLimit === 1 ? "" : "s"}`, sub: "Monitored and audited", show: true },
-                { icon: Users, title: `${seatsLimit >= 9999 ? "Unlimited" : seatsLimit} seats`, sub: "Team members included", show: !isIndividual },
-                { icon: Zap, title: "Scheduled audits", sub: currentPlan === "free" ? "Upgrade to enable" : "Weekly & monthly", show: true },
-              ]
-                .filter((s) => s.show)
-                .map(({ icon: Icon, title, sub }) => (
-                  <div
-                    key={title}
-                    className="flex items-center gap-3 rounded-[4px] border border-border bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]"
-                  >
-                    <McIconBox icon={<Icon size={16} strokeWidth={2} />} tone="neutral" size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground">{title}</p>
-                      <p className="text-xs text-muted-foreground">{sub}</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-
-            {isIndividual && (
-              <McCard
-                icon={<Users size={16} strokeWidth={2} />}
-                title="Need to manage clients or add team members?"
-                bodyClassName="space-y-3 p-4"
-              >
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Switch your account to Agency to unlock multi-site management, white-label branding, client portals, and team collaboration.
-                </p>
-                <a
-                  href="mailto:support@brandbees.io?subject=Switch to Agency account"
-                  className="mt-3 inline-flex items-center rounded-[4px] border border-border bg-white px-3 py-1.5 text-xs font-bold text-foreground shadow-[0_1px_2px_rgb(26_29_35/0.04)] transition-colors hover:bg-[#f7f9fc]"
-                >
-                  Contact us
-                </a>
-              </McCard>
-            )}
-          </>
-        )}
-
-        {billingTab === "tokens" && (
-          currentPlan === "free" ? (
-            <McAlert variant="info" title="Upgrade to buy tokens">
-              AI token top-ups are available on paid plans. Choose a plan in the Plans tab to get started.
-            </McAlert>
-          ) : (
-            <McCard
-              title="AI assistant tokens"
-              icon={<Zap size={16} strokeWidth={2} />}
-              bodyClassName="space-y-5 p-4 sm:p-5"
-            >
-              {tokenState && (() => {
-                const monthlyBase = tokenState.monthly_limit ?? tokenState.tokens_limit;
-                const planUsed = Math.min(tokenState.tokens_used, monthlyBase);
-                const planPct = Math.min(100, (planUsed / Math.max(monthlyBase, 1)) * 100);
-                const extraTotal = tokenState.tokens_extra;
-                const extraLeft = Math.max(0, tokenState.extra_remaining ?? (extraTotal - (tokenState.extra_used ?? 0)));
-                const extraPct = extraTotal > 0 ? Math.min(100, ((extraTotal - extraLeft) / extraTotal) * 100) : 0;
-
-                return (
-                  <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          Plan allowance <span className="opacity-70">· refills monthly</span>
-                        </span>
-                        <span className="font-bold tabular-nums text-foreground">
-                          {fmtTokens(planUsed)} / {fmtTokens(monthlyBase)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
-                        <div
-                          className="h-full rounded-[2px] bg-accent transition-all duration-300"
-                          style={{ width: `${planPct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {extraTotal > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            Top-up balance <span className="opacity-70">· one-time, does not refill</span>
-                          </span>
-                          <span className="font-bold tabular-nums text-foreground">
-                            {fmtTokens(extraLeft)} left of {fmtTokens(extraTotal)}
-                          </span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
-                          <div
-                            className={cn(
-                              "h-full rounded-[2px] transition-all duration-300",
-                              extraLeft <= extraTotal * 0.2 ? "bg-[var(--score-warn)]" : "bg-accent"
-                            )}
-                            style={{ width: `${extraPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      Your plan allowance refills at the start of each month. Top-up tokens never expire and are used only after the monthly allowance runs out.
-                    </p>
-                  </div>
-                );
-              })()}
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {tokenPkgList.length > 0
-                  ? tokenPkgList.map(({ key, tokens, price_cents, label }) => (
-                      <div
-                        key={key}
-                        className="flex flex-col gap-3 rounded-[4px] border border-border bg-[#f7f9fc] p-4"
-                      >
-                        <div>
-                          <p className="text-lg font-bold text-foreground">{fmtCents(price_cents)}</p>
-                          <p className="mt-0.5 text-sm font-bold text-foreground">{fmtTokens(tokens)} tokens</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
-                        </div>
-                        <Button
-                          className="mt-auto w-full"
-                          onClick={() => handleAddonCheckout("tokens", key)}
-                          loading={addonLoading === key}
-                          disabled={addonLoading !== null && addonLoading !== key}
-                        >
-                          Buy
-                        </Button>
-                      </div>
-                    ))
-                  : [1, 2, 3].map((i) => (
-                      <div key={i} className="h-28 animate-pulse rounded-[4px] border border-border bg-[#eef1f6]" />
-                    ))}
-              </div>
-            </McCard>
-          )
-        )}
-
-        {billingTab === "storage" && (
-          currentPlan === "free" ? (
-            <McAlert variant="info" title="Upgrade to buy storage">
-              Storage add-ons are available on paid plans. Choose a plan in the Plans tab to get started.
-            </McAlert>
-          ) : (
-            (() => {
-              const storageExtra = agency?.storage_extra_bytes ?? 0;
-              const storageUsed = agency?.storage_used_bytes ?? 0;
-              const storageTotal = dynStorageLimit + storageExtra;
-              const storagePct = Math.min(100, (storageUsed / Math.max(storageTotal, 1)) * 100);
-              const storageWarn = storagePct >= 80;
-              return (
-                <McCard
-                  title="Storage"
-                  icon={<HardDrive size={16} strokeWidth={2} />}
-                  bodyClassName="space-y-5 p-4 sm:p-5"
-                >
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Used</span>
-                      <span className="font-bold tabular-nums text-foreground">
-                        {formatBytes(storageUsed)} / {formatBytes(storageTotal)}
-                        {storageExtra > 0 && (
-                          <span className="ml-2 font-bold text-accent">+{formatBytes(storageExtra)} extra</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-[2px] bg-[#eef1f6]">
-                      <div
-                        className="h-full rounded-[2px] transition-all duration-300"
-                        style={{
-                          width: `${storagePct}%`,
-                          background: storageWarn ? "var(--score-bad)" : "var(--accent)",
-                        }}
-                      />
-                    </div>
-                    {storageWarn && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--score-bad)]">
-                        <AlertCircle size={11} />
-                        Storage almost full — buy more to keep saving reports and backups.
-                      </p>
-                    )}
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      Extra storage never expires and is applied on top of your plan allowance.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    {storagePkgList.length > 0
-                      ? storagePkgList.map(({ key, bytes, price_cents, label }) => (
-                          <div
-                            key={key}
-                            className="flex flex-col gap-3 rounded-[4px] border border-border bg-[#f7f9fc] p-4"
-                          >
-                            <div>
-                              <p className="text-lg font-bold text-foreground">{fmtCents(price_cents)}</p>
-                              <p className="mt-0.5 text-sm font-bold text-foreground">{formatBytes(bytes)}</p>
-                              <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
-                            </div>
-                            <Button
-                              className="mt-auto w-full"
-                              onClick={() => handleAddonCheckout("storage", key)}
-                              loading={addonLoading === key}
-                              disabled={addonLoading !== null && addonLoading !== key}
-                            >
-                              Buy
-                            </Button>
-                          </div>
-                        ))
-                      : [1, 2, 3].map((i) => (
-                          <div key={i} className="h-28 animate-pulse rounded-[4px] border border-border bg-[#eef1f6]" />
-                        ))}
-                  </div>
-                </McCard>
-              );
-            })()
-          )
-        )}
-
-        {billingTab === "history" && (
-          <McCard
-            title="Purchase history"
-            icon={<Receipt size={16} strokeWidth={2} />}
-            bodyClassName="p-0 sm:p-0"
-            flush
-          >
-            {!historyLoaded ? (
-              <p className="p-4 text-xs text-muted-foreground">Loading…</p>
-            ) : history.length === 0 ? (
-              <EmptyState
-                icon={<Receipt size={26} className="text-muted-foreground/25" />}
-                title="No purchases yet"
-                description="Plan upgrades, token top-ups, and storage add-ons will appear here."
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-[#f7f9fc] text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                      <th className="px-4 py-2.5 text-left">Type</th>
-                      <th className="px-4 py-2.5 text-left">Details</th>
-                      <th className="px-4 py-2.5 text-right">Amount</th>
-                      <th className="px-4 py-2.5 text-right">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((tx) => {
-                      const meta = TX_META[tx.type] ?? TX_META.subscription;
-                      const Icon = meta.icon;
-                      return (
-                        <tr key={tx.id} className="border-b border-border/60 transition-colors hover:bg-[#f7f9fc]/80">
-                          <td className="px-4 py-3">
-                            <McTag tone={meta.tone} icon={<Icon size={10} strokeWidth={2.5} />}>
-                              {meta.label}
-                            </McTag>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">
-                            {tx.type === "token_topup" && tx.tokens && `+${fmtTokens(tx.tokens)} tokens`}
-                            {tx.type === "storage_addon" && tx.bytes && `+${formatBytes(tx.bytes)} storage`}
-                            {tx.type === "subscription" && tx.plan && `${PLAN_LABELS[tx.plan] ?? tx.plan} plan`}
-                          </td>
-                          <td className="px-4 py-3 text-right text-xs font-bold tabular-nums text-foreground">
-                            {fmtCents(tx.amount_cents, tx.currency)}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right text-xs text-muted-foreground">
-                            {new Date(tx.created_at).toLocaleDateString("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </McCard>
-        )}
-
-        {billingTab === "coupon" && (
-          <McCard
-            title="Redeem coupon"
-            icon={<Tag size={16} strokeWidth={2} />}
-            bodyClassName="space-y-4 p-4 sm:p-5"
-          >
-            <p className="text-xs text-muted-foreground">
-              Have a coupon code? Enter it below to upgrade your plan or unlock features.
-            </p>
-            <div className="flex max-w-md items-start gap-3">
-              <div className="relative flex-1">
-                <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="ENTER-COUPON-CODE"
-                  className="rounded-[4px] pl-8 font-mono uppercase tracking-widest"
-                  onKeyDown={(e) => e.key === "Enter" && handleCouponRedeem()}
-                />
-              </div>
-              <Button onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>
-                Apply
-              </Button>
-            </div>
-          </McCard>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BillingTab() {
-  return <Suspense fallback={<div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>}><BillingContent /></Suspense>;
-}
-
-// ── MAIN PAGE ──────────────────────────────────────────────────────────────────
+// â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SettingsPageInner() {
   const searchParams = useSearchParams();
@@ -1738,6 +1087,13 @@ function SettingsPageInner() {
   };
 
   const [activeTab, setActiveTab] = useState<Tab>(getValidTab);
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "billing") {
+      const q = searchParams.toString().replace(/^tab=billing&?/, "").replace(/^&/, "");
+      router.replace(q ? `/billing?${q}` : "/billing");
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     setActiveTab(getValidTab());
@@ -1788,18 +1144,14 @@ function SettingsPageInner() {
         </div>
 
         <div className="min-w-0 flex-1 bg-white">
-          {activeTab === "billing" ? (
-            <BillingTab />
-          ) : (
-            <div className="p-6">
-              {activeTab === "general"       && <GeneralTab />}
-              {activeTab === "branding"      && <BrandingTab />}
-              {activeTab === "notifications" && <NotificationsTab />}
-              {activeTab === "activity"      && <ActivityTab />}
-              {activeTab === "team"          && <TeamTab />}
-              {activeTab === "integrations"  && <IntegrationsTab />}
-            </div>
-          )}
+          <div className="p-6">
+            {activeTab === "general"       && <GeneralTab />}
+            {activeTab === "branding"      && <BrandingTab />}
+            {activeTab === "notifications" && <NotificationsTab />}
+            {activeTab === "activity"      && <ActivityTab />}
+            {activeTab === "team"          && <TeamTab />}
+            {activeTab === "integrations"  && <IntegrationsTab />}
+          </div>
         </div>
       </div>
     </div>

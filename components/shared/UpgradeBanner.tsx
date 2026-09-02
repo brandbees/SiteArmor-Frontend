@@ -22,7 +22,7 @@ export function UpgradeBanner({ message, compact = false }: UpgradeBannerProps) 
         <span className={cn("text-sm text-accent", compact && "text-xs")}>{message}</span>
       </div>
       <Link
-        href="/settings?tab=billing"
+        href="/billing"
         className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-accent hover:underline"
       >
         Upgrade plan

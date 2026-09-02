@@ -583,7 +583,7 @@ export function MalCareDashboard({
               </div>
             </McStatCard>
 
-            <McStatCard label="Plans" href="/settings?tab=billing" icon={<CircleDollarSign size={24} strokeWidth={1.5} />}>
+            <McStatCard label="Plans & Billing" href="/billing" icon={<CircleDollarSign size={24} strokeWidth={1.5} />}>
               <div className="flex flex-col gap-1 rounded-lg">
                 <div className="flex w-full items-end justify-between">
                   <div className="flex items-end gap-0">

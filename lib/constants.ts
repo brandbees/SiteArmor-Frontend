@@ -31,9 +31,9 @@ export const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = 
 
 export const PLAN_FEATURES: Record<string, string[]> = {
   free: ["1 site", "1 seat", "Manual audits only", "Basic reports", "1,000 AI tokens/mo"],
-  freemium: ["10 sites", "3 seats", "Scheduled audits", "White-label reports", "Email alerts", "Team management", "5,000 AI tokens/mo"],
-  premium: ["50 sites", "10 seats", "Everything in Starter", "PDF reports", "Client portal", "Safe plugin updates with auto-rollback", "Automated site backups & restores", "Priority support", "20,000 AI tokens/mo"],
-  agency_plus: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "AI agent", "Custom domain", "Dedicated support", "100,000 AI tokens/mo"],
+  freemium: ["10 sites", "3 seats", "Scheduled audits", "White-label reports", "Email alerts", "AI agent (chat)", "5,000 AI tokens/mo"],
+  premium: ["50 sites", "10 seats", "Everything in Starter", "PDF reports", "Client portal", "Safe plugin updates with auto-rollback", "Automated backups", "AI agent + optimize", "20,000 AI tokens/mo"],
+  agency_plus: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "SSH server control", "Custom domain", "Dedicated support", "100,000 AI tokens/mo"],
 };
 
 // Monthly AI token budget per plan (must match AI_TOKEN_LIMITS in routes/agent.js and usageService.js)

@@ -846,9 +846,9 @@ function LockedSshBar() {
       <div className="flex items-center gap-2 text-muted-foreground">
         <Lock size={11} className="shrink-0" />
         <span className="font-medium">SSH Access</span>
-        <span className="text-gray-400">· Upgrade to Agency plan to unlock full server control</span>
+        <span className="text-gray-400">· Upgrade to Agency+ for full SSH server control</span>
       </div>
-      <Link href="/settings?tab=billing"
+      <Link href="/billing"
         className="text-[11px] font-semibold hover:underline"
         style={{ color: "var(--accent)" }}>
         Upgrade
@@ -1023,7 +1023,7 @@ function SshUpgradeModal({ onClose }: { onClose: () => void }) {
           </div>
           <h2 className="text-base font-bold text-foreground mb-2">SSH Access Required</h2>
           <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
-            Advanced operations beyond the 27 predefined actions require SSH access, available on Agency and Agency Plus plans.
+            Advanced operations beyond the 27 predefined actions require SSH access, available on Agency+ plans.
           </p>
           <div className="bg-gray-50 rounded-xl p-4 mb-5 text-left text-[11px] space-y-2">
             <p className="font-semibold text-foreground">Upgrade to unlock:</p>
@@ -1042,10 +1042,10 @@ function SshUpgradeModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </div>
-          <Link href="/settings?tab=billing"
+          <Link href="/billing"
             className="block w-full py-2.5 rounded-xl text-white text-sm font-semibold text-center mb-2 transition-opacity hover:opacity-90"
             style={{ background: "var(--accent)" }}>
-            Upgrade to Agency Plan
+            Upgrade to Agency+
           </Link>
           <button onClick={onClose}
             className="w-full py-2 rounded-xl border border-border text-sm text-muted-foreground hover:bg-gray-50 transition-colors">
@@ -1580,7 +1580,7 @@ export function AgentPanel({
                 <p key={q} className="text-sm italic text-muted-foreground">{q}</p>
               ))}
             </div>
-            <Link href="/settings?tab=billing&from=%2Fagent">
+            <Link href="/billing?from=%2Fagent">
               <Button>
                 <Zap size={14} />
                 Upgrade to unlock
