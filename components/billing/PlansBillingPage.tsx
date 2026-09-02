@@ -15,7 +15,7 @@ import { McAlert, McCard, McIconBox, McPill, McTag } from "@/components/shared/M
 import { ScrollFadeRow } from "@/components/shared/ScrollFadeRow";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES } from "@/lib/constants";
+import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES, resolvePlanCode, getPlanPrice, getPlanLabel } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Site } from "@/types";
 
@@ -83,12 +83,19 @@ const BILLING_TABS = [
   { id: "coupon", label: "Coupon" },
 ] as const;
 
-const AGENT_BY_PLAN: Record<PlanKey, string> = {
+const AGENT_BY_PLAN: Record<string, string> = {
   free: "Locked — upgrade to Starter",
   freemium: "Chat & remediate",
   premium: "Chat, remediate & optimize",
+  agency: "Full agent + SSH server control",
   agency_plus: "Full agent + SSH server control",
 };
+
+function planRank(code: string): number {
+  const order = ["free", "freemium", "premium", "agency", "agency_plus"];
+  const i = order.indexOf(code);
+  return i === -1 ? 0 : i;
+}
 function BillingContent() {
   const { agency, refreshAgency } = useAuth();
   const searchParams = useSearchParams();
@@ -119,9 +126,12 @@ function BillingContent() {
     }
   }, [sectionParam]);
 
-  const currentPlan  = (agency?.plan ?? "free") as PlanKey;
-  const sitesLimit   = PLAN_LIMITS[currentPlan] ?? 1;
-  const seatsLimit   = PLAN_SEATS[currentPlan] ?? 1;
+  const rawPlan = agency?.plan ?? "free";
+  const currentPlan = resolvePlanCode(rawPlan) as PlanKey;
+  const currentPlanLabel = getPlanLabel(rawPlan);
+  const currentPlanPrice = getPlanPrice(rawPlan);
+  const sitesLimit   = PLAN_LIMITS[rawPlan] ?? PLAN_LIMITS[currentPlan] ?? 1;
+  const seatsLimit   = PLAN_SEATS[rawPlan] ?? PLAN_SEATS[currentPlan] ?? 1;
   const isIndividual = agency?.account_type === "individual";
 
   // Dynamic storage limit â€” live from API, fallback to constant
@@ -304,11 +314,11 @@ function BillingContent() {
               <McCard bodyClassName="p-4 space-y-3">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Current plan</p>
                 <div>
-                  <p className="text-xl font-bold text-foreground">{PLAN_LABELS[currentPlan]}</p>
+                  <p className="text-xl font-bold text-foreground">{currentPlanLabel}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {PLAN_PRICES[currentPlan].monthly === 0
+                    {currentPlanPrice.monthly === 0
                       ? "Free"
-                      : `$${PLAN_PRICES[currentPlan].monthly}/month`}
+                      : `$${currentPlanPrice.monthly}/month`}
                   </p>
                 </div>
                 {currentPlan !== "free" && (
@@ -324,14 +334,21 @@ function BillingContent() {
               </McCard>
             </div>
 
+            {rawPlan === "agency" && (
+              <McAlert variant="info" title="Legacy Agency plan">
+                You&apos;re on our legacy Agency plan. Your features remain active. Upgrade to Agency+ anytime for higher token limits and priority support.
+              </McAlert>
+            )}
+
             <div className="space-y-4">
               <p className="text-sm font-bold text-foreground">Available plans</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {PLANS.map((plan) => {
-                  const isCurrent = plan === currentPlan;
-                  const price = PLAN_PRICES[plan].monthly;
-                  const isDowngrade = PLANS.indexOf(plan) < PLANS.indexOf(currentPlan);
+                  const isCurrent = rawPlan === plan || (rawPlan === "agency" && plan === "agency_plus");
+                  const price = getPlanPrice(plan).monthly;
+                  const isDowngrade = planRank(plan) < planRank(rawPlan);
                   const limits = planLimits[plan];
+                  const features = PLAN_FEATURES[plan] ?? [];
                   return (
                     <div
                       key={plan}
@@ -363,7 +380,7 @@ function BillingContent() {
                         </div>
                       )}
                       <ul className="flex-1 space-y-2">
-                        {PLAN_FEATURES[plan].map((f) => (
+                        {features.map((f) => (
                           <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
                             <Check size={12} className="mt-0.5 shrink-0 text-[var(--score-good)]" strokeWidth={2.5} />
                             <span>{f}</span>
@@ -402,7 +419,7 @@ function BillingContent() {
                     )}
                   >
                     <p className="text-xs font-bold text-foreground">{PLAN_LABELS[plan]}</p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">{AGENT_BY_PLAN[plan]}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{AGENT_BY_PLAN[plan] ?? AGENT_BY_PLAN.free}</p>
                   </div>
                 ))}
               </div>

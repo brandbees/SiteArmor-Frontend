@@ -5,6 +5,7 @@ export const PLAN_LIMITS: Record<string, number> = {
   free: 1,
   freemium: 10,
   premium: 50,
+  agency: 9999,
   agency_plus: 9999,
 };
 
@@ -12,6 +13,7 @@ export const PLAN_LABELS: Record<string, string> = {
   free: "Free",
   freemium: "Starter",
   premium: "Growth",
+  agency: "Agency",
   agency_plus: "Agency+",
 };
 
@@ -19,6 +21,7 @@ export const PLAN_SEATS: Record<string, number> = {
   free: 1,
   freemium: 3,
   premium: 10,
+  agency: 9999,
   agency_plus: 9999,
 };
 
@@ -26,6 +29,7 @@ export const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = 
   free: { monthly: 0, annual: 0 },
   freemium: { monthly: 29, annual: 24 },
   premium: { monthly: 79, annual: 67 },
+  agency: { monthly: 99, annual: 84 },
   agency_plus: { monthly: 149, annual: 126 },
 };
 
@@ -33,8 +37,25 @@ export const PLAN_FEATURES: Record<string, string[]> = {
   free: ["1 site", "1 seat", "Manual audits only", "Basic reports", "1,000 AI tokens/mo"],
   freemium: ["10 sites", "3 seats", "Scheduled audits", "White-label reports", "Email alerts", "AI agent (chat)", "5,000 AI tokens/mo"],
   premium: ["50 sites", "10 seats", "Everything in Starter", "PDF reports", "Client portal", "Safe plugin updates with auto-rollback", "Automated backups", "AI agent + optimize", "20,000 AI tokens/mo"],
+  agency: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "SSH server control", "White-label branding", "50,000 AI tokens/mo"],
   agency_plus: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "SSH server control", "Custom domain", "Dedicated support", "100,000 AI tokens/mo"],
 };
+
+/** Legacy or unknown plan codes from the API — never crash billing UI */
+export function resolvePlanCode(plan?: string | null): string {
+  if (!plan) return "free";
+  if (plan in PLAN_PRICES) return plan;
+  return "free";
+}
+
+export function getPlanPrice(plan?: string | null) {
+  return PLAN_PRICES[resolvePlanCode(plan)] ?? PLAN_PRICES.free;
+}
+
+export function getPlanLabel(plan?: string | null) {
+  const code = plan ?? "free";
+  return PLAN_LABELS[code] ?? PLAN_LABELS[resolvePlanCode(code)] ?? code;
+}
 
 // Monthly AI token budget per plan (must match AI_TOKEN_LIMITS in routes/agent.js and usageService.js)
 export const PLAN_TOKEN_LIMITS: Record<string, number> = {
