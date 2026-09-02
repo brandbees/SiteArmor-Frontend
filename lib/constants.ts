@@ -57,6 +57,19 @@ export function getPlanLabel(plan?: string | null) {
   return PLAN_LABELS[code] ?? PLAN_LABELS[resolvePlanCode(code)] ?? code;
 }
 
+/** DB limit wins when set; legacy agency/agency+ always unlimited sites */
+export function effectiveSitesLimit(plan?: string | null, dbLimit?: number | null): number {
+  const code = plan ?? "free";
+  if (code === "agency" || code === "agency_plus") return dbLimit && dbLimit > 1 ? dbLimit : 9999;
+  return dbLimit ?? PLAN_LIMITS[code] ?? 1;
+}
+
+export function effectiveSeatsLimit(plan?: string | null, dbLimit?: number | null): number {
+  const code = plan ?? "free";
+  if (code === "agency" || code === "agency_plus") return dbLimit && dbLimit > 1 ? dbLimit : 9999;
+  return dbLimit ?? PLAN_SEATS[code] ?? 1;
+}
+
 // Monthly AI token budget per plan (must match AI_TOKEN_LIMITS in routes/agent.js and usageService.js)
 export const PLAN_TOKEN_LIMITS: Record<string, number> = {
   free:         1_000,

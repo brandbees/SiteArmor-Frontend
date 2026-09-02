@@ -16,7 +16,7 @@ import { PortalPageShell } from "@/components/layout/PortalPageShell";
 import { ScrollFadeRow } from "@/components/shared/ScrollFadeRow";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES, resolvePlanCode, getPlanPrice, getPlanLabel } from "@/lib/constants";
+import { PLAN_LABELS, PLAN_LIMITS, PLAN_SEATS, PLAN_PRICES, PLAN_FEATURES, resolvePlanCode, getPlanPrice, getPlanLabel, effectiveSitesLimit, effectiveSeatsLimit } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Site } from "@/types";
 
@@ -104,6 +104,7 @@ function BillingContent() {
 
   const [sites, setSites]           = useState<Site[]>([]);
   const [seatsUsed, setSeatsUsed]   = useState(1);
+  const [seatsLimit, setSeatsLimit] = useState(1);
   const [couponCode, setCouponCode] = useState("");
   const [redeemLoading, setRedeemLoading]   = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
@@ -128,19 +129,24 @@ function BillingContent() {
   }, [sectionParam]);
 
   const rawPlan = agency?.plan ?? "free";
+  const isLegacyAgency = rawPlan === "agency";
   const currentPlan = resolvePlanCode(rawPlan) as PlanKey;
   const currentPlanLabel = getPlanLabel(rawPlan);
   const currentPlanPrice = getPlanPrice(rawPlan);
-  const sitesLimit   = PLAN_LIMITS[rawPlan] ?? PLAN_LIMITS[currentPlan] ?? 1;
-  const seatsLimit   = PLAN_SEATS[rawPlan] ?? PLAN_SEATS[currentPlan] ?? 1;
+  const sitesLimit = effectiveSitesLimit(rawPlan, agency?.sites_limit);
   const isIndividual = agency?.account_type === "individual";
 
-  // Dynamic storage limit â€” live from API, fallback to constant
-  const dynStorageLimit = planLimits[currentPlan]?.storage ?? 524_288_000;
+  // Dynamic storage limit — live from API for the actual plan code
+  const dynStorageLimit = planLimits[rawPlan]?.storage ?? planLimits[currentPlan]?.storage ?? 524_288_000;
 
   useEffect(() => {
     api.get<{ sites: Site[] }>("/sites").then(({ data }) => setSites(data.sites ?? [])).catch(() => {});
-    api.get<{ seats_used: number }>("/team").then(({ data }) => setSeatsUsed(data.seats_used)).catch(() => {});
+    api.get<{ seats_used: number; seats_limit: number }>("/team")
+      .then(({ data }) => {
+        setSeatsUsed(data.seats_used);
+        setSeatsLimit(effectiveSeatsLimit(agency?.plan, data.seats_limit));
+      })
+      .catch(() => {});
     api.get<TokenState>("/agent/tokens").then(({ data }) => setTokenState(data)).catch(() => {});
     api.get<{ packages: Record<string, TokenPackage> }>("/billing/tokens/packages")
       .then(({ data }) => setTokenPkgs(data.packages)).catch(() => {});
@@ -343,9 +349,27 @@ function BillingContent() {
 
             <div className="space-y-4">
               <p className="text-sm font-bold text-foreground">Available plans</p>
+
+              {isLegacyAgency && (
+                <div className="rounded-2xl border border-accent/35 bg-accent-light/25 p-5 ring-1 ring-inset ring-accent/10">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <McTag tone="accent">Your current plan</McTag>
+                      <p className="mt-2 text-lg font-bold text-foreground">Agency (Legacy)</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        ${currentPlanPrice.monthly}/mo · Unlimited sites & seats · SSH + full AI agent
+                      </p>
+                    </div>
+                    <Button onClick={() => handleUpgrade("agency_plus")} loading={checkoutLoading === "agency_plus"}>
+                      Upgrade to Agency+
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {PLANS.map((plan) => {
-                  const isCurrent = rawPlan === plan || (rawPlan === "agency" && plan === "agency_plus");
+                  const isCurrent = rawPlan === plan;
                   const price = getPlanPrice(plan).monthly;
                   const isDowngrade = planRank(plan) < planRank(rawPlan);
                   const limits = planLimits[plan];
@@ -416,7 +440,7 @@ function BillingContent() {
                     key={plan}
                     className={cn(
                       "rounded-xl border px-3 py-2.5",
-                      plan === currentPlan ? "border-accent/30 bg-accent-light/20" : "border-zinc-200 bg-zinc-50"
+                      plan === rawPlan ? "border-accent/30 bg-accent-light/20" : "border-zinc-200 bg-zinc-50"
                     )}
                   >
                     <p className="text-xs font-bold text-foreground">{PLAN_LABELS[plan]}</p>
@@ -430,7 +454,7 @@ function BillingContent() {
               {[
                 { icon: Globe, title: `${sitesLimit >= 9999 ? "Unlimited" : sitesLimit} site${sitesLimit === 1 ? "" : "s"}`, sub: "Monitored and audited", show: true },
                 { icon: Users, title: `${seatsLimit >= 9999 ? "Unlimited" : seatsLimit} seats`, sub: "Team members included", show: !isIndividual },
-                { icon: Zap, title: "Scheduled audits", sub: currentPlan === "free" ? "Upgrade to enable" : "Weekly & monthly", show: true },
+                { icon: Zap, title: "Scheduled audits", sub: rawPlan === "free" ? "Upgrade to enable" : "Weekly & monthly", show: true },
               ]
                 .filter((s) => s.show)
                 .map(({ icon: Icon, title, sub }) => (
