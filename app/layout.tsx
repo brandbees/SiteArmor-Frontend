@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, Space_Grotesk } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { BrandingInit } from "@/components/BrandingInit";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
-const portalDisplay = Space_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-portal-display",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -39,7 +37,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} ${portalDisplay.variable} ${setupAccent.variable}`} suppressHydrationWarning>
+      <body className={`${inter.className} ${inter.variable} ${setupAccent.variable}`} suppressHydrationWarning>
         <BrandingInit />
         {children}
         <Toaster

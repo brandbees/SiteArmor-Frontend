@@ -108,8 +108,8 @@ html.dark {
   --color-score-good: var(--score-good);
   --color-score-warn: var(--score-warn);
   --color-score-bad: var(--score-bad);
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-inter), "Inter", "Inter Fallback", system-ui, sans-serif;
   --radius: var(--radius);
   --ease-out: var(--ease-out);
   --duration-fast: var(--duration-fast);

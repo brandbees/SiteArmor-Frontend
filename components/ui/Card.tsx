@@ -25,7 +25,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-surface",
+        "rounded-2xl border border-zinc-200 bg-surface",
         featured && "border-accent/25",
         hover && "cursor-pointer transition-colors hover:border-accent/35",
         paddingMap[padding],
@@ -61,7 +61,7 @@ export function CardTitle({
   return (
     <h2
       className={cn(
-        "font-portal-display text-base font-bold tracking-tight text-foreground",
+        "text-base font-semibold tracking-tight text-foreground",
         className
       )}
     >

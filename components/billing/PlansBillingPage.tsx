@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { McAlert, McCard, McIconBox, McPill, McTag } from "@/components/shared/MalCareUI";
+import { PortalPageShell } from "@/components/layout/PortalPageShell";
 import { ScrollFadeRow } from "@/components/shared/ScrollFadeRow";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
@@ -267,7 +268,7 @@ function BillingContent() {
 
   return (
     <div className="flex min-w-0 flex-col">
-      <div className="shrink-0 border-b border-border bg-white px-4 sm:px-6">
+      <div className="shrink-0 border-b border-zinc-200 bg-white px-4 sm:px-6">
         <ScrollFadeRow innerClassName="flex gap-0">
           {BILLING_TABS.map(({ id, label }) => {
             const active = billingTab === id;
@@ -353,10 +354,10 @@ function BillingContent() {
                     <div
                       key={plan}
                       className={cn(
-                        "flex flex-col gap-4 rounded-[4px] border p-5 shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
+                        "flex flex-col gap-4 rounded-2xl border p-5 shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
                         isCurrent
                           ? "border-accent/35 bg-accent-light/25 ring-1 ring-inset ring-accent/10"
-                          : "border-border bg-white"
+                          : "border-zinc-200 bg-white"
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -414,8 +415,8 @@ function BillingContent() {
                   <div
                     key={plan}
                     className={cn(
-                      "rounded-[4px] border px-3 py-2.5",
-                      plan === currentPlan ? "border-accent/30 bg-accent-light/20" : "border-border bg-[#f7f9fc]"
+                      "rounded-xl border px-3 py-2.5",
+                      plan === currentPlan ? "border-accent/30 bg-accent-light/20" : "border-zinc-200 bg-zinc-50"
                     )}
                   >
                     <p className="text-xs font-bold text-foreground">{PLAN_LABELS[plan]}</p>
@@ -435,7 +436,7 @@ function BillingContent() {
                 .map(({ icon: Icon, title, sub }) => (
                   <div
                     key={title}
-                    className="flex items-center gap-3 rounded-[4px] border border-border bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]"
+                    className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]"
                   >
                     <McIconBox icon={<Icon size={16} strokeWidth={2} />} tone="neutral" size="sm" />
                     <div className="min-w-0">
@@ -737,25 +738,18 @@ function BillingContent() {
 }
 
 export function PlansBillingPage({ showHeader = true }: { showHeader?: boolean }) {
+  if (!showHeader) {
+    return <BillingContent />;
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f4f4f5]">
-      {showHeader && (
-        <div className="shrink-0 border-b border-border bg-white px-4 py-5 sm:px-6">
-          <div className="flex items-center gap-3">
-            <McIconBox icon={<CircleDollarSign size={18} strokeWidth={2.25} />} tone="accent" />
-            <div>
-              <h1 className="font-portal-display text-[1.75rem] font-bold leading-none tracking-tight text-foreground">
-                Plans & Billing
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Manage your plan, AI tokens, storage, and purchase history.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+    <PortalPageShell
+      title="Plans & Billing"
+      description="Manage your plan, AI tokens, storage, and purchase history"
+      icon={<CircleDollarSign size={22} strokeWidth={1.25} />}
+    >
       <BillingContent />
-    </div>
+    </PortalPageShell>
   );
 }
 

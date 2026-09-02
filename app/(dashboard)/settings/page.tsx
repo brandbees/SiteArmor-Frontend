@@ -20,6 +20,7 @@ import { IconChip } from "@/components/ui/IconChip";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { McAlert, McCard, McIconBox, McPill, McTag } from "@/components/shared/MalCareUI";
+import { PortalPageShell } from "@/components/layout/PortalPageShell";
 import { ScrollFadeRow } from "@/components/shared/ScrollFadeRow";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -1106,21 +1107,13 @@ function SettingsPageInner() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <McIconBox icon={<Settings size={18} strokeWidth={2.25} />} tone="accent" />
-        <div>
-          <h1 className="font-portal-display text-[1.75rem] font-bold leading-none tracking-tight text-foreground">
-            Settings
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Customize branding and account settings.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col overflow-hidden rounded-[4px] border border-border bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)] lg:flex-row">
-        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border p-3 lg:w-56 lg:flex-col lg:overflow-x-visible lg:border-b-0 lg:border-r lg:bg-[#f7f9fc]">
+    <PortalPageShell
+      title="Settings"
+      description="Customize branding and account settings"
+      icon={<Settings size={22} strokeWidth={1.25} />}
+    >
+      <div className="flex min-h-full flex-col lg:flex-row">
+        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-zinc-200 p-3 lg:w-56 lg:flex-col lg:overflow-x-visible lg:border-b-0 lg:border-r lg:bg-zinc-50">
           {visibleTabs.map(({ id, label, icon: Icon }) => {
             const active = activeTab === id;
             return (
@@ -1130,7 +1123,7 @@ function SettingsPageInner() {
                 data-tab={id}
                 onClick={() => handleTabChange(id)}
                 className={cn(
-                  "flex items-center gap-2.5 whitespace-nowrap rounded-[4px] px-3 py-2.5 text-left text-[13px] font-semibold transition-colors",
+                  "flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold transition-colors",
                   active
                     ? "bg-accent-light text-accent ring-1 ring-inset ring-accent/15"
                     : "text-muted-foreground hover:bg-white hover:text-foreground"
@@ -1154,7 +1147,7 @@ function SettingsPageInner() {
           </div>
         </div>
       </div>
-    </div>
+    </PortalPageShell>
   );
 }
 

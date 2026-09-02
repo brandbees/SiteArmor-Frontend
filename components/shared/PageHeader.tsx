@@ -20,7 +20,7 @@ export function PageHeader({
     <div className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
       <div className="flex min-w-0 items-center gap-3">
         {icon ? (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-950">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-950">
             {icon}
           </span>
         ) : null}

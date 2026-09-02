@@ -116,7 +116,7 @@ export function McCard({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col overflow-hidden rounded-[4px] border border-border bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
+        "flex min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
         className
       )}
     >
