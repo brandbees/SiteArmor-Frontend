@@ -179,7 +179,7 @@ export default function DashboardLayout({
               "min-w-0 flex-1 overflow-x-auto",
               isDashboard ? "flex flex-col bg-[#f4f4f5]" : "bg-[#f4f4f5]",
               isFullBleed ? "p-0" : "p-4 md:p-5",
-              isAgent || isSiteDetail || isSetup || pathname?.startsWith("/reports")
+              isAgent || isSiteDetail || isSetup || pathname === "/billing" || pathname?.startsWith("/reports")
                 ? "flex flex-col overflow-hidden"
                 : "overflow-y-auto"
             )}
