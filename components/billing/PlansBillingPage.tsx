@@ -129,9 +129,10 @@ function planRank(code: string): number {
 function limitLabel(n: number) {
   return n >= 9999 ? "Unlimited" : String(n);
 }
-function defaultPreview(rawPlan: string, current: PlanKey): PlanKey {
+function defaultPreview(rawPlan: string, current: string): PlanKey {
   const next = PLANS.find((p) => p !== "free" && planRank(p) > planRank(rawPlan));
-  return next ?? current;
+  if (next) return next;
+  return (PLANS.includes(current as PlanKey) ? current : "agency_plus") as PlanKey;
 }
 
 export function PlansBillingPage() {
@@ -166,7 +167,7 @@ export function PlansBillingPage() {
 
   const rawPlan = agency?.plan ?? "free";
   const isLegacyAgency = rawPlan === "agency";
-  const currentPlan = resolvePlanCode(rawPlan) as PlanKey;
+  const currentPlan = resolvePlanCode(rawPlan);
   const currentPlanLabel = getPlanLabel(rawPlan);
   const currentPlanPrice = getPlanPrice(rawPlan);
   const sitesLimit = effectiveSitesLimit(rawPlan, agency?.sites_limit);
@@ -177,6 +178,8 @@ export function PlansBillingPage() {
   const focusedPrice = getPlanPrice(focusedPlan).monthly;
   const focusedIsCurrent = rawPlan === focusedPlan;
   const focusedIsDowngrade = planRank(focusedPlan) < planRank(rawPlan);
+  const focusedIndex = PLANS.indexOf(focusedPlan);
+  const currentTrackIndex = PLANS.indexOf(rawPlan as PlanKey);
 
   useEffect(() => {
     api.get<{ sites: Site[] }>("/sites").then(({ data }) => setSites(data.sites ?? [])).catch(() => {});
@@ -312,93 +315,51 @@ export function PlansBillingPage() {
   const storageUsed = agency?.storage_used_bytes ?? 0;
   const storageTotal = dynStorageLimit + storageExtra;
   const tokensLeft = Math.max(monthlyBase - planUsed, 0);
-
-  const tabs = (
-    <>
-      {BILLING_TABS.map(({ id, label }) => {
-        const active = billingTab === id;
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setBillingTab(id)}
-            className={cn(
-              "relative shrink-0 text-left text-sm transition-colors lg:pl-3",
-              active ? "font-semibold text-white" : "font-medium text-white/45 hover:text-white"
-            )}
-          >
-            {label}
-            {active && (
-              <>
-                <span className="absolute -bottom-1 left-0 h-px w-6 bg-white lg:hidden" />
-                <span className="absolute left-0 top-1.5 hidden h-3 w-px bg-white lg:block" />
-              </>
-            )}
-          </button>
-        );
-      })}
-    </>
-  );
+  const isFree = currentPlan === "free";
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white lg:flex-row">
-      <aside className="relative shrink-0 overflow-hidden bg-[#102850] text-white lg:flex lg:w-[300px] lg:flex-col xl:w-[340px]">
+    <div className="flex h-full min-h-0 flex-col bg-[#f4f4f5]">
+      <nav className="shrink-0 border-b border-zinc-200 bg-white">
+        <ScrollFadeRow fadeFrom="from-white" innerClassName="flex px-4 sm:px-8">
+          {BILLING_TABS.map(({ id, label }) => {
+            const active = billingTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setBillingTab(id)}
+                className={cn(
+                  "relative shrink-0 px-3 py-3.5 text-sm transition-colors sm:px-4",
+                  active ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-800"
+                )}
+              >
+                {label}
+                <span
+                  className={cn(
+                    "absolute inset-x-3 bottom-0 h-0.5 bg-accent transition-opacity",
+                    active ? "opacity-100" : "opacity-0"
+                  )}
+                />
+              </button>
+            );
+          })}
+        </ScrollFadeRow>
+      </nav>
+
+      <div className="relative min-h-0 flex-1 overflow-auto">
         <div
-          className="pointer-events-none absolute inset-0"
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-56"
           style={{
             background:
-              "radial-gradient(520px 280px at 0% 0%, rgb(26 86 219 / 0.35), transparent 58%)",
+              "linear-gradient(180deg, rgb(232 238 249 / 0.9) 0%, rgb(244 244 245 / 0) 100%)",
           }}
         />
-        <div className="relative px-6 pb-5 pt-6 lg:flex lg:flex-1 lg:flex-col lg:px-8 lg:pb-8 lg:pt-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/40">
-            Your plan
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight xl:text-5xl">
-            {currentPlanLabel}
-          </h1>
-          <p className="mt-2 text-lg text-white/55">
-            {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly}`}
-            {currentPlanPrice.monthly > 0 ? " / month" : ""}
-            {isLegacyAgency ? " — legacy" : ""}
-          </p>
 
-          <div className="mt-8 flex gap-8 lg:flex-col lg:gap-6">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">Sites</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">
-                {sites.length}
-                <span className="ml-1.5 text-sm font-medium text-white/35">/ {limitLabel(sitesLimit)}</span>
-              </p>
-            </div>
-            {!isIndividual && (
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">Seats</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">
-                  {seatsUsed}
-                  <span className="ml-1.5 text-sm font-medium text-white/35">/ {limitLabel(seatsLimit)}</span>
-                </p>
-              </div>
-            )}
-          </div>
-
-          <nav className="mt-8 hidden flex-col gap-3.5 lg:mt-auto lg:flex">
-            {tabs}
-          </nav>
-        </div>
-
-        <div className="relative border-t border-white/10 px-6 lg:hidden">
-          <ScrollFadeRow fadeFrom="from-[#102850]" innerClassName="flex gap-5 py-3.5">
-            {tabs}
-          </ScrollFadeRow>
-        </div>
-      </aside>
-
-      <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-        <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
+        <div className="relative mx-auto max-w-5xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
           {checkoutError && (
             <div className="mb-8 flex items-start justify-between gap-3 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <p className="flex items-center gap-2 font-medium">
+              <p className="flex items-center gap-2">
                 <AlertCircle size={16} />
                 {checkoutError}
               </p>
@@ -410,14 +371,42 @@ export function PlansBillingPage() {
 
           {billingTab === "plans" && (
             <div className="animate-fade-in">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm text-zinc-500">Current plan</p>
+                  <h1 className="mt-1 text-2xl font-medium tracking-tight text-zinc-900">
+                    {currentPlanLabel}
+                    {isLegacyAgency ? (
+                      <span className="ml-2 text-sm font-normal text-zinc-400">legacy</span>
+                    ) : null}
+                  </h1>
+                </div>
+                <p className="text-sm text-zinc-500">
+                  {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly} / month`}
+                </p>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-sm text-zinc-500">
+                <p>
+                  <span className="text-zinc-800">{sites.length}</span>
+                  {" / "}
+                  {limitLabel(sitesLimit)} sites
+                </p>
+                {!isIndividual && (
+                  <p>
+                    <span className="text-zinc-800">{seatsUsed}</span>
+                    {" / "}
+                    {limitLabel(seatsLimit)} seats
+                  </p>
+                )}
+              </div>
+
               {isLegacyAgency && (
-                <div className="mb-10 flex flex-col gap-4 border-b border-zinc-200 pb-8 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-zinc-500">You&apos;re on a legacy Agency plan</p>
-                    <p className="mt-1 text-lg font-semibold text-zinc-950">Move to Agency+ for higher token limits</p>
-                  </div>
+                <div className="mt-8 flex flex-col gap-3 border-t border-zinc-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-zinc-600">
+                    Legacy Agency stays as-is. Agency+ adds a higher monthly token limit.
+                  </p>
                   <Button
-                    size="lg"
                     onClick={() => handleUpgrade("agency_plus")}
                     loading={checkoutLoading === "agency_plus"}
                   >
@@ -426,98 +415,108 @@ export function PlansBillingPage() {
                 </div>
               )}
 
-              <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-                    Change plan
-                  </p>
-                  <ul className="mt-4">
-                    {PLANS.map((plan) => {
-                      const isCurrent = rawPlan === plan;
-                      const price = getPlanPrice(plan).monthly;
-                      const selected = focusedPlan === plan;
-                      const recommended = plan === "premium" && planRank(rawPlan) < planRank("premium");
-                      return (
-                        <li key={plan}>
+              <div className="mt-12">
+                <p className="text-sm text-zinc-500">Choose a plan</p>
+                <ScrollFadeRow fadeFrom="from-[#f4f4f5]" className="mt-6" innerClassName="min-w-[640px] pb-1">
+                  <div className="relative">
+                    <div className="absolute left-[12.5%] right-[12.5%] top-[7px] h-px bg-zinc-200" />
+                    <div
+                      className="absolute top-[7px] h-px bg-accent transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      style={{
+                        left: "12.5%",
+                        width: `${(focusedIndex / 3) * 75}%`,
+                      }}
+                    />
+                    <div className="grid grid-cols-4">
+                      {PLANS.map((plan) => {
+                        const price = getPlanPrice(plan).monthly;
+                        const selected = focusedPlan === plan;
+                        const isCurrent = currentTrackIndex === PLANS.indexOf(plan);
+                        const recommended = plan === "premium" && planRank(rawPlan) < planRank("premium");
+                        return (
                           <button
+                            key={plan}
                             type="button"
                             onClick={() => setPreviewPlan(plan)}
-                            className={cn(
-                              "flex w-full items-baseline gap-4 border-b border-zinc-200 py-5 text-left transition-colors",
-                              selected ? "text-zinc-950" : "text-zinc-400 hover:text-zinc-700"
-                            )}
+                            aria-pressed={selected}
+                            className="group flex flex-col items-center px-2 pt-0 text-center"
                           >
-                            <span className="min-w-0 flex-1">
-                              <span className="flex items-center gap-2">
-                                <span className={cn("text-lg", selected ? "font-semibold" : "font-medium")}>
-                                  {PLAN_LABELS[plan]}
-                                </span>
-                                {isCurrent && (
-                                  <span className="text-[11px] font-semibold uppercase tracking-wider text-accent">
-                                    Current
-                                  </span>
-                                )}
-                                {recommended && !isCurrent && (
-                                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                                    Recommended
-                                  </span>
-                                )}
-                              </span>
+                            <span
+                              className={cn(
+                                "relative z-10 h-3.5 w-3.5 rounded-[2px] border-2 transition-all duration-300",
+                                selected
+                                  ? "scale-110 border-accent bg-accent"
+                                  : isCurrent
+                                    ? "border-accent bg-accent/20"
+                                    : "border-zinc-300 bg-[#f4f4f5] group-hover:border-accent/50"
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                "mt-4 text-sm transition-colors",
+                                selected ? "font-medium text-zinc-900" : "text-zinc-500 group-hover:text-zinc-800"
+                              )}
+                            >
+                              {PLAN_LABELS[plan]}
                             </span>
-                            <span className={cn("text-2xl tabular-nums", selected ? "font-semibold" : "font-medium")}>
+                            <span className="mt-1 text-sm tabular-nums text-zinc-400">
                               {price === 0 ? "Free" : `$${price}`}
                             </span>
+                            <span className="mt-1 h-4 text-xs text-accent">
+                              {isCurrent ? "Current" : recommended ? "Popular" : ""}
+                            </span>
                           </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </ScrollFadeRow>
+              </div>
+
+              <div key={focusedPlan} className="animate-fade-in mt-10 border-t border-zinc-200 pt-8">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-medium tracking-tight text-zinc-900">
+                      {PLAN_LABELS[focusedPlan]}
+                    </h2>
+                    <p className="mt-1 text-sm text-zinc-500">{focusedCopy.tagline}</p>
+                  </div>
+                  <p className="text-sm tabular-nums text-zinc-500">
+                    {focusedPrice === 0 ? "Free" : `$${focusedPrice} / month`}
+                  </p>
                 </div>
 
-                <div className="lg:sticky lg:top-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-                    {PLAN_LABELS[focusedPlan]}
-                  </p>
-                  <p className="mt-2 text-4xl font-semibold tracking-tight text-zinc-950">
-                    {focusedPrice === 0 ? "Free" : `$${focusedPrice}`}
-                    {focusedPrice > 0 && (
-                      <span className="ml-1 text-base font-medium text-zinc-400">/mo</span>
-                    )}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-500">{focusedCopy.tagline}</p>
-                  <ul className="mt-6 space-y-2.5">
-                    {focusedCopy.points.map((point) => (
-                      <li key={point} className="flex items-start gap-2.5 text-sm text-zinc-800">
-                        <Check size={16} className="mt-0.5 shrink-0 text-accent" strokeWidth={2.5} />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-8">
-                    {focusedIsCurrent ? (
-                      <p className="text-sm font-semibold text-accent">You&apos;re on this plan</p>
-                    ) : focusedIsDowngrade || focusedPlan === "free" ? (
-                      <p className="text-sm text-zinc-400">
-                        {focusedPlan === "free" ? "Included with every account" : "Lower tier"}
-                      </p>
-                    ) : (
-                      <Button
-                        size="lg"
-                        className="w-full sm:w-auto"
-                        onClick={() => handleUpgrade(focusedPlan)}
-                        loading={checkoutLoading === focusedPlan}
-                      >
-                        Upgrade to {PLAN_LABELS[focusedPlan]}
-                      </Button>
-                    )}
-                  </div>
+                <ul className="mt-6 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
+                  {focusedCopy.points.map((point) => (
+                    <li key={point} className="flex items-start gap-2.5 text-sm text-zinc-700">
+                      <Check size={15} className="mt-0.5 shrink-0 text-accent" strokeWidth={2} />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8">
+                  {focusedIsCurrent ? (
+                    <p className="text-sm text-zinc-500">You&apos;re on this plan</p>
+                  ) : focusedIsDowngrade || focusedPlan === "free" ? (
+                    <p className="text-sm text-zinc-400">
+                      {focusedPlan === "free" ? "Included with every account" : "Lower tier"}
+                    </p>
+                  ) : (
+                    <Button
+                      onClick={() => handleUpgrade(focusedPlan)}
+                      loading={checkoutLoading === focusedPlan}
+                    >
+                      Upgrade to {PLAN_LABELS[focusedPlan]}
+                    </Button>
+                  )}
                 </div>
               </div>
 
               {isIndividual && (
-                <p className="mt-12 text-sm text-zinc-500">
+                <p className="mt-10 text-sm text-zinc-500">
                   Need clients or a team?{" "}
-                  <a href="mailto:support@brandbees.io?subject=Switch to Agency account" className="font-semibold text-accent hover:underline">
+                  <a href="mailto:support@brandbees.io?subject=Switch to Agency account" className="text-accent hover:underline">
                     Contact us
                   </a>{" "}
                   to switch to an Agency account.
@@ -527,7 +526,7 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "tokens" && (
-            currentPlan === "free" ? (
+            isFree ? (
               <LockedPanel
                 title="Tokens are on paid plans"
                 body="Upgrade to Starter or above to get a monthly AI token allowance and buy extra packs."
@@ -560,7 +559,7 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "storage" && (
-            currentPlan === "free" ? (
+            isFree ? (
               <LockedPanel
                 title="Storage add-ons need a paid plan"
                 body="Upgrade to buy extra storage for reports and backups."
@@ -595,8 +594,8 @@ export function PlansBillingPage() {
 
           {billingTab === "history" && (
             <div className="animate-fade-in">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Purchases</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">History</h2>
+              <h2 className="text-xl font-medium tracking-tight text-zinc-900">Purchase history</h2>
+              <p className="mt-1 text-sm text-zinc-500">Plans, tokens, and storage</p>
               {!historyLoaded ? (
                 <p className="mt-8 text-sm text-zinc-500">Loading...</p>
               ) : history.length === 0 ? (
@@ -615,10 +614,10 @@ export function PlansBillingPage() {
                           ? `+${formatBytes(tx.bytes)} storage`
                           : `${PLAN_LABELS[tx.plan ?? ""] ?? tx.plan ?? "Plan"}`;
                     return (
-                      <li key={tx.id} className="flex items-center gap-4 border-b border-zinc-200 py-5">
-                        <Icon size={18} className="shrink-0 text-zinc-400" />
+                      <li key={tx.id} className="flex items-center gap-4 border-b border-zinc-200 py-4">
+                        <Icon size={16} className="shrink-0 text-zinc-400" />
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-zinc-950">{label}</p>
+                          <p className="text-sm text-zinc-800">{label}</p>
                           <p className="text-sm text-zinc-500">
                             {new Date(tx.created_at).toLocaleDateString("en-GB", {
                               day: "numeric",
@@ -627,7 +626,7 @@ export function PlansBillingPage() {
                             })}
                           </p>
                         </div>
-                        <p className="text-sm font-semibold tabular-nums text-zinc-950">
+                        <p className="text-sm tabular-nums text-zinc-700">
                           {fmtCents(tx.amount_cents, tx.currency)}
                         </p>
                       </li>
@@ -640,21 +639,20 @@ export function PlansBillingPage() {
 
           {billingTab === "coupon" && (
             <div className="animate-fade-in max-w-md">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Redeem</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">Have a coupon?</h2>
-              <p className="mt-2 text-sm text-zinc-500">Enter a code to upgrade your plan or unlock features.</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <h2 className="text-xl font-medium tracking-tight text-zinc-900">Have a coupon?</h2>
+              <p className="mt-1 text-sm text-zinc-500">Enter a code to upgrade your plan or unlock features.</p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <div className="relative flex-1">
                   <Tag size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <Input
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                     placeholder="ENTER-CODE"
-                    className="h-12 rounded-md pl-10 font-mono text-sm uppercase tracking-[0.2em]"
+                    className="h-11 rounded-md pl-10 font-mono text-sm uppercase tracking-[0.16em]"
                     onKeyDown={(e) => e.key === "Enter" && handleCouponRedeem()}
                   />
                 </div>
-                <Button size="lg" onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>
+                <Button onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>
                   Apply
                 </Button>
               </div>
@@ -669,9 +667,9 @@ export function PlansBillingPage() {
 function LockedPanel({ title, body, onCta }: { title: string; body: string; onCta: () => void }) {
   return (
     <div className="animate-fade-in max-w-lg">
-      <h2 className="text-3xl font-semibold tracking-tight text-zinc-950">{title}</h2>
+      <h2 className="text-xl font-medium tracking-tight text-zinc-900">{title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-zinc-500">{body}</p>
-      <Button className="mt-6" size="lg" onClick={onCta}>
+      <Button className="mt-6" onClick={onCta}>
         View plans
       </Button>
     </div>
@@ -704,23 +702,23 @@ function AddonPanel<T>({
   renderRow: (row: T) => ReactNode;
 }) {
   return (
-    <div className="animate-fade-in grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <div className="animate-fade-in grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">{kicker}</p>
-        <p className="mt-2 text-6xl font-semibold tracking-tight tabular-nums text-zinc-950">{amount}</p>
-        <p className="mt-2 text-sm text-zinc-500">{caption}</p>
-        <div className="mt-6 h-1 overflow-hidden bg-zinc-200">
+        <p className="text-sm text-zinc-500">{kicker}</p>
+        <p className="mt-1 text-4xl font-medium tracking-tight tabular-nums text-zinc-900">{amount}</p>
+        <p className="mt-1 text-sm text-zinc-500">{caption}</p>
+        <div className="mt-5 h-1 overflow-hidden bg-zinc-200">
           <div
             className={cn("h-full", warn ? "bg-red-500" : "bg-accent")}
             style={{ width: `${Math.min(100, (used / Math.max(total, 1)) * 100)}%` }}
           />
         </div>
-        {extra && <p className="mt-4 text-sm font-medium text-zinc-700">{extra}</p>}
-        <p className="mt-6 max-w-sm text-sm leading-relaxed text-zinc-500">{note}</p>
+        {extra && <p className="mt-4 text-sm text-zinc-600">{extra}</p>}
+        <p className="mt-5 max-w-sm text-sm leading-relaxed text-zinc-500">{note}</p>
       </div>
       <div>
         {loading
-          ? [1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse border-b border-zinc-100 bg-zinc-50" />)
+          ? [1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse border-b border-zinc-200" />)
           : rows.map(renderRow)}
       </div>
     </div>
@@ -743,9 +741,9 @@ function AddonRow({
   onBuy: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-zinc-200 py-5">
+    <div className="flex items-center justify-between gap-4 border-b border-zinc-200 py-4">
       <div>
-        <p className="text-lg font-semibold text-zinc-950">{title}</p>
+        <p className="text-sm text-zinc-800">{title}</p>
         <p className="text-sm text-zinc-500">{label}</p>
       </div>
       <Button onClick={onBuy} loading={loading} disabled={disabled}>
