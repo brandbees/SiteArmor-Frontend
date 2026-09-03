@@ -301,10 +301,19 @@ export function PlansBillingPage() {
         </ScrollFadeRow>
       </nav>
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
+      <div className="relative min-h-0 flex-1 overflow-auto">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-64"
+          style={{
+            background:
+              "radial-gradient(900px 220px at 10% -10%, rgb(26 86 219 / 0.10), transparent 55%), radial-gradient(700px 180px at 90% 0%, rgb(16 40 80 / 0.06), transparent 50%)",
+          }}
+        />
+
+        <div className="relative mx-auto max-w-6xl px-5 py-8 sm:px-8">
           {checkoutError && (
-            <div className="mb-6 flex items-start justify-between gap-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-6 flex items-start justify-between gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
               <p className="flex items-center gap-2">
                 <AlertCircle size={16} />
                 {checkoutError}
@@ -317,35 +326,49 @@ export function PlansBillingPage() {
 
           {billingTab === "plans" && (
             <div>
-              <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 sm:px-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-elevated-sm">
+                <div className="flex flex-col gap-5 bg-gradient-to-br from-[#102850] to-[#1a56db] px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <div>
-                    <p className="text-xs text-zinc-500">Current plan</p>
-                    <p className="mt-0.5 text-lg font-medium text-zinc-900">
+                    <div className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-[2px] bg-emerald-400" />
+                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/60">
+                        Current plan
+                      </p>
+                    </div>
+                    <p className="mt-1.5 text-2xl font-medium tracking-tight">
                       {currentPlanLabel}
                       {isLegacyAgency ? (
-                        <span className="ml-2 text-sm font-normal text-zinc-400">legacy</span>
+                        <span className="ml-2 text-sm font-normal text-white/50">legacy</span>
                       ) : null}
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-zinc-500">
-                    <span>
-                      {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly}/mo`}
-                    </span>
-                    <span>
-                      {sites.length} / {limitLabel(sitesLimit)} sites
-                    </span>
+                  <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                    <div>
+                      <p className="text-white/50">Billing</p>
+                      <p className="mt-0.5 font-medium tabular-nums">
+                        {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly}/mo`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-white/50">Sites</p>
+                      <p className="mt-0.5 font-medium tabular-nums">
+                        {sites.length} / {limitLabel(sitesLimit)}
+                      </p>
+                    </div>
                     {!isIndividual && (
-                      <span>
-                        {seatsUsed} / {limitLabel(seatsLimit)} seats
-                      </span>
+                      <div>
+                        <p className="text-white/50">Seats</p>
+                        <p className="mt-0.5 font-medium tabular-nums">
+                          {seatsUsed} / {limitLabel(seatsLimit)}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
 
               {isLegacyAgency && (
-                <div className="mt-4 flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-elevated-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <p className="text-sm text-zinc-600">
                     Move to Agency+ for a higher monthly token limit.
                   </p>
@@ -358,7 +381,12 @@ export function PlansBillingPage() {
                 </div>
               )}
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-8 mb-4">
+                <h2 className="text-lg font-medium tracking-tight text-zinc-900">Choose a plan</h2>
+                <p className="mt-1 text-sm text-zinc-500">Upgrade anytime. Changes apply after checkout.</p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {PLANS.map((plan) => {
                   const price = getPlanPrice(plan).monthly;
                   const copy = PLAN_COPY[plan];
@@ -370,38 +398,39 @@ export function PlansBillingPage() {
                     <div
                       key={plan}
                       className={cn(
-                        "flex flex-col rounded-xl border bg-white p-5",
-                        isCurrent ? "border-accent shadow-sm" : "border-zinc-200"
+                        "relative flex flex-col rounded-2xl border bg-white p-5 shadow-elevated-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated-md",
+                        isCurrent && "border-accent/40 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_42%)] ring-1 ring-accent/20",
+                        popular && "border-accent/30"
                       )}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium text-zinc-900">{PLAN_LABELS[plan]}</p>
-                          <p className="mt-1 text-2xl font-medium tracking-tight text-zinc-900">
-                            {price === 0 ? "Free" : `$${price}`}
-                            {price > 0 && (
-                              <span className="ml-1 text-sm font-normal text-zinc-400">/mo</span>
-                            )}
-                          </p>
-                        </div>
-                        {(isCurrent || popular) && (
-                          <span
-                            className={cn(
-                              "shrink-0 text-xs",
-                              isCurrent ? "text-accent" : "text-zinc-400"
-                            )}
-                          >
-                            {isCurrent ? "Current" : "Popular"}
-                          </span>
-                        )}
-                      </div>
+                      {(isCurrent || popular) && (
+                        <span
+                          className={cn(
+                            "absolute right-4 top-4 rounded-md px-2 py-0.5 text-[11px] font-medium",
+                            isCurrent ? "bg-accent text-white" : "bg-accent-light text-accent"
+                          )}
+                        >
+                          {isCurrent ? "Current" : "Popular"}
+                        </span>
+                      )}
 
-                      <p className="mt-2 text-sm text-zinc-500">{copy.tagline}</p>
+                      <p className="pr-16 text-sm font-medium text-zinc-500">{PLAN_LABELS[plan]}</p>
+                      <p className="mt-2 flex items-baseline gap-1 tracking-tight text-zinc-900">
+                        <span className="text-3xl font-medium">
+                          {price === 0 ? "Free" : `$${price}`}
+                        </span>
+                        {price > 0 && <span className="text-sm text-zinc-400">/mo</span>}
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-zinc-500">{copy.tagline}</p>
 
-                      <ul className="mt-5 flex-1 space-y-2">
+                      <div className="my-5 h-px bg-zinc-100" />
+
+                      <ul className="flex-1 space-y-2.5">
                         {copy.points.map((point) => (
-                          <li key={point} className="flex items-start gap-2 text-sm text-zinc-600">
-                            <Check size={14} className="mt-0.5 shrink-0 text-accent" strokeWidth={2} />
+                          <li key={point} className="flex items-start gap-2.5 text-sm text-zinc-600">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] bg-accent-light text-accent">
+                              <Check size={11} strokeWidth={2.5} />
+                            </span>
                             {point}
                           </li>
                         ))}
@@ -512,7 +541,7 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "history" && (
-            <div className="rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+            <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-6 shadow-elevated-sm sm:px-6">
               <h2 className="text-lg font-medium text-zinc-900">Purchase history</h2>
               <p className="mt-1 text-sm text-zinc-500">Plans, tokens, and storage</p>
               {!historyLoaded ? (
@@ -557,7 +586,7 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "coupon" && (
-            <div className="max-w-md rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+            <div className="max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-6 shadow-elevated-sm sm:px-6">
               <h2 className="text-lg font-medium text-zinc-900">Have a coupon?</h2>
               <p className="mt-1 text-sm text-zinc-500">Enter a code to upgrade your plan or unlock features.</p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -585,7 +614,7 @@ export function PlansBillingPage() {
 
 function LockedPanel({ title, body, onCta }: { title: string; body: string; onCta: () => void }) {
   return (
-    <div className="max-w-lg rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+    <div className="max-w-lg rounded-2xl border border-zinc-200 bg-white px-5 py-6 shadow-elevated-sm sm:px-6">
       <h2 className="text-lg font-medium text-zinc-900">{title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-zinc-500">{body}</p>
       <Button className="mt-5" onClick={onCta}>
@@ -622,7 +651,7 @@ function AddonPanel<T>({
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+      <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-6 shadow-elevated-sm sm:px-6">
         <p className="text-sm text-zinc-500">{kicker}</p>
         <p className="mt-1 text-3xl font-medium tracking-tight tabular-nums text-zinc-900">{amount}</p>
         <p className="mt-1 text-sm text-zinc-500">{caption}</p>
@@ -635,7 +664,7 @@ function AddonPanel<T>({
         {extra && <p className="mt-4 text-sm text-zinc-600">{extra}</p>}
         <p className="mt-4 text-sm leading-relaxed text-zinc-500">{note}</p>
       </div>
-      <div className="rounded-xl border border-zinc-200 bg-white px-5 py-2 sm:px-6">
+      <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-2 shadow-elevated-sm sm:px-6">
         {loading
           ? [1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse border-b border-zinc-100 last:border-0" />)
           : rows.map(renderRow)}
