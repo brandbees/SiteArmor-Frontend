@@ -59,52 +59,20 @@ const BILLING_TABS = [
 
 const PLAN_COPY: Record<PlanKey, { tagline: string; points: string[] }> = {
   free: {
-    tagline: "One site to try the product.",
-    points: [
-      "1 WordPress site",
-      "1 team seat",
-      "1,000 AI tokens each month",
-      "100 MB storage",
-      "Manual audits",
-      "Basic reports",
-    ],
+    tagline: "Try Site Armor on one site.",
+    points: ["1 site", "1 seat", "1,000 AI tokens / month", "100 MB storage", "Manual audits"],
   },
   freemium: {
     tagline: "For freelancers running care plans.",
-    points: [
-      "10 WordPress sites",
-      "3 team seats",
-      "5,000 AI tokens each month",
-      "500 MB storage",
-      "Scheduled audits",
-      "White-label reports",
-      "AI agent chat",
-    ],
+    points: ["10 sites", "3 seats", "5,000 AI tokens / month", "500 MB storage", "Scheduled audits"],
   },
   premium: {
     tagline: "For agencies that need proof at scale.",
-    points: [
-      "50 WordPress sites",
-      "10 team seats",
-      "20,000 AI tokens each month",
-      "1 GB storage",
-      "Client portal",
-      "Automated backups",
-      "Safe plugin updates",
-      "AI optimize",
-    ],
+    points: ["50 sites", "10 seats", "20,000 AI tokens / month", "1 GB storage", "Client portal & backups"],
   },
   agency_plus: {
-    tagline: "Portfolio-scale operations, fully branded.",
-    points: [
-      "Unlimited sites",
-      "Unlimited seats",
-      "100,000 AI tokens each month",
-      "5 GB storage",
-      "SSH server control",
-      "Custom domain",
-      "Dedicated support",
-    ],
+    tagline: "Portfolio-scale, fully branded.",
+    points: ["Unlimited sites", "Unlimited seats", "100,000 AI tokens / month", "5 GB storage", "SSH & custom domain"],
   },
 };
 
@@ -129,11 +97,6 @@ function planRank(code: string): number {
 function limitLabel(n: number) {
   return n >= 9999 ? "Unlimited" : String(n);
 }
-function defaultPreview(rawPlan: string, current: string): PlanKey {
-  const next = PLANS.find((p) => p !== "free" && planRank(p) > planRank(rawPlan));
-  if (next) return next;
-  return (PLANS.includes(current as PlanKey) ? current : "agency_plus") as PlanKey;
-}
 
 export function PlansBillingPage() {
   const { agency, refreshAgency } = useAuth();
@@ -154,7 +117,6 @@ export function PlansBillingPage() {
   const [planLimits, setPlanLimits] = useState<Record<string, PlanLimits>>({});
   const [history, setHistory] = useState<BillingEvent[]>([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
-  const [previewPlan, setPreviewPlan] = useState<PlanKey | null>(null);
   const sectionParam = searchParams.get("section");
   const validSection = BILLING_TABS.some((t) => t.id === sectionParam) ? sectionParam! : "plans";
   const [billingTab, setBillingTab] = useState(validSection);
@@ -173,13 +135,6 @@ export function PlansBillingPage() {
   const sitesLimit = effectiveSitesLimit(rawPlan, agency?.sites_limit);
   const isIndividual = agency?.account_type === "individual";
   const dynStorageLimit = planLimits[rawPlan]?.storage ?? planLimits[currentPlan]?.storage ?? 524_288_000;
-  const focusedPlan = previewPlan ?? defaultPreview(rawPlan, currentPlan);
-  const focusedCopy = PLAN_COPY[focusedPlan];
-  const focusedPrice = getPlanPrice(focusedPlan).monthly;
-  const focusedIsCurrent = rawPlan === focusedPlan;
-  const focusedIsDowngrade = planRank(focusedPlan) < planRank(rawPlan);
-  const focusedIndex = PLANS.indexOf(focusedPlan);
-  const currentTrackIndex = PLANS.indexOf(rawPlan as PlanKey);
 
   useEffect(() => {
     api.get<{ sites: Site[] }>("/sites").then(({ data }) => setSites(data.sites ?? [])).catch(() => {});
@@ -346,19 +301,10 @@ export function PlansBillingPage() {
         </ScrollFadeRow>
       </nav>
 
-      <div className="relative min-h-0 flex-1 overflow-auto">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-56"
-          style={{
-            background:
-              "linear-gradient(180deg, rgb(232 238 249 / 0.9) 0%, rgb(244 244 245 / 0) 100%)",
-          }}
-        />
-
-        <div className="relative mx-auto max-w-5xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
           {checkoutError && (
-            <div className="mb-8 flex items-start justify-between gap-3 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-6 flex items-start justify-between gap-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
               <p className="flex items-center gap-2">
                 <AlertCircle size={16} />
                 {checkoutError}
@@ -370,41 +316,38 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "plans" && (
-            <div className="animate-fade-in">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-sm text-zinc-500">Current plan</p>
-                  <h1 className="mt-1 text-2xl font-medium tracking-tight text-zinc-900">
-                    {currentPlanLabel}
-                    {isLegacyAgency ? (
-                      <span className="ml-2 text-sm font-normal text-zinc-400">legacy</span>
-                    ) : null}
-                  </h1>
+            <div>
+              <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 sm:px-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs text-zinc-500">Current plan</p>
+                    <p className="mt-0.5 text-lg font-medium text-zinc-900">
+                      {currentPlanLabel}
+                      {isLegacyAgency ? (
+                        <span className="ml-2 text-sm font-normal text-zinc-400">legacy</span>
+                      ) : null}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-zinc-500">
+                    <span>
+                      {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly}/mo`}
+                    </span>
+                    <span>
+                      {sites.length} / {limitLabel(sitesLimit)} sites
+                    </span>
+                    {!isIndividual && (
+                      <span>
+                        {seatsUsed} / {limitLabel(seatsLimit)} seats
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm text-zinc-500">
-                  {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly} / month`}
-                </p>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-sm text-zinc-500">
-                <p>
-                  <span className="text-zinc-800">{sites.length}</span>
-                  {" / "}
-                  {limitLabel(sitesLimit)} sites
-                </p>
-                {!isIndividual && (
-                  <p>
-                    <span className="text-zinc-800">{seatsUsed}</span>
-                    {" / "}
-                    {limitLabel(seatsLimit)} seats
-                  </p>
-                )}
               </div>
 
               {isLegacyAgency && (
-                <div className="mt-8 flex flex-col gap-3 border-t border-zinc-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-4 flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <p className="text-sm text-zinc-600">
-                    Legacy Agency stays as-is. Agency+ adds a higher monthly token limit.
+                    Move to Agency+ for a higher monthly token limit.
                   </p>
                   <Button
                     onClick={() => handleUpgrade("agency_plus")}
@@ -415,106 +358,82 @@ export function PlansBillingPage() {
                 </div>
               )}
 
-              <div className="mt-12">
-                <p className="text-sm text-zinc-500">Choose a plan</p>
-                <ScrollFadeRow fadeFrom="from-[#f4f4f5]" className="mt-6" innerClassName="min-w-[640px] pb-1">
-                  <div className="relative">
-                    <div className="absolute left-[12.5%] right-[12.5%] top-[7px] h-px bg-zinc-200" />
+              <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {PLANS.map((plan) => {
+                  const price = getPlanPrice(plan).monthly;
+                  const copy = PLAN_COPY[plan];
+                  const isCurrent = rawPlan === plan;
+                  const isDowngrade = planRank(plan) < planRank(rawPlan);
+                  const popular = plan === "premium" && !isCurrent && planRank(rawPlan) < planRank("premium");
+
+                  return (
                     <div
-                      className="absolute top-[7px] h-px bg-accent transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                      style={{
-                        left: "12.5%",
-                        width: `${(focusedIndex / 3) * 75}%`,
-                      }}
-                    />
-                    <div className="grid grid-cols-4">
-                      {PLANS.map((plan) => {
-                        const price = getPlanPrice(plan).monthly;
-                        const selected = focusedPlan === plan;
-                        const isCurrent = currentTrackIndex === PLANS.indexOf(plan);
-                        const recommended = plan === "premium" && planRank(rawPlan) < planRank("premium");
-                        return (
-                          <button
-                            key={plan}
-                            type="button"
-                            onClick={() => setPreviewPlan(plan)}
-                            aria-pressed={selected}
-                            className="group flex flex-col items-center px-2 pt-0 text-center"
-                          >
-                            <span
-                              className={cn(
-                                "relative z-10 h-3.5 w-3.5 rounded-[2px] border-2 transition-all duration-300",
-                                selected
-                                  ? "scale-110 border-accent bg-accent"
-                                  : isCurrent
-                                    ? "border-accent bg-accent/20"
-                                    : "border-zinc-300 bg-[#f4f4f5] group-hover:border-accent/50"
-                              )}
-                            />
-                            <span
-                              className={cn(
-                                "mt-4 text-sm transition-colors",
-                                selected ? "font-medium text-zinc-900" : "text-zinc-500 group-hover:text-zinc-800"
-                              )}
-                            >
-                              {PLAN_LABELS[plan]}
-                            </span>
-                            <span className="mt-1 text-sm tabular-nums text-zinc-400">
-                              {price === 0 ? "Free" : `$${price}`}
-                            </span>
-                            <span className="mt-1 h-4 text-xs text-accent">
-                              {isCurrent ? "Current" : recommended ? "Popular" : ""}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </ScrollFadeRow>
-              </div>
-
-              <div key={focusedPlan} className="animate-fade-in mt-10 border-t border-zinc-200 pt-8">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-medium tracking-tight text-zinc-900">
-                      {PLAN_LABELS[focusedPlan]}
-                    </h2>
-                    <p className="mt-1 text-sm text-zinc-500">{focusedCopy.tagline}</p>
-                  </div>
-                  <p className="text-sm tabular-nums text-zinc-500">
-                    {focusedPrice === 0 ? "Free" : `$${focusedPrice} / month`}
-                  </p>
-                </div>
-
-                <ul className="mt-6 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
-                  {focusedCopy.points.map((point) => (
-                    <li key={point} className="flex items-start gap-2.5 text-sm text-zinc-700">
-                      <Check size={15} className="mt-0.5 shrink-0 text-accent" strokeWidth={2} />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-8">
-                  {focusedIsCurrent ? (
-                    <p className="text-sm text-zinc-500">You&apos;re on this plan</p>
-                  ) : focusedIsDowngrade || focusedPlan === "free" ? (
-                    <p className="text-sm text-zinc-400">
-                      {focusedPlan === "free" ? "Included with every account" : "Lower tier"}
-                    </p>
-                  ) : (
-                    <Button
-                      onClick={() => handleUpgrade(focusedPlan)}
-                      loading={checkoutLoading === focusedPlan}
+                      key={plan}
+                      className={cn(
+                        "flex flex-col rounded-xl border bg-white p-5",
+                        isCurrent ? "border-accent shadow-sm" : "border-zinc-200"
+                      )}
                     >
-                      Upgrade to {PLAN_LABELS[focusedPlan]}
-                    </Button>
-                  )}
-                </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium text-zinc-900">{PLAN_LABELS[plan]}</p>
+                          <p className="mt-1 text-2xl font-medium tracking-tight text-zinc-900">
+                            {price === 0 ? "Free" : `$${price}`}
+                            {price > 0 && (
+                              <span className="ml-1 text-sm font-normal text-zinc-400">/mo</span>
+                            )}
+                          </p>
+                        </div>
+                        {(isCurrent || popular) && (
+                          <span
+                            className={cn(
+                              "shrink-0 text-xs",
+                              isCurrent ? "text-accent" : "text-zinc-400"
+                            )}
+                          >
+                            {isCurrent ? "Current" : "Popular"}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-2 text-sm text-zinc-500">{copy.tagline}</p>
+
+                      <ul className="mt-5 flex-1 space-y-2">
+                        {copy.points.map((point) => (
+                          <li key={point} className="flex items-start gap-2 text-sm text-zinc-600">
+                            <Check size={14} className="mt-0.5 shrink-0 text-accent" strokeWidth={2} />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-6">
+                        {isCurrent ? (
+                          <Button variant="secondary" className="w-full" disabled>
+                            Current plan
+                          </Button>
+                        ) : isDowngrade || plan === "free" ? (
+                          <Button variant="secondary" className="w-full" disabled>
+                            {plan === "free" ? "Included" : "Lower tier"}
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            variant={popular ? "primary" : "secondary"}
+                            onClick={() => handleUpgrade(plan)}
+                            loading={checkoutLoading === plan}
+                          >
+                            Upgrade
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {isIndividual && (
-                <p className="mt-10 text-sm text-zinc-500">
+                <p className="mt-6 text-sm text-zinc-500">
                   Need clients or a team?{" "}
                   <a href="mailto:support@brandbees.io?subject=Switch to Agency account" className="text-accent hover:underline">
                     Contact us
@@ -593,15 +512,15 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "history" && (
-            <div className="animate-fade-in">
-              <h2 className="text-xl font-medium tracking-tight text-zinc-900">Purchase history</h2>
+            <div className="rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+              <h2 className="text-lg font-medium text-zinc-900">Purchase history</h2>
               <p className="mt-1 text-sm text-zinc-500">Plans, tokens, and storage</p>
               {!historyLoaded ? (
                 <p className="mt-8 text-sm text-zinc-500">Loading...</p>
               ) : history.length === 0 ? (
-                <p className="mt-10 text-sm text-zinc-500">No purchases yet.</p>
+                <p className="mt-8 text-sm text-zinc-500">No purchases yet.</p>
               ) : (
-                <ul className="mt-8">
+                <ul className="mt-6">
                   {history.map((tx) => {
                     const Icon =
                       tx.type === "token_topup" ? Zap : tx.type === "storage_addon" ? HardDrive : CreditCard;
@@ -614,7 +533,7 @@ export function PlansBillingPage() {
                           ? `+${formatBytes(tx.bytes)} storage`
                           : `${PLAN_LABELS[tx.plan ?? ""] ?? tx.plan ?? "Plan"}`;
                     return (
-                      <li key={tx.id} className="flex items-center gap-4 border-b border-zinc-200 py-4">
+                      <li key={tx.id} className="flex items-center gap-4 border-t border-zinc-100 py-4 first:border-t-0">
                         <Icon size={16} className="shrink-0 text-zinc-400" />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-zinc-800">{label}</p>
@@ -638,10 +557,10 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "coupon" && (
-            <div className="animate-fade-in max-w-md">
-              <h2 className="text-xl font-medium tracking-tight text-zinc-900">Have a coupon?</h2>
+            <div className="max-w-md rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+              <h2 className="text-lg font-medium text-zinc-900">Have a coupon?</h2>
               <p className="mt-1 text-sm text-zinc-500">Enter a code to upgrade your plan or unlock features.</p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <div className="relative flex-1">
                   <Tag size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <Input
@@ -666,10 +585,10 @@ export function PlansBillingPage() {
 
 function LockedPanel({ title, body, onCta }: { title: string; body: string; onCta: () => void }) {
   return (
-    <div className="animate-fade-in max-w-lg">
-      <h2 className="text-xl font-medium tracking-tight text-zinc-900">{title}</h2>
+    <div className="max-w-lg rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
+      <h2 className="text-lg font-medium text-zinc-900">{title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-zinc-500">{body}</p>
-      <Button className="mt-6" onClick={onCta}>
+      <Button className="mt-5" onClick={onCta}>
         View plans
       </Button>
     </div>
@@ -702,23 +621,23 @@ function AddonPanel<T>({
   renderRow: (row: T) => ReactNode;
 }) {
   return (
-    <div className="animate-fade-in grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-      <div>
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-xl border border-zinc-200 bg-white px-5 py-6 sm:px-6">
         <p className="text-sm text-zinc-500">{kicker}</p>
-        <p className="mt-1 text-4xl font-medium tracking-tight tabular-nums text-zinc-900">{amount}</p>
+        <p className="mt-1 text-3xl font-medium tracking-tight tabular-nums text-zinc-900">{amount}</p>
         <p className="mt-1 text-sm text-zinc-500">{caption}</p>
-        <div className="mt-5 h-1 overflow-hidden bg-zinc-200">
+        <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-zinc-100">
           <div
-            className={cn("h-full", warn ? "bg-red-500" : "bg-accent")}
+            className={cn("h-full rounded-full", warn ? "bg-red-500" : "bg-accent")}
             style={{ width: `${Math.min(100, (used / Math.max(total, 1)) * 100)}%` }}
           />
         </div>
         {extra && <p className="mt-4 text-sm text-zinc-600">{extra}</p>}
-        <p className="mt-5 max-w-sm text-sm leading-relaxed text-zinc-500">{note}</p>
+        <p className="mt-4 text-sm leading-relaxed text-zinc-500">{note}</p>
       </div>
-      <div>
+      <div className="rounded-xl border border-zinc-200 bg-white px-5 py-2 sm:px-6">
         {loading
-          ? [1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse border-b border-zinc-200" />)
+          ? [1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse border-b border-zinc-100 last:border-0" />)
           : rows.map(renderRow)}
       </div>
     </div>
@@ -741,7 +660,7 @@ function AddonRow({
   onBuy: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-zinc-200 py-4">
+    <div className="flex items-center justify-between gap-4 border-b border-zinc-100 py-4 last:border-0">
       <div>
         <p className="text-sm text-zinc-800">{title}</p>
         <p className="text-sm text-zinc-500">{label}</p>
