@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     q: "Can I put my agency logo and brand on the reports?",
-    a: "Yes, on Growth and above you can add your logo, brand colors, and a custom domain for the client portal. Clients see your agency brand throughout — Site Armor stays behind the scenes.",
+    a: "Yes, on Growth and above you can add your logo and brand colors for white-label reports and the client portal. Clients see your agency brand throughout — Site Armor stays behind the scenes.",
   },
   {
     q: "What happens when a threat or issue is detected?",

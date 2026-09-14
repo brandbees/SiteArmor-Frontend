@@ -128,7 +128,7 @@ export const PLANS: PlanDefinition[] = [
       "5 GB storage",
       "Automated backups (30-day retention)",
       "Full white-label + team roles",
-      "AI agent + custom domain",
+      "AI agent + dedicated support",
     ],
   },
 ];

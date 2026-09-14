@@ -27,7 +27,7 @@ import { useRole } from "@/hooks/useRole";
 import { useSites } from "@/hooks/useSites";
 import { setAgency } from "@/lib/auth";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_SEATS } from "@/lib/constants";
+import { PLAN_LABELS, PLAN_SEATS, getPlanLabel, effectiveSeatsLimit } from "@/lib/constants";
 import { downloadPluginZip } from "@/lib/downloadPlugin";
 import { isValidEmail, cn } from "@/lib/utils";
 import type { AlertSettings, TeamMember, TeamRole, Site } from "@/types";
@@ -207,8 +207,8 @@ function GeneralTab() {
         </div>
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">Current Plan</label>
-          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground capitalize flex items-center justify-between">
-            <span>{agency?.plan ?? "free"}</span>
+          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground flex items-center justify-between">
+            <span>{getPlanLabel(agency?.plan)}</span>
             {agency?.plan !== "agency_plus" && (
               <Link href="/billing" className="text-xs font-medium text-accent hover:underline">Upgrade</Link>
             )}
@@ -762,7 +762,7 @@ function TeamTab() {
   const { roleCanDo, loading: roleLoading } = useRole();
 
   const isPaidPlan = agency?.plan !== "free";
-  const seatLimit  = agency ? (PLAN_SEATS[agency.plan] ?? 1) : 1;
+  const seatLimit  = agency ? effectiveSeatsLimit(agency.plan) : 1;
 
   const [data, setData]           = useState<TeamData | null>(null);
   const [loading, setLoading]     = useState(true);

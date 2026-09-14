@@ -21,7 +21,9 @@ export function TrialBanner() {
     setDismissed(sessionStorage.getItem(DISMISSED_KEY) === "1");
   }, []);
 
-  if (!agency?.trial_ends_at || (agency.plan && agency.plan !== "free")) return null;
+  // Never show trial CTA for paid plans (even if trial_ends_at is stale in localStorage).
+  const isPaid = Boolean(agency?.plan && agency.plan !== "free");
+  if (!agency?.trial_ends_at || isPaid) return null;
 
   const days = getDaysRemaining(agency.trial_ends_at);
   const isExpired = days === 0;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, CheckCircle2, Circle, ArrowLeft, RefreshCw, Wand2, Building2, User } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useAuth } from "@/hooks/useAuth";
@@ -100,11 +100,17 @@ interface Phase1Props {
   onBack: () => void;
 }
 
-function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
+function RegistrationForm({
+  onSuccess,
+  accountType,
+  onBack,
+  initialCoupon = "",
+}: Phase1Props & { initialCoupon?: string }) {
   const { register } = useAuth();
   const [agencyName, setAgencyName]   = useState("");
   const [email, setEmail]             = useState("");
   const [password, setPassword]       = useState("");
+  const [coupon, setCoupon]           = useState(initialCoupon);
   const [showPassword, setShowPassword] = useState(false);
   const [showStrength, setShowStrength] = useState(false);
   const [generated, setGenerated]       = useState(false);
@@ -112,6 +118,7 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
   const [error, setError]             = useState("");
   const [loading, setLoading]         = useState(false);
   const [cfToken, setCfToken]         = useState<string | null>(null);
+  const turnstileRef = useRef<{ reset: () => void } | null>(null);
 
   const strength = getStrength(password);
 
@@ -136,13 +143,22 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
     }
     setLoading(true);
     try {
-      const result = await register(agencyName, email, password, undefined, cfToken, accountType);
+      const result = await register(
+        agencyName,
+        email,
+        password,
+        coupon.trim() || undefined,
+        cfToken,
+        accountType
+      );
       if (result.pending) onSuccess(result.email);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
         "Registration failed. Please try again.";
-      setError(msg);
+      setError(msg === "Server error" ? "Something went wrong. Please retry the captcha and try again." : msg);
+      setCfToken(null);
+      turnstileRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -280,6 +296,18 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
         )}
       </div>
 
+      <div>
+        <label className={authLabelClass}>Coupon / AppSumo code (optional)</label>
+        <input
+          type="text"
+          value={coupon}
+          onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+          className={cn(inputCls, "font-mono uppercase tracking-wider")}
+          placeholder="SAXXXXXXXXXX"
+          autoComplete="off"
+        />
+      </div>
+
       {error && (
         <div className="rounded-[4px] border border-red-200 bg-red-50 px-3.5 py-2.5">
           <p className="text-sm text-red-700">{error}</p>
@@ -288,6 +316,7 @@ function RegistrationForm({ onSuccess, accountType, onBack }: Phase1Props) {
 
       {CF_SITE_KEY && (
         <Turnstile
+          ref={turnstileRef as never}
           siteKey={CF_SITE_KEY}
           onSuccess={setCfToken}
           onExpire={() => setCfToken(null)}
@@ -429,9 +458,11 @@ function VerifyEmailForm({ email, onBack }: Phase2Props) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function RegisterPage() {
+function RegisterPageInner() {
   const router = useRouter();
-  const [phase, setPhase]               = useState<"type" | "form" | "verify">("type");
+  const searchParams = useSearchParams();
+  const initialCoupon = (searchParams.get("code") || searchParams.get("coupon") || "").toUpperCase();
+  const [phase, setPhase]               = useState<"type" | "form" | "verify">(initialCoupon ? "form" : "type");
   const [accountType, setAccountType]   = useState<AccountType>("agency");
   const [pendingEmail, setPending]      = useState("");
 
@@ -486,6 +517,7 @@ export default function RegisterPage() {
       {phase === "form" && (
         <RegistrationForm
           accountType={accountType}
+          initialCoupon={initialCoupon}
           onBack={() => setPhase("type")}
           onSuccess={(email) => {
             setPending(email);
@@ -499,3 +531,12 @@ export default function RegisterPage() {
     </AuthShell>
   );
 }
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading…</div>}>
+      <RegisterPageInner />
+    </Suspense>
+  );
+}
+

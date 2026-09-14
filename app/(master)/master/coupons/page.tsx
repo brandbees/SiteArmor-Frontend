@@ -25,6 +25,7 @@ interface Coupon {
   used_count:  number;
   expires_at:  string | null;
   created_at:  string;
+  campaign?:   string;
   redemptions: Redemption[];
 }
 
@@ -75,12 +76,19 @@ export default function MasterCouponsPage() {
   const [editVals,  setEditVals]  = useState({ max_uses: "", expires_at: "" });
   const [expanded,  setExpanded]  = useState<string | null>(null);
   const [deleting,  setDeleting]  = useState<string | null>(null);
+  const [appsumoStats, setAppsumoStats] = useState<{ total: number; redeemed: number; available: number } | null>(null);
+  const [minting, setMinting] = useState(false);
+  const [mintCount, setMintCount] = useState("2000");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await masterApi.get<{ coupons: Coupon[] }>("/master/coupons");
+      const [{ data }, statsRes] = await Promise.all([
+        masterApi.get<{ coupons: Coupon[] }>("/master/coupons"),
+        masterApi.get<{ total: number; redeemed: number; available: number }>("/master/coupons/appsumo/stats").catch(() => null),
+      ]);
       setCoupons(data.coupons);
+      if (statsRes?.data) setAppsumoStats(statsRes.data);
     } catch { /* interceptor */ }
     finally { setLoading(false); }
   }, []);
@@ -138,8 +146,59 @@ export default function MasterCouponsPage() {
     } finally { setDeleting(null); }
   }
 
+  async function mintAppsumo() {
+    const count = parseInt(mintCount, 10) || 2000;
+    if (count < 1 || count > 10000) {
+      toast.error("Count must be between 1 and 10,000.");
+      return;
+    }
+    setMinting(true);
+    try {
+      const { data } = await masterApi.post<{ created: number; csv: string }>(
+        "/master/coupons/appsumo/generate",
+        { count }
+      );
+      const blob = new Blob([data.csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `appsumo-codes-${data.created}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Generated ${data.created} AppSumo codes. CSV downloaded.`);
+      await load();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+        ?? "Failed to generate AppSumo codes.";
+      toast.error(msg);
+    } finally {
+      setMinting(false);
+    }
+  }
+
+  function downloadAppsumoCsv(unusedOnly = false) {
+    const base = masterApi.defaults.baseURL || "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("master_token") || localStorage.getItem("bb_master_token") : "";
+    // Use fetch with auth header via masterApi
+    masterApi
+      .get(`/master/coupons/appsumo/csv${unusedOnly ? "?unused=1" : ""}`, { responseType: "blob" })
+      .then(({ data }) => {
+        const blob = new Blob([data], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = unusedOnly ? "appsumo-codes-unused.csv" : "appsumo-codes.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(() => toast.error("Failed to download CSV."));
+    void base;
+    void token;
+  }
+
   const active   = coupons.filter(c => !isExpired(c.expires_at) && c.used_count < c.max_uses);
   const expired  = coupons.filter(c => isExpired(c.expires_at) || c.used_count >= c.max_uses);
+  const appsumoCoupons = coupons.filter(c => c.campaign === "appsumo");
 
   return (
     <div className="space-y-5">
@@ -179,6 +238,61 @@ export default function MasterCouponsPage() {
               style={{ background: AMBER }}
             >
               {showForm ? <><X size={12} /> Cancel</> : <><Plus size={12} /> New Coupon</>}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* AppSumo */}
+      <div className="bg-white rounded-2xl border border-border p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-bold text-foreground">AppSumo codes</p>
+            <p className="mt-1 text-xs text-muted-foreground max-w-xl">
+              Stackable LTD: 1 Free · 2 Starter · 3 Growth · 4+ Agency+. Codes are one-time use.
+              Redemption URL: <code className="text-foreground">/redeem</code> (or <code className="text-foreground">/redeem?code=…</code>).
+            </p>
+            {appsumoStats && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">{appsumoStats.total}</span> total ·{" "}
+                <span className="font-semibold text-green-600">{appsumoStats.available}</span> available ·{" "}
+                <span className="font-semibold text-foreground">{appsumoStats.redeemed}</span> redeemed
+                {appsumoCoupons.length ? ` · showing up to ${appsumoCoupons.length} in table` : ""}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={10000}
+              value={mintCount}
+              onChange={(e) => setMintCount(e.target.value)}
+              className="w-24 px-3 py-1.5 text-xs rounded-xl border border-border"
+            />
+            <button
+              type="button"
+              onClick={mintAppsumo}
+              disabled={minting}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold text-white disabled:opacity-50"
+              style={{ background: "#1a56db" }}
+            >
+              {minting ? <RefreshCw size={12} className="animate-spin" /> : <Tag size={12} />}
+              Generate &amp; download CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadAppsumoCsv(false)}
+              className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-gray-50"
+            >
+              Download all CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadAppsumoCsv(true)}
+              className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-gray-50"
+            >
+              Unused only
             </button>
           </div>
         </div>

@@ -35,6 +35,7 @@ export function SSHSettingsPanel({ site, onCredentialsSaved }: SSHSettingsPanelP
     username: "",
     password: "",
     privateKey: "",
+    documentRoot: "",
   });
 
   // Form is editable when nothing is saved, or user clicked Update Credentials
@@ -86,7 +87,7 @@ export function SSHSettingsPanel({ site, onCredentialsSaved }: SSHSettingsPanelP
       const success = await deleteSSHCredentials(site.id);
       if (success) {
         toast.success("✓ SSH disconnected");
-        setFormData({ host: "", port: 22, username: "", password: "", privateKey: "" });
+        setFormData({ host: "", port: 22, username: "", password: "", privateKey: "", documentRoot: "" });
         setEditing(false);
         await loadStatus();
       }
@@ -99,7 +100,7 @@ export function SSHSettingsPanel({ site, onCredentialsSaved }: SSHSettingsPanelP
   };
 
   const startEditing = () => {
-    setFormData({ host: "", port: 22, username: "", password: "", privateKey: "" });
+    setFormData({ host: "", port: 22, username: "", password: "", privateKey: "", documentRoot: "" });
     setEditing(true);
   };
 
@@ -116,6 +117,11 @@ export function SSHSettingsPanel({ site, onCredentialsSaved }: SSHSettingsPanelP
               <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
                 Secured with AES-256-GCM • Saved {new Date(status.saved_at || "").toLocaleDateString()}
               </p>
+              {status.wordpress_root && (
+                <p className="mt-1 font-mono text-[11px] text-emerald-800 dark:text-emerald-200">
+                  Document root: {status.wordpress_root}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -164,6 +170,24 @@ export function SSHSettingsPanel({ site, onCredentialsSaved }: SSHSettingsPanelP
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
+        </div>
+
+        {/* Optional document root */}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            WordPress document root <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <input
+            type="text"
+            placeholder="/home/user/public_html/almondia"
+            value={formData.documentRoot || ""}
+            onChange={(e) => setFormData({ ...formData, documentRoot: e.target.value })}
+            disabled={!formEnabled}
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Leave blank to auto-detect. Set this on multi-site hosts so Agent edits the correct install.
+          </p>
         </div>
 
         {/* Auth Method Toggle */}

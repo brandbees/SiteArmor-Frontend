@@ -18,13 +18,22 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const reqUrl = String(error.config?.url || "");
+    const isAuthAttempt = /\/auth\/(login|register|verify|resend)/.test(reqUrl);
+
+    if (status === 401) {
+      // Wrong password on /login returns 401 — do NOT hard-redirect or the inline error vanishes.
+      // Agent long jobs can also 401 mid-flight; let the panel toast instead of nuking the session UX.
+      if (isAuthAttempt || /\/agent(\/|$)/.test(reqUrl)) {
+        return Promise.reject(error);
+      }
       clearToken();
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
     }
-    if (error.response?.status === 403 && getToken()) {
+    if (status === 403 && getToken()) {
       // Plan-gate errors (upgrade_required) are handled inline by the page — don't log out.
       if (error.response?.data?.upgrade_required) {
         return Promise.reject(error);
@@ -37,7 +46,7 @@ api.interceptors.response.use(
         window.location.href = `/login?error=${encodeURIComponent(msg)}`;
       }
     }
-    if (error.response?.status === 503 && error.response?.data?.maintenance === true) {
+    if (status === 503 && error.response?.data?.maintenance === true) {
       if (typeof window !== "undefined") {
         window.location.href = "/maintenance";
       }

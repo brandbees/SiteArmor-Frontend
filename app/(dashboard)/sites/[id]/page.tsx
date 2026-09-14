@@ -2056,14 +2056,30 @@ function CronTab({ site, brandColor }: { site: Site; brandColor: string }) {
   const [filter, setFilter] = useState<CronFilter>("all");
   const [search, setSearch] = useState("");
 
+  /** WP sometimes sends 0 / epoch — treat as unknown, never show 1970 or count as overdue. */
+  function parseCronNextRun(raw: string | null | undefined): Date | null {
+    if (raw == null || raw === "" || raw === "0") return null;
+    const n = Number(raw);
+    // Unix seconds or ms
+    if (Number.isFinite(n) && n > 0) {
+      const ms = n < 1e12 ? n * 1000 : n;
+      if (ms < Date.UTC(2000, 0, 1)) return null;
+      return new Date(ms);
+    }
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime()) || d.getUTCFullYear() < 2000) return null;
+    return d;
+  }
+
   const wpCount   = events.filter((e) => e.source === "wp-cron").length;
   const asCount   = events.filter((e) => e.source === "action-scheduler").length;
   const failedCnt = events.filter((e) => e.status.toLowerCase() === "failed").length;
 
   const now = Date.now();
   const dueCnt = events.filter((e) => {
-    if (e.source !== "wp-cron" || !e.next_run) return false;
-    return new Date(e.next_run).getTime() <= now;
+    if (e.source !== "wp-cron") return false;
+    const next = parseCronNextRun(e.next_run);
+    return next != null && next.getTime() <= now;
   }).length;
 
   const FILTER_TABS: { key: CronFilter; label: string; count?: number }[] = [
@@ -2195,8 +2211,8 @@ function CronTab({ site, brandColor }: { site: Site; brandColor: string }) {
                 </tr>
               ) : (
                 filtered.map((ev, i) => {
-                  const nextRun = ev.next_run ? new Date(ev.next_run) : null;
-                  const isOverdue = nextRun && ev.source === "wp-cron" && nextRun.getTime() <= now;
+                  const nextRun = parseCronNextRun(ev.next_run);
+                  const isOverdue = nextRun != null && ev.source === "wp-cron" && nextRun.getTime() <= now;
                   return (
                     <tr key={i} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-5 py-3 font-mono text-[11px] text-foreground max-w-[260px] truncate" title={ev.hook}>
@@ -2206,7 +2222,7 @@ function CronTab({ site, brandColor }: { site: Site; brandColor: string }) {
                       <td className={`px-4 py-3 tabular-nums ${isOverdue ? "text-amber-600 font-semibold" : "text-muted-foreground"}`}>
                         {nextRun
                           ? nextRun.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })
-                          : "—"}
+                          : "Unknown"}
                         {isOverdue && <AlertCircle size={11} className="inline ml-1 text-amber-400" />}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">

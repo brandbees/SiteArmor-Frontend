@@ -38,7 +38,7 @@ export const PLAN_FEATURES: Record<string, string[]> = {
   freemium: ["10 sites", "3 seats", "Scheduled audits", "White-label reports", "Email alerts", "AI agent (chat)", "5,000 AI tokens/mo"],
   premium: ["50 sites", "10 seats", "Everything in Starter", "PDF reports", "Client portal", "Safe plugin updates with auto-rollback", "Automated backups", "AI agent + optimize", "20,000 AI tokens/mo"],
   agency: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "SSH server control", "White-label branding", "50,000 AI tokens/mo"],
-  agency_plus: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "SSH server control", "Custom domain", "Dedicated support", "100,000 AI tokens/mo"],
+  agency_plus: ["Unlimited sites", "Unlimited seats", "Everything in Growth", "SSH server control", "White-label branding", "Dedicated support", "100,000 AI tokens/mo"],
 };
 
 /** Legacy or unknown plan codes from the API — never crash billing UI */
@@ -67,7 +67,10 @@ export function effectiveSitesLimit(plan?: string | null, dbLimit?: number | nul
 export function effectiveSeatsLimit(plan?: string | null, dbLimit?: number | null): number {
   const code = plan ?? "free";
   if (code === "agency" || code === "agency_plus") return dbLimit && dbLimit > 1 ? dbLimit : 9999;
-  return dbLimit ?? PLAN_SEATS[code] ?? 1;
+  const catalog = PLAN_SEATS[code] ?? 1;
+  // Never show fewer seats than the plan catalog (stale seats_limit=1 after upgrade).
+  if (dbLimit == null) return catalog;
+  return Math.max(dbLimit, catalog);
 }
 
 // Monthly AI token budget per plan (must match AI_TOKEN_LIMITS in routes/agent.js and usageService.js)

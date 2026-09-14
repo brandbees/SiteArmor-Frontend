@@ -11,6 +11,8 @@ export interface SSHCredentials {
   username: string;
   password?: string;
   privateKey?: string;
+  /** Optional absolute WordPress document root override (e.g. /home/user/public_html/almondia) */
+  documentRoot?: string;
 }
 
 export interface SSHCredentialStatus {
@@ -18,6 +20,7 @@ export interface SSHCredentialStatus {
   vault_id?: string;
   saved_at?: string;
   updated_at?: string;
+  wordpress_root?: string | null;
 }
 
 export interface SSHConnectResponse {

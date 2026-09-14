@@ -100,12 +100,17 @@ export function SecurityTab({
           <SiteScoreWheel score={score} caption="Security Score" size={118} />
           <div>
             <p className="text-sm font-semibold text-foreground">
-              {issueCount > 0
-                ? `${issueCount} issue${issueCount !== 1 ? "s" : ""} found`
-                : "No threats detected"}
+              {score != null && score <= 0 && issueCount > 0
+                ? "Critical security risks failed"
+                : issueCount > 0
+                  ? `${issueCount} issue${issueCount !== 1 ? "s" : ""} found`
+                  : "No threats detected"}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {safeCount} of {knownChecks.length} security checks passed
+              {score != null && score <= 0 && issueCount > 0
+                ? " — score drops to 0 when high-severity risks remain open"
+                : ""}
             </p>
             {trendPts.length > 0 && (
               <div className="mt-4">

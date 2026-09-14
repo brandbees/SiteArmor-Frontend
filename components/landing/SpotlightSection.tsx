@@ -132,7 +132,7 @@ function Spotlight1() {
               Deliver reports your clients will actually read — with your brand on every page.
             </h2>
             <p className="text-gray-500 text-lg leading-relaxed mb-6">
-              Auto-generated PDF reports look like they came from a premium in-house team. Add your logo, brand colors, and custom domain. Clients see your agency — not ours.
+              Auto-generated PDF reports look like they came from a premium in-house team. Add your logo and brand colors. Clients see your agency — not ours.
             </p>
             <ul className="space-y-3 mb-8">
               {[

@@ -475,9 +475,11 @@ export function PerformanceTab({
         <div className="mb-6">
           <div className="flex items-center gap-2">
             <Gauge size={24} strokeWidth={1.5} className="text-zinc-950" />
-            <p className="text-lg font-semibold text-zinc-900">Google Lighthouse Report</p>
+            <p className="text-lg font-semibold text-zinc-900">Audit performance snapshot</p>
           </div>
-          <p className="mt-1 text-xs text-emerald-700">Performance metrics for your website</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            From your last Site Armor audit (lab metrics). Live Google PSI mobile/desktop may differ — ask the AI Agent for a fresh PageSpeed run.
+          </p>
         </div>
 
         <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">

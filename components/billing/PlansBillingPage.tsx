@@ -72,7 +72,7 @@ const PLAN_COPY: Record<PlanKey, { tagline: string; points: string[] }> = {
   },
   agency_plus: {
     tagline: "Portfolio-scale, fully branded.",
-    points: ["Unlimited sites", "Unlimited seats", "100,000 AI tokens / month", "5 GB storage", "SSH & custom domain"],
+    points: ["Unlimited sites", "Unlimited seats", "100,000 AI tokens / month", "5 GB storage", "SSH & white-label"],
   },
 };
 
@@ -117,6 +117,10 @@ export function PlansBillingPage() {
   const [planLimits, setPlanLimits] = useState<Record<string, PlanLimits>>({});
   const [history, setHistory] = useState<BillingEvent[]>([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [appsumoStatus, setAppsumoStatus] = useState<{
+    codes_redeemed: number;
+    tier: { label: string; plan: string; minCodes: number } | null;
+  } | null>(null);
   const sectionParam = searchParams.get("section");
   const validSection = BILLING_TABS.some((t) => t.id === sectionParam) ? sectionParam! : "plans";
   const [billingTab, setBillingTab] = useState(validSection);
@@ -151,6 +155,9 @@ export function PlansBillingPage() {
       .then(({ data }) => setStoragePkgs(data.packages)).catch(() => {});
     api.get<{ limits: Record<string, PlanLimits> }>("/billing/limits")
       .then(({ data }) => setPlanLimits(data.limits)).catch(() => {});
+    api.get<{ codes_redeemed: number; tier: { label: string; plan: string; minCodes: number } | null }>(
+      "/billing/appsumo/status"
+    ).then(({ data }) => setAppsumoStatus(data)).catch(() => {});
     const fetchHistory = () =>
       api.get<{ history: BillingEvent[] }>("/billing/history")
         .then(({ data }) => { setHistory(data.history); setHistoryLoaded(true); })
@@ -247,10 +254,27 @@ export function PlansBillingPage() {
     if (!couponCode.trim()) return;
     setRedeemLoading(true);
     try {
-      const { data } = await api.post<{ plan: string; sites_limit: number }>("/billing/coupons/redeem", { code: couponCode.trim() });
-      toast.success(`Coupon applied! Plan upgraded to ${PLAN_LABELS[data.plan]}.`);
+      const { data } = await api.post<{
+        plan: string;
+        sites_limit: number;
+        label?: string;
+        codes_redeemed?: number;
+        is_appsumo?: boolean;
+        campaign?: string;
+      }>("/billing/coupons/redeem", { code: couponCode.trim() });
+      const planName = data.label || PLAN_LABELS[data.plan] || data.plan;
+      const stackNote =
+        data.campaign === "appsumo" && data.codes_redeemed
+          ? ` (${data.codes_redeemed} AppSumo code${data.codes_redeemed === 1 ? "" : "s"} stacked)`
+          : "";
+      toast.success(`Coupon applied! Plan upgraded to ${planName}${stackNote}.`);
       setCouponCode("");
-      setTimeout(() => window.location.reload(), 1500);
+      await refreshAgency();
+      api.get<{ codes_redeemed: number; tier: { label: string; plan: string; minCodes: number } | null }>(
+        "/billing/appsumo/status"
+      )
+        .then(({ data: st }) => setAppsumoStatus(st))
+        .catch(() => {});
     } catch (err: unknown) {
       toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Invalid coupon code.");
     } finally {
@@ -586,23 +610,39 @@ export function PlansBillingPage() {
           )}
 
           {billingTab === "coupon" && (
-            <div className="max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-6 shadow-elevated-sm sm:px-6">
-              <h2 className="text-lg font-medium text-zinc-900">Have a coupon?</h2>
-              <p className="mt-1 text-sm text-zinc-500">Enter a code to upgrade your plan or unlock features.</p>
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <div className="relative flex-1">
-                  <Tag size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                  <Input
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="ENTER-CODE"
-                    className="h-11 rounded-md pl-10 font-mono text-sm uppercase tracking-[0.16em]"
-                    onKeyDown={(e) => e.key === "Enter" && handleCouponRedeem()}
-                  />
+            <div className="max-w-lg space-y-4">
+              {appsumoStatus && appsumoStatus.codes_redeemed > 0 && (
+                <div className="rounded-2xl border border-accent/20 bg-accent-light/50 px-5 py-4 shadow-elevated-sm">
+                  <p className="text-sm text-zinc-600">AppSumo codes stacked</p>
+                  <p className="mt-1 text-lg font-medium text-zinc-900">
+                    {appsumoStatus.codes_redeemed} code{appsumoStatus.codes_redeemed === 1 ? "" : "s"}
+                    {appsumoStatus.tier ? ` · ${appsumoStatus.tier.label}` : ""}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Stack more codes to unlock higher tiers (2 Starter · 3 Growth · 4+ Agency+).
+                  </p>
                 </div>
-                <Button onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>
-                  Apply
-                </Button>
+              )}
+              <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-6 shadow-elevated-sm sm:px-6">
+                <h2 className="text-lg font-medium text-zinc-900">Redeem a code</h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  AppSumo and promo codes. AppSumo codes stack on this account.
+                </p>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <div className="relative flex-1">
+                    <Tag size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                    <Input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="SAXXXXXXXXXX"
+                      className="h-11 rounded-md pl-10 font-mono text-sm uppercase tracking-[0.16em]"
+                      onKeyDown={(e) => e.key === "Enter" && handleCouponRedeem()}
+                    />
+                  </div>
+                  <Button onClick={handleCouponRedeem} loading={redeemLoading} disabled={!couponCode.trim()}>
+                    Apply
+                  </Button>
+                </div>
               </div>
             </div>
           )}

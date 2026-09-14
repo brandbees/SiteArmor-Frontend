@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_SEATS } from "@/lib/constants";
+import { PLAN_LABELS, PLAN_SEATS, effectiveSeatsLimit } from "@/lib/constants";
 import { isValidEmail } from "@/lib/utils";
 import type { TeamMember, TeamRole } from "@/types";
 
@@ -59,7 +59,7 @@ export default function TeamPage() {
 
   const isPaidPlan = agency?.plan !== "free";
   const planLabel = agency ? PLAN_LABELS[agency.plan] : "";
-  const seatLimit = agency ? (PLAN_SEATS[agency.plan] ?? 1) : 1;
+  const seatLimit = agency ? effectiveSeatsLimit(agency.plan) : 1;
 
   useEffect(() => {
     if (roleLoading || !roleCanDo("manage_team")) return;
@@ -275,18 +275,6 @@ export default function TeamPage() {
                   </td>
                   <td className="px-5 py-3.5" />
                 </tr>
-
-                {data?.members.length === 0 && (
-                  <tr>
-                    <td colSpan={4}>
-                      <EmptyState
-                        icon={<Users size={18} />}
-                        title="No team members yet"
-                        description="Invite a colleague to collaborate on your sites."
-                      />
-                    </td>
-                  </tr>
-                )}
 
                 {data?.members.map((member) => (
                   <tr key={member.id}>
