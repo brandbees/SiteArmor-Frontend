@@ -57,13 +57,19 @@ export type SiteNavGroup = {
 /** MalCare-style grouped site navigation */
 export const SITE_NAV_GROUPS: SiteNavGroup[] = [
   {
+    id: "seo",
+    label: "SEO",
+    icon: TrendingUp,
+    defaultOpen: true,
+    items: [{ id: "seo", label: "SEO Audit", tab: "seo", icon: TrendingUp }],
+  },
+  {
     id: "manage",
     label: "Manage",
     icon: Wrench,
     defaultOpen: true,
     items: [
       { id: "plugins", label: "Plugins", tab: "plugins", icon: Plug, badgeFrom: "plugins" },
-      { id: "seo", label: "SEO", tab: "seo", icon: TrendingUp },
       { id: "issues", label: "Issues", tab: "issues", icon: ListTodo },
       { id: "health", label: "Site Health", tab: "health", icon: HeartPulse },
     ],

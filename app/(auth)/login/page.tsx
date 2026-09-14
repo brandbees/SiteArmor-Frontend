@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Mail } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/Button";
 import { AuthShell, authInputClass, authLabelClass } from "@/components/auth/AuthShell";
@@ -85,6 +86,8 @@ function LoginContent() {
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
         "Invalid email or password.";
       setError(msg);
+      toast.error(msg);
+      setCfToken(null);
     } finally {
       setLoading(false);
     }

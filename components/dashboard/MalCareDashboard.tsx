@@ -335,18 +335,26 @@ export function MalCareDashboard({
   const planPct = planLimit > 0 ? Math.min(100, (sitesUsed / planLimit) * 100) : 0;
 
   const hackedSites = sites.filter((s) => s.malware_status === "threat");
-  const criticalSites = sites.filter(
-    (s) =>
+  const criticalSites = sites.filter((s) => {
+    const securityScore = s.latest_scores?.security ?? null;
+    return (
       s.uptime_status === "down" ||
-      (s.overall_score != null && s.overall_score < 50)
-  );
-  const warningSites = sites.filter(
-    (s) =>
-      s.overall_score != null &&
-      s.overall_score >= 50 &&
-      s.overall_score < 80 &&
-      s.malware_status !== "threat"
-  );
+      (s.overall_score != null && s.overall_score < 50) ||
+      (securityScore != null && securityScore <= 0)
+    );
+  });
+  const warningSites = sites.filter((s) => {
+    const securityScore = s.latest_scores?.security ?? null;
+    const isCritical =
+      s.uptime_status === "down" ||
+      (s.overall_score != null && s.overall_score < 50) ||
+      (securityScore != null && securityScore <= 0);
+    if (isCritical || s.malware_status === "threat") return false;
+    return (
+      (s.overall_score != null && s.overall_score >= 50 && s.overall_score < 80) ||
+      (securityScore != null && securityScore > 0 && securityScore < 50)
+    );
+  });
 
   const alertCounts = {
     hacked: hackedSites.length,
