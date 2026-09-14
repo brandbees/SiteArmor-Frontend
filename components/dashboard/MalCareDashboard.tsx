@@ -385,15 +385,16 @@ export function MalCareDashboard({
         continue;
       }
       const sslDays = sslDaysRemaining(s.ssl_expiry_date);
+      const securityScore = s.latest_scores?.security ?? null;
       const isCritical =
         s.malware_status === "threat" ||
         s.uptime_status === "down" ||
         (s.overall_score != null && s.overall_score < 50) ||
-        (s.security_score != null && s.security_score <= 0);
+        (securityScore != null && securityScore <= 0);
       const isWarning =
         !isCritical &&
         ((s.overall_score != null && s.overall_score >= 50 && s.overall_score < 80) ||
-          (s.security_score != null && s.security_score > 0 && s.security_score < 50) ||
+          (securityScore != null && securityScore > 0 && securityScore < 50) ||
           (sslDays != null && sslDays <= 30) ||
           !s.ssl_expiry_date);
 
