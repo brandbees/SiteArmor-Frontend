@@ -17,7 +17,6 @@ import { useBranding } from "@/contexts/BrandingContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { IconChip } from "@/components/ui/IconChip";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { McAlert, McCard, McIconBox, McPill, McTag } from "@/components/shared/MalCareUI";
 import { PortalPageShell } from "@/components/layout/PortalPageShell";
@@ -941,9 +940,6 @@ function TeamTab() {
                   <td className="px-5 py-3.5"><span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700"><span className="w-1.5 h-1.5 rounded-full bg-green-500" />Active</span></td>
                   <td className="px-5 py-3.5" />
                 </tr>
-                {data?.members.length === 0 && (
-                  <tr><td colSpan={4}><EmptyState icon={<Users size={18} />} title="No team members yet" description="Invite a colleague to collaborate on your sites." /></td></tr>
-                )}
                 {data?.members.map(member => (
                   <tr key={member.id}>
                     <td className="px-5 py-3.5"><p className="font-medium text-foreground">{member.name || "â€”"}</p><p className="text-xs text-muted-foreground">{member.email}</p></td>

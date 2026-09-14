@@ -2289,8 +2289,15 @@ function SiteHealthTab({ site }: { site: Site }) {
   }
 
   const ext = h.php_extensions ?? {};
-  const extKeys = Object.keys(ext);
-  const extMissing = extKeys.filter((k) => !ext[k]);
+  // Deduplicate sodium / libsodium — same capability on different PHP builds
+  const extNormalized: Record<string, boolean> = { ...ext };
+  if ("sodium" in extNormalized || "libsodium" in extNormalized) {
+    const loaded = Boolean(extNormalized.sodium || extNormalized.libsodium);
+    delete extNormalized.libsodium;
+    extNormalized.sodium = loaded;
+  }
+  const extKeys = Object.keys(extNormalized);
+  const extMissing = extKeys.filter((k) => !extNormalized[k]);
 
   const wpChecks = [
     { label: "HTTPS enabled",         value: h.is_https,            good: true,  bad: false },
@@ -2387,14 +2394,14 @@ function SiteHealthTab({ site }: { site: Site }) {
             <div>
               <p className="text-sm font-semibold text-foreground">PHP Extensions</p>
               <p className="text-xs text-muted-foreground">
-                {extKeys.filter((k) => ext[k]).length} of {extKeys.length} loaded
+                {extKeys.filter((k) => extNormalized[k]).length} of {extKeys.length} loaded
                 {extMissing.length > 0 && ` · ${extMissing.length} missing`}
               </p>
             </div>
           </div>
           <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {extKeys.map((name) => {
-              const loaded = ext[name];
+              const loaded = extNormalized[name];
               return (
                 <div
                   key={name}

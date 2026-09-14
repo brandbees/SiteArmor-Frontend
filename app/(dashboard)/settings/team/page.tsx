@@ -5,14 +5,13 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { UserPlus, Trash2, ChevronDown, Users, Lock, AlertCircle, X } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import api from "@/lib/api";
-import { PLAN_LABELS, PLAN_SEATS, effectiveSeatsLimit } from "@/lib/constants";
+import { PLAN_LABELS, effectiveSeatsLimit } from "@/lib/constants";
 import { isValidEmail } from "@/lib/utils";
 import type { TeamMember, TeamRole } from "@/types";
 
