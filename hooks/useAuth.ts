@@ -29,13 +29,15 @@ export function useAuth() {
     password: string,
     coupon?: string,
     cfTurnstileToken?: string | null,
-    accountType?: "agency" | "individual"
+    accountType?: "agency" | "individual",
+    appsumoClaimToken?: string | null
   ): Promise<{ pending: boolean; email: string }> {
     const { data } = await api.post<{ pending: boolean; email: string }>("/auth/register", {
       agency_name: agencyName,
       email,
       password,
       coupon_code: coupon,
+      appsumo_claim_token: appsumoClaimToken || undefined,
       cf_turnstile_token: cfTurnstileToken,
       account_type: accountType ?? "agency",
     });

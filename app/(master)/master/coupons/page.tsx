@@ -250,7 +250,9 @@ export default function MasterCouponsPage() {
             <p className="text-sm font-bold text-foreground">AppSumo codes</p>
             <p className="mt-1 text-xs text-muted-foreground max-w-xl">
               Stackable LTD: 1 Free · 2 Starter · 3 Growth · 4+ Agency+. Codes are one-time use.
-              Redemption URL: <code className="text-foreground">/redeem</code> (or <code className="text-foreground">/redeem?code=…</code>).
+              Redemption URL: <code className="text-foreground">/appsumo/activate</code> (Licensing API)
+              {" · "}
+              <code className="text-foreground">/redeem</code> (legacy coupon codes).
             </p>
             {appsumoStats && (
               <p className="mt-2 text-xs text-muted-foreground">

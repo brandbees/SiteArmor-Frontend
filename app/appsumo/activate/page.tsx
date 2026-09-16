@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,47 +13,103 @@ import { PLAN_LABELS } from "@/lib/constants";
 
 const CF_SITE_KEY = process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY ?? "";
 
-const STACK_HINT = [
-  { codes: "1 code", plan: "Starter", limits: "10 sites · 3 seats" },
-  { codes: "2 codes", plan: "Growth", limits: "50 sites · 10 seats" },
-  { codes: "3+ codes", plan: "Agency+", limits: "Unlimited sites & seats" },
-];
+type ExchangeResult = {
+  license_key: string;
+  status: string;
+  tier: number;
+  plan: string;
+  sites_limit: number;
+  label: string;
+  agency_id: string | null;
+  claim_token: string;
+};
 
-function RedeemInner() {
+function ActivateInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register, verifyEmail, login, refreshAgency } = useAuth();
 
-  const prefill = (searchParams.get("code") || searchParams.get("coupon") || "").toUpperCase();
+  const oauthCode = searchParams.get("code") || "";
 
-  const [mode, setMode] = useState<"signup" | "login" | "stack">("signup");
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [phase, setPhase] = useState<"form" | "verify">("form");
-  const [pendingEmail, setPendingEmail] = useState("");
+  const [phase, setPhase] = useState<"loading" | "form" | "verify" | "done" | "error">("loading");
+  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [exchange, setExchange] = useState<ExchangeResult | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState(prefill);
   const [cfToken, setCfToken] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState<{ plan: string; label?: string; codes?: number } | null>(null);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [doneLabel, setDoneLabel] = useState("");
 
   useEffect(() => {
-    const ok = isLoggedIn();
-    setLoggedIn(ok);
-    if (ok) setMode("stack");
-  }, []);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (prefill) setCode(prefill);
-  }, [prefill]);
+    async function run() {
+      // Portal validation hits this URL with no query — always render OK
+      if (!oauthCode) {
+        setPhase("form");
+        setError("Open this page from AppSumo after clicking Activate now.");
+        return;
+      }
+
+      try {
+        const { data } = await api.post<ExchangeResult>("/appsumo/oauth/exchange", {
+          code: oauthCode,
+        });
+        if (cancelled) return;
+        setExchange(data);
+
+        // Already linked → just log them toward dashboard if same session
+        if (data.agency_id && isLoggedIn()) {
+          await api.post("/appsumo/oauth/claim", { claim_token: data.claim_token }).catch(() => null);
+          await refreshAgency();
+          setDoneLabel(data.label);
+          setPhase("done");
+          return;
+        }
+
+        if (isLoggedIn()) {
+          setMode("login");
+        }
+        setPhase("form");
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setError(
+          (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+            || "Could not complete AppSumo activation. Try Activate now again from AppSumo."
+        );
+        setPhase("error");
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [oauthCode, refreshAgency]);
+
+  async function claimAfterAuth() {
+    if (!exchange?.claim_token) throw new Error("Missing claim token");
+    const { data } = await api.post<{ label: string; plan: string }>(
+      "/appsumo/oauth/claim",
+      { claim_token: exchange.claim_token }
+    );
+    await refreshAgency();
+    setDoneLabel(data.label || PLAN_LABELS[data.plan] || data.plan);
+    setPhase("done");
+  }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!exchange?.claim_token) {
+      setError("AppSumo session missing. Activate again from AppSumo.");
+      return;
+    }
     if (!isValidEmail(email)) {
       setError("Enter a valid email address.");
       return;
@@ -63,13 +118,17 @@ function RedeemInner() {
       setError("Password must be at least 8 characters.");
       return;
     }
-    if (!code.trim()) {
-      setError("AppSumo code is required.");
-      return;
-    }
     setLoading(true);
     try {
-      const result = await register(name, email, password, code.trim(), cfToken, "agency");
+      const result = await register(
+        name,
+        email,
+        password,
+        undefined,
+        cfToken,
+        "agency",
+        exchange.claim_token
+      );
       if (result.pending) {
         setPendingEmail(result.email);
         setPhase("verify");
@@ -77,7 +136,7 @@ function RedeemInner() {
     } catch (err: unknown) {
       setError(
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-          || "Registration failed. Please try again."
+          || "Registration failed."
       );
     } finally {
       setLoading(false);
@@ -90,8 +149,10 @@ function RedeemInner() {
     setLoading(true);
     try {
       await verifyEmail(pendingEmail, otp.trim());
+      // License already linked during verify-email when claim token was in payload
       await refreshAgency();
-      router.replace("/billing?section=plans");
+      setDoneLabel(exchange?.label || "");
+      setPhase("done");
     } catch (err: unknown) {
       setError(
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error
@@ -102,61 +163,59 @@ function RedeemInner() {
     }
   }
 
-  async function handleLoginRedeem(e: React.FormEvent) {
+  async function handleLoginClaim(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!code.trim()) {
-      setError("AppSumo code is required.");
-      return;
-    }
     setLoading(true);
     try {
       if (!isLoggedIn()) {
         await login(email, password, cfToken);
       }
-      const { data } = await api.post<{
-        plan: string;
-        label?: string;
-        codes_redeemed?: number;
-      }>("/billing/coupons/redeem", { code: code.trim() });
-      await refreshAgency();
-      setDone({
-        plan: data.plan,
-        label: data.label,
-        codes: data.codes_redeemed,
-      });
+      await claimAfterAuth();
     } catch (err: unknown) {
       setError(
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-          || "Could not redeem code."
+          || "Could not link AppSumo license."
       );
     } finally {
       setLoading(false);
     }
   }
 
-  if (done) {
+  if (phase === "loading") {
     return (
-      <AuthShell
-        variant="register"
-        title="Code redeemed"
-        subtitle="Your AppSumo plan is active"
-      >
+      <AuthShell variant="register" title="Connecting AppSumo…" subtitle="Hang tight — verifying your license">
+        <p className="text-center text-sm text-muted-foreground">Talking to AppSumo…</p>
+      </AuthShell>
+    );
+  }
+
+  if (phase === "done") {
+    return (
+      <AuthShell variant="register" title="License activated" subtitle="Your AppSumo plan is live">
         <div className="space-y-4 text-center">
           <p className="text-sm text-muted-foreground">
             You&apos;re on{" "}
             <span className="font-semibold text-foreground">
-              {done.label || PLAN_LABELS[done.plan] || done.plan}
+              {doneLabel || exchange?.label || "your AppSumo plan"}
             </span>
-            {done.codes ? ` · ${done.codes} code${done.codes === 1 ? "" : "s"} stacked` : ""}.
+            .
           </p>
           <Button className="w-full" size="lg" onClick={() => router.push("/dashboard")}>
             Go to dashboard
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Stack more codes anytime from Plans &amp; Billing → Coupon.
-          </p>
         </div>
+      </AuthShell>
+    );
+  }
+
+  if (phase === "error") {
+    return (
+      <AuthShell variant="register" title="Activation failed" subtitle="Try again from AppSumo">
+        <p className="mb-4 text-sm text-red-600">{error}</p>
+        <Button className="w-full" variant="secondary" onClick={() => router.push("/redeem")}>
+          Redeem a code instead
+        </Button>
       </AuthShell>
     );
   }
@@ -164,8 +223,12 @@ function RedeemInner() {
   return (
     <AuthShell
       variant="register"
-      title="Redeem AppSumo code"
-      subtitle="Create your account or stack a code on an existing account — no payment required"
+      title="Activate AppSumo license"
+      subtitle={
+        exchange
+          ? `Unlocks ${exchange.label} · ${exchange.sites_limit >= 9999 ? "Unlimited" : exchange.sites_limit} sites`
+          : "Create or sign in to finish activation"
+      }
       footer={
         <p className="text-center text-sm text-muted-foreground">
           Need help?{" "}
@@ -175,22 +238,16 @@ function RedeemInner() {
         </p>
       }
     >
-      <div className="mb-5 rounded-[4px] border border-border bg-[#f7f9fc] p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Stackable plans
-        </p>
-        <ul className="mt-2 space-y-1">
-          {STACK_HINT.map((row) => (
-            <li key={row.codes} className="flex justify-between gap-3 text-xs text-foreground">
-              <span className="text-muted-foreground">{row.codes}</span>
-              <span className="font-medium">{row.plan}</span>
-              <span className="text-muted-foreground">{row.limits}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {exchange && (
+        <div className="mb-5 rounded-[4px] border border-border bg-[#f7f9fc] p-3 text-xs text-muted-foreground">
+          License{" "}
+          <span className="font-mono text-foreground">{exchange.license_key.slice(0, 8)}…</span>
+          {" · "}
+          Tier {exchange.tier} → {exchange.label}
+        </div>
+      )}
 
-      {!loggedIn && phase === "form" && (
+      {!isLoggedIn() && phase === "form" && (
         <div className="mb-4 flex gap-2">
           <button
             type="button"
@@ -234,7 +291,7 @@ function RedeemInner() {
             Verify &amp; activate
           </Button>
         </form>
-      ) : mode === "signup" && !loggedIn ? (
+      ) : mode === "signup" && !isLoggedIn() ? (
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
             <label className={authLabelClass}>Name / agency</label>
@@ -263,27 +320,17 @@ function RedeemInner() {
               autoComplete="new-password"
             />
           </div>
-          <div>
-            <label className={authLabelClass}>AppSumo code</label>
-            <input
-              className={`${authInputClass} font-mono uppercase tracking-wider`}
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              required
-              placeholder="SAXXXXXXXXXX"
-            />
-          </div>
           {CF_SITE_KEY ? (
             <Turnstile siteKey={CF_SITE_KEY} onSuccess={setCfToken} onExpire={() => setCfToken(null)} />
           ) : null}
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" loading={loading} className="w-full" size="lg">
-            Create account &amp; redeem
+          <Button type="submit" loading={loading} className="w-full" size="lg" disabled={!exchange}>
+            Create account &amp; activate
           </Button>
         </form>
       ) : (
-        <form onSubmit={handleLoginRedeem} className="space-y-4">
-          {!loggedIn && (
+        <form onSubmit={handleLoginClaim} className="space-y-4">
+          {!isLoggedIn() && (
             <>
               <div>
                 <label className={authLabelClass}>Email</label>
@@ -312,38 +359,26 @@ function RedeemInner() {
               ) : null}
             </>
           )}
-          <div>
-            <label className={authLabelClass}>AppSumo code</label>
-            <input
-              className={`${authInputClass} font-mono uppercase tracking-wider`}
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              required
-              placeholder="SAXXXXXXXXXX"
-            />
-          </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" loading={loading} className="w-full" size="lg">
-            {loggedIn ? "Stack code" : "Sign in & redeem"}
+          <Button type="submit" loading={loading} className="w-full" size="lg" disabled={!exchange}>
+            {isLoggedIn() ? "Link license to this account" : "Sign in & activate"}
           </Button>
-          {loggedIn && (
-            <p className="text-center text-xs text-muted-foreground">
-              Or manage codes in{" "}
-              <Link href="/billing?section=coupon" className="text-accent hover:underline">
-                Plans &amp; Billing
-              </Link>
-            </p>
-          )}
         </form>
       )}
     </AuthShell>
   );
 }
 
-export default function RedeemPage() {
+export default function AppsumoActivatePage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading…</div>}>
-      <RedeemInner />
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+          Loading…
+        </div>
+      }
+    >
+      <ActivateInner />
     </Suspense>
   );
 }
