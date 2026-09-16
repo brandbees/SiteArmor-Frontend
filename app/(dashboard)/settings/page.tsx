@@ -201,7 +201,7 @@ function GeneralTab() {
         </div>
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">Email Address</label>
-          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground select-all">{agency?.email ?? "â€”"}</div>
+          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground select-all">{agency?.email ?? "—"}</div>
           <p className="text-[11px] text-muted-foreground mt-1">Email cannot be changed. Contact support if needed.</p>
         </div>
         <div>
@@ -400,7 +400,7 @@ function BrandingTab() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left â€” form */}
+      {/* Left — form */}
       <div className="space-y-5">
         {/* Logo upload */}
         <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
@@ -427,8 +427,8 @@ function BrandingTab() {
               <Upload size={24} className="text-muted-foreground" />
             )}
             <div className="text-center">
-              <p className="text-sm font-semibold text-foreground">{logoUploading ? "Uploadingâ€¦" : "Drag & drop or click to upload"}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PNG, SVG or JPG â€” max 2MB</p>
+              <p className="text-sm font-semibold text-foreground">{logoUploading ? "Uploading…" : "Drag & drop or click to upload"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG, SVG or JPG — max 2MB</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Appears on PDF report covers, client portal, and email headers.</p>
@@ -449,8 +449,8 @@ function BrandingTab() {
               )}
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{faviconUploading ? "Uploadingâ€¦" : faviconPreview ? "Favicon uploaded" : "Upload a favicon"}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PNG, ICO, or SVG â€” max 512KB. Shown in browser tabs.</p>
+              <p className="text-sm font-medium text-foreground">{faviconUploading ? "Uploading…" : faviconPreview ? "Favicon uploaded" : "Upload a favicon"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG, ICO, or SVG — max 512KB. Shown in browser tabs.</p>
             </div>
             {faviconPreview && (
               <button onClick={() => { setFaviconPreview(null); setFaviconUrl(null); }}
@@ -499,7 +499,7 @@ function BrandingTab() {
         <Button onClick={save} loading={saving} className="w-full">Save Brand Settings</Button>
       </div>
 
-      {/* Right â€” live preview */}
+      {/* Right — live preview */}
       <div className="sticky top-6">
         <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
           <div className="px-5 py-4 border-b border-border">
@@ -619,7 +619,7 @@ function NotificationsTab() {
               <div className="flex items-center justify-between py-1">
                 <div>
                   <span className="text-sm font-medium text-foreground flex items-center gap-1.5">Malware <Lock size={11} className="text-muted-foreground" /></span>
-                  <p className="text-[10px] text-muted-foreground">Always on â€” cannot be disabled</p>
+                  <p className="text-[10px] text-muted-foreground">Always on — cannot be disabled</p>
                 </div>
                 <span className="text-xs text-emerald-600 font-semibold">Always On</span>
               </div>
@@ -716,7 +716,7 @@ function ActivityTab() {
                         className="text-sm font-medium text-foreground hover:text-accent hover:underline truncate block">{log.site_name}</Link>
                     ) : (
                       <p className="text-sm font-medium text-foreground">
-                        {log.details && typeof log.details === "object" && "name" in log.details ? String(log.details.name) : "â€”"}
+                        {log.details && typeof log.details === "object" && "name" in log.details ? String(log.details.name) : "—"}
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -733,7 +733,7 @@ function ActivityTab() {
         )}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-border">
-            <p className="text-xs text-muted-foreground">{page * PAGE_SIZE + 1}â€“{Math.min((page + 1) * PAGE_SIZE, total)} of {total}</p>
+            <p className="text-xs text-muted-foreground">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}</p>
             <div className="flex items-center gap-2">
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
                 className="p-1.5 rounded-lg border border-border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
@@ -942,7 +942,7 @@ function TeamTab() {
                 </tr>
                 {data?.members.map(member => (
                   <tr key={member.id}>
-                    <td className="px-5 py-3.5"><p className="font-medium text-foreground">{member.name || "â€”"}</p><p className="text-xs text-muted-foreground">{member.email}</p></td>
+                    <td className="px-5 py-3.5"><p className="font-medium text-foreground">{member.name || "—"}</p><p className="text-xs text-muted-foreground">{member.email}</p></td>
                     <td className="px-5 py-3.5">
                       <div className="relative inline-block">
                         <select value={member.role} onChange={(e) => handleRoleChange(member.id, e.target.value as Exclude<TeamRole, "owner">)}
@@ -1032,13 +1032,13 @@ function IntegrationsTab() {
         <div className="rounded-xl border border-border bg-muted/20 p-5 flex flex-col gap-5">
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">How to connect a site</p>
-            <p className="text-xs text-muted-foreground">API keys and site tokens are managed per-site â€” no global key needed.</p>
+            <p className="text-xs text-muted-foreground">API keys and site tokens are managed per-site — no global key needed.</p>
           </div>
 
           <ol className="space-y-4 flex-1">
             {[
-              { title: "Add your site", desc: "Go to the Sites page and add a new site â€” you'll get an API key and site token." },
-              { title: "Install the plugin", desc: "Download the zip above and upload via WordPress Admin â†’ Plugins â†’ Add New â†’ Upload Plugin." },
+              { title: "Add your site", desc: "Go to the Sites page and add a new site — you'll get an API key and site token." },
+              { title: "Install the plugin", desc: "Download the zip above and upload via WordPress Admin → Plugins → Add New → Upload Plugin." },
               { title: "Connect in plugin settings", desc: "Enter your API key and site token in the plugin settings page, then click Save & Connect." },
               { title: "Data starts flowing", desc: "The plugin verifies the connection and begins pushing data within the hour via WP Cron." },
             ].map((step, i) => (
