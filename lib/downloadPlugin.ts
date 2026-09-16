@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "@/lib/constants";
 
 /** Canonical download filename for the Site Armor WordPress plugin. */
-export const PLUGIN_ZIP_NAME = "sitearmor.zip";
+export const PLUGIN_ZIP_NAME = "site-armor.zip";
 
 /**
  * Download the WP plugin zip with a forced filename.
