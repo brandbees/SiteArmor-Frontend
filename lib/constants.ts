@@ -18,9 +18,9 @@ export const PLAN_LABELS: Record<string, string> = {
   premium: "Growth",
   agency: "Agency",
   agency_plus: "Agency+",
-  appsumo_solo: "Solo",
-  appsumo_practice: "Practice",
-  appsumo_studio: "Studio",
+  appsumo_solo: "Starter",
+  appsumo_practice: "Growth",
+  appsumo_studio: "Agency+",
 };
 
 export const PLAN_SEATS: Record<string, number> = {

@@ -401,7 +401,7 @@ export function PlansBillingPage() {
                 <div className="mt-4 rounded-2xl border border-accent/20 bg-accent-light/40 px-5 py-4 shadow-elevated-sm sm:px-6">
                   <p className="text-sm font-medium text-zinc-900">AppSumo lifetime plan</p>
                   <p className="mt-1 text-sm text-zinc-600">
-                    Stack more AppSumo codes to move Solo → Practice → Studio. Need more AI or storage? Buy packs below — monthly Stripe upgrades are optional and separate.
+                    Stack more AppSumo codes to move Starter → Growth → Agency+ (LTD limits). Need more AI or storage? Buy packs below — monthly Stripe upgrades are optional and separate.
                   </p>
                 </div>
               )}
@@ -634,7 +634,7 @@ export function PlansBillingPage() {
                     {appsumoStatus.tier ? ` · ${appsumoStatus.tier.label}` : ""}
                   </p>
                   <p className="mt-1 text-xs text-zinc-500">
-                    Stack more codes: 1 Solo · 2 Practice · 3 Studio.
+                    Stack more codes: 1 Starter · 2 Growth · 3 Agency+.
                   </p>
                 </div>
               )}

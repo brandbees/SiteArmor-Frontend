@@ -15,9 +15,9 @@ import { PLAN_LABELS } from "@/lib/constants";
 const CF_SITE_KEY = process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY ?? "";
 
 const STACK_HINT = [
-  { codes: "1 code · Solo", plan: "$45 LTD", limits: "1 site · 2 seats · 20k tokens" },
-  { codes: "2 codes · Practice", plan: "$89 LTD", limits: "3 sites · 3 seats · 50k tokens" },
-  { codes: "3 codes · Studio", plan: "$139 LTD", limits: "5 sites · 5 seats · 100k tokens · backups" },
+  { codes: "1 code · Starter", plan: "$45 LTD", limits: "1 site · 2 seats · 20k tokens" },
+  { codes: "2 codes · Growth", plan: "$89 LTD", limits: "3 sites · 3 seats · 50k tokens" },
+  { codes: "3 codes · Agency+", plan: "$139 LTD", limits: "5 sites · 5 seats · 100k tokens · backups" },
 ];
 
 function RedeemInner() {
