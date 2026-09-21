@@ -19,6 +19,7 @@ import {
   getPlanLabel,
   effectiveSitesLimit,
   effectiveSeatsLimit,
+  isAppsumoPlan,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Site } from "@/types";
@@ -133,6 +134,7 @@ export function PlansBillingPage() {
 
   const rawPlan = agency?.plan ?? "free";
   const isLegacyAgency = rawPlan === "agency";
+  const isAppsumo = isAppsumoPlan(rawPlan);
   const currentPlan = resolvePlanCode(rawPlan);
   const currentPlanLabel = getPlanLabel(rawPlan);
   const currentPlanPrice = getPlanPrice(rawPlan);
@@ -370,7 +372,11 @@ export function PlansBillingPage() {
                     <div>
                       <p className="text-white/50">Billing</p>
                       <p className="mt-0.5 font-medium tabular-nums">
-                        {currentPlanPrice.monthly === 0 ? "Free" : `$${currentPlanPrice.monthly}/mo`}
+                        {isAppsumo
+                          ? "Lifetime (AppSumo)"
+                          : currentPlanPrice.monthly === 0
+                            ? "Free"
+                            : `$${currentPlanPrice.monthly}/mo`}
                       </p>
                     </div>
                     <div>
@@ -390,6 +396,15 @@ export function PlansBillingPage() {
                   </div>
                 </div>
               </div>
+
+              {isAppsumo && (
+                <div className="mt-4 rounded-2xl border border-accent/20 bg-accent-light/40 px-5 py-4 shadow-elevated-sm sm:px-6">
+                  <p className="text-sm font-medium text-zinc-900">AppSumo lifetime plan</p>
+                  <p className="mt-1 text-sm text-zinc-600">
+                    Stack more AppSumo codes to move Solo → Practice → Studio. Need more AI or storage? Buy packs below — monthly Stripe upgrades are optional and separate.
+                  </p>
+                </div>
+              )}
 
               {isLegacyAgency && (
                 <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-elevated-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -619,7 +634,7 @@ export function PlansBillingPage() {
                     {appsumoStatus.tier ? ` · ${appsumoStatus.tier.label}` : ""}
                   </p>
                   <p className="mt-1 text-xs text-zinc-500">
-                    Stack more codes to unlock higher tiers (2 Starter · 3 Growth · 4+ Agency+).
+                    Stack more codes: 1 Solo · 2 Practice · 3 Studio.
                   </p>
                 </div>
               )}

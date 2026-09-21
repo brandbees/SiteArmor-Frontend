@@ -40,10 +40,22 @@ const PLAN_OPTIONS = [
   { value: "agency_plus", label: "Agency+"  },
 ];
 const PLAN_LABELS: Record<string, string> = {
-  freemium: "Starter", premium: "Growth", agency: "Agency", agency_plus: "Agency+",
+  freemium: "Starter",
+  premium: "Growth",
+  agency: "Agency",
+  agency_plus: "Agency+",
+  appsumo_solo: "Solo",
+  appsumo_practice: "Practice",
+  appsumo_studio: "Studio",
 };
 const PLAN_COLORS: Record<string, string> = {
-  freemium: "#3b82f6", premium: "#8b5cf6", agency: "#64748b", agency_plus: "#f59e0b",
+  freemium: "#3b82f6",
+  premium: "#8b5cf6",
+  agency: "#64748b",
+  agency_plus: "#f59e0b",
+  appsumo_solo: "#0ea5e9",
+  appsumo_practice: "#6366f1",
+  appsumo_studio: "#10b981",
 };
 
 function planLabel(p: string) { return PLAN_LABELS[p] ?? p; }
