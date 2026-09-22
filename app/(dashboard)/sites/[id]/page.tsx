@@ -34,6 +34,7 @@ import { parseSiteTab, siteTabHref, SITE_TAB_LABELS, type SiteTab } from "@/comp
 import { SiteLoadingOverlay } from "@/components/sites/SiteLoadingOverlay";
 import { useSSHSettings } from "@/hooks/useSSHSettings";
 import api from "@/lib/api";
+import { planHasBackups, planHasSafeUpdates } from "@/lib/constants";
 import { timeAgo, scoreHex, cn } from "@/lib/utils";
 import type { Site, Audit, ScanResult, Plugin as SitePlugin, CronEvent, SiteHealth, PluginVulnerability, WooFatalError, WooGateway } from "@/types";
 
@@ -2445,7 +2446,8 @@ function SiteDetailContent() {
   const { site, loading, error, refetch } = useSiteContext();
   const { agency } = useAuth();
   const brandColor = agency?.accent_color ?? "#1f5fb8";
-  const canUseAdvancedFeatures = agency?.plan === "premium" || agency?.plan === "agency_plus";
+  const canUseBackups = planHasBackups(agency?.plan);
+  const canUseSafeUpdates = planHasSafeUpdates(agency?.plan);
   const { roleCanDo } = useRole();
   const canRunAudit = roleCanDo("run_audit");
   const canDeleteSite = roleCanDo("delete_site");
@@ -2729,11 +2731,11 @@ function SiteDetailContent() {
           />
         )}
         {activeTab === "uptime"      && <UptimeTab site={site} brandColor={brandColor} />}
-        {activeTab === "plugins"     && <PluginsTab site={site} audits={site.audits} brandColor={brandColor} onSiteRefetch={refetch} canUseAdvancedFeatures={canUseAdvancedFeatures} />}
+        {activeTab === "plugins"     && <PluginsTab site={site} audits={site.audits} brandColor={brandColor} onSiteRefetch={refetch} canUseAdvancedFeatures={canUseSafeUpdates} />}
         {activeTab === "woocommerce" && <WooCommerceTab site={site} audits={site.audits} brandColor={brandColor} />}
         {activeTab === "cron"        && <CronTab site={site} brandColor={brandColor} />}
         {activeTab === "health"      && <SiteHealthTab site={site} />}
-        {activeTab === "backups"     && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseAdvancedFeatures} />}
+        {activeTab === "backups"     && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseBackups} />}
         {activeTab === "agent"       && <AgentTab site={site} />}
       </div>
 

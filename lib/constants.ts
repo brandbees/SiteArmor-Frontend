@@ -1,6 +1,20 @@
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+/** Plans that may run backups (must match backupService.BACKUP_PLANS). */
+export const BACKUP_ELIGIBLE_PLANS = ["premium", "agency_plus", "appsumo_studio"] as const;
+
+/** Plans that may use safe plugin/theme updates (Growth+ monthly; not AppSumo Studio). */
+export const SAFE_UPDATE_ELIGIBLE_PLANS = ["premium", "agency_plus"] as const;
+
+export function planHasBackups(plan?: string | null): boolean {
+  return !!plan && (BACKUP_ELIGIBLE_PLANS as readonly string[]).includes(plan);
+}
+
+export function planHasSafeUpdates(plan?: string | null): boolean {
+  return !!plan && (SAFE_UPDATE_ELIGIBLE_PLANS as readonly string[]).includes(plan);
+}
+
 export const PLAN_LIMITS: Record<string, number> = {
   free: 1,
   freemium: 10,
