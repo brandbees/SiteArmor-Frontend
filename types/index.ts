@@ -314,6 +314,9 @@ export interface MalwareScanResult {
   status: MalwareScanStatus;
   triggered_by: string | null;
   overall_threat_score: number;
+  infection_score?: number | null;
+  hygiene_score?: number | null;
+  intel_degraded?: boolean | null;
   threats_found: number;
   critical_count: number;
   high_count: number;
