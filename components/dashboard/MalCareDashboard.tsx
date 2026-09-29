@@ -508,12 +508,16 @@ export function MalCareDashboard({
   }, [agency, isIndividual]);
 
   useEffect(() => {
+    if (agency?.is_client_portal) {
+      setReportsLoading(false);
+      return;
+    }
     api
       .get<{ reports: RawReportRow[] }>("/reports")
       .then(({ data }) => setReports((data.reports ?? []).map(mapReportRow)))
       .catch(() => setReports([]))
       .finally(() => setReportsLoading(false));
-  }, []);
+  }, [agency?.is_client_portal]);
 
   async function runAudit(siteId: string) {
     setAuditLoading(siteId);

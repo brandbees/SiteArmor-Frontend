@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import api from "@/lib/api";
+import { getAgency } from "@/lib/auth";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 
@@ -55,6 +56,11 @@ export function ChangelogModal({ open, onClose, onSeen }: ChangelogModalProps) {
 
   useEffect(() => {
     if (!open) return;
+    if (getAgency()?.is_client_portal) {
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     api
       .get<{ entries: ChangelogEntry[]; unread: number }>("/changelog")

@@ -82,7 +82,8 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.replace("/login");
+      const agency = getAgency();
+      router.replace(agency?.is_client_portal ? "/client-portal/login" : "/login");
       return;
     }
 
@@ -136,8 +137,9 @@ export default function DashboardLayout({
   // Auto-logout on inactivity or when returning to a tab with an expired token
   useEffect(() => {
     function doLogout() {
+      const wasClient = !!getAgency()?.is_client_portal;
       clearToken();
-      window.location.href = "/login";
+      window.location.href = wasClient ? "/client-portal/login" : "/login";
     }
 
     function resetTimer() {

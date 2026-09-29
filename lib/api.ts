@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "./constants";
-import { getToken, clearToken } from "./auth";
+import { getToken, clearToken, getAgency } from "./auth";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -15,12 +15,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+function isClientPortalSession(): boolean {
+  return !!getAgency()?.is_client_portal;
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
     const reqUrl = String(error.config?.url || "");
     const isAuthAttempt = /\/auth\/(login|register|verify|resend)/.test(reqUrl);
+    const clientPortal = isClientPortalSession();
+    const loginPath = clientPortal ? "/client-portal/login" : "/login";
 
     if (status === 401) {
       // Wrong password on /login returns 401 — do NOT hard-redirect or the inline error vanishes.
@@ -30,20 +36,24 @@ api.interceptors.response.use(
       }
       clearToken();
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        window.location.href = loginPath;
       }
+      return Promise.reject(error);
     }
     if (status === 403 && getToken()) {
       // Plan-gate errors (upgrade_required) are handled inline by the page — don't log out.
       if (error.response?.data?.upgrade_required) {
         return Promise.reject(error);
       }
-      // Only redirect when mid-session (had a valid token). If no token, the
-      // 403 came from the login endpoint itself — let the catch block handle it.
+      // Client JWTs hit agency-only routes (settings, announcements, reports) →
+      // "Access denied for client portal." Must NOT bounce to agency /login (BUG-034).
+      const msg = String(error.response?.data?.error ?? "");
+      if (clientPortal || /client portal/i.test(msg)) {
+        return Promise.reject(error);
+      }
       clearToken();
       if (typeof window !== "undefined") {
-        const msg = error.response?.data?.error ?? "Access denied.";
-        window.location.href = `/login?error=${encodeURIComponent(msg)}`;
+        window.location.href = `/login?error=${encodeURIComponent(msg || "Access denied.")}`;
       }
     }
     if (status === 503 && error.response?.data?.maintenance === true) {

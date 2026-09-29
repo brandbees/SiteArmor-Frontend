@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sparkles, X } from "lucide-react";
 import api from "@/lib/api";
+import { getAgency } from "@/lib/auth";
 
 interface Announcement {
   id: string;
@@ -39,6 +40,8 @@ export function AnnouncementBanner() {
 
   useEffect(() => {
     async function load() {
+      // Agency-only — skip for client portal (BUG-034)
+      if (getAgency()?.is_client_portal) return;
       try {
         const { data } = await api.get("/announcements");
         const items: Announcement[] = data.announcements ?? [];

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import api from "@/lib/api";
-import { isLoggedIn, getBranding, saveBranding } from "@/lib/auth";
+import { isLoggedIn, getBranding, saveBranding, getAgency } from "@/lib/auth";
 
 interface Branding {
   logoUrl: string | null;
@@ -89,6 +89,8 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     }
 
     if (!isLoggedIn()) return;
+    // Agency-only route — client portal JWTs get 403 (BUG-034). Use invite-stored branding.
+    if (getAgency()?.is_client_portal) return;
     api.get<{ logo_url?: string | null; brand_name?: string | null; accent_color?: string | null; favicon_url?: string | null }>(
       "/settings"
     )
