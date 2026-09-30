@@ -157,6 +157,7 @@ export interface Site {
   last_backup_type?: "db" | "files" | "full" | null;
   last_backup_error?: string | null;
   last_backup_created_at?: string | null;
+  last_backup_size_mb?: number | null;
 }
 
 export interface PillarScores {

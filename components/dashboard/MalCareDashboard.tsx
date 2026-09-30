@@ -374,7 +374,26 @@ export function MalCareDashboard({
     );
     const failed = sites.filter((s) => s.last_backup_status === "failed");
     const enabled = scheduled.length > 0 || withHistory.length > 0;
-    return { scheduled, withHistory, running, failed, enabled };
+
+    // Merge scheduled + history sites (dedupe). Prefer most recent backup first so
+    // manual sites like hamoiztech.com aren't hidden when another site is weekly.
+    const listedById = new Map<string, Site>();
+    for (const s of [...scheduled, ...withHistory]) {
+      if (!listedById.has(s.id)) listedById.set(s.id, s);
+    }
+    const listed = [...listedById.values()].sort((a, b) => {
+      const aRunning = a.last_backup_status === "running" || a.last_backup_status === "pending" ? 1 : 0;
+      const bRunning = b.last_backup_status === "running" || b.last_backup_status === "pending" ? 1 : 0;
+      if (aRunning !== bRunning) return bRunning - aRunning;
+      const aFailed = a.last_backup_status === "failed" ? 1 : 0;
+      const bFailed = b.last_backup_status === "failed" ? 1 : 0;
+      if (aFailed !== bFailed) return bFailed - aFailed;
+      const aT = Date.parse(a.last_backup_created_at || a.last_backup_at || "") || 0;
+      const bT = Date.parse(b.last_backup_created_at || b.last_backup_at || "") || 0;
+      return bT - aT;
+    });
+
+    return { scheduled, withHistory, running, failed, enabled, listed };
   }, [sites]);
 
   const alertSitesWithIssues = sites.filter(
@@ -870,12 +889,7 @@ export function MalCareDashboard({
                         )}
                       </div>
                       <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto">
-                        {(backupStats.scheduled.length
-                          ? backupStats.scheduled
-                          : backupStats.withHistory
-                        )
-                          .slice(0, 8)
-                          .map((s) => {
+                        {backupStats.listed.slice(0, 8).map((s) => {
                             const status = s.last_backup_status;
                             const schedule =
                               s.backup_schedule && s.backup_schedule !== "manual"
@@ -885,6 +899,10 @@ export function MalCareDashboard({
                               s.last_backup_created_at || s.last_backup_at
                                 ? timeAgo(s.last_backup_created_at || s.last_backup_at!)
                                 : "never";
+                            const size =
+                              s.last_backup_size_mb != null && Number.isFinite(s.last_backup_size_mb)
+                                ? ` · ${s.last_backup_size_mb} MB`
+                                : "";
                             const statusLabel =
                               status === "running" || status === "pending"
                                 ? "Running"
@@ -903,6 +921,7 @@ export function MalCareDashboard({
                                   <div className="truncate text-sm text-zinc-900">{s.name}</div>
                                   <div className="truncate text-xs text-muted-foreground">
                                     {schedule} · last {when}
+                                    {size}
                                     {status === "failed" && s.last_backup_error
                                       ? ` · ${s.last_backup_error}`
                                       : ""}

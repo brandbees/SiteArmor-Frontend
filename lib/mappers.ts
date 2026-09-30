@@ -44,6 +44,7 @@ export interface RawSite {
   last_backup_type?: "db" | "files" | "full" | null;
   last_backup_error?: string | null;
   last_backup_created_at?: string | null;
+  last_backup_size_mb?: number | null;
   // Security signals
   xml_rpc_enabled?: boolean | null;
   file_editor_enabled?: boolean | null;
@@ -390,6 +391,12 @@ export function mapSite(raw: RawSite): Site {
     last_backup_type: (raw.last_backup_type as Site["last_backup_type"]) ?? null,
     last_backup_error: raw.last_backup_error ?? null,
     last_backup_created_at: raw.last_backup_created_at ?? null,
+    last_backup_size_mb:
+      typeof raw.last_backup_size_mb === "number"
+        ? raw.last_backup_size_mb
+        : raw.last_backup_size_mb != null
+          ? Number(raw.last_backup_size_mb)
+          : null,
 
     plugin_version: raw.plugin_version ?? null,
   };
