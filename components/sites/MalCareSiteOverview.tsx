@@ -516,7 +516,8 @@ export function MalCareSiteOverview({
 
   const alerts = useMemo(() => {
     const items: { title: string; description: string; onClick: () => void }[] = [];
-    if (updates > 0) {
+    // Clients are read-only — no update CTAs (BUG-034)
+    if (!isClientPortal && updates > 0) {
       items.push({
         title: `${updates} Plugin Update${updates === 1 ? "" : "s"} Available`,
         description: `${updates} plugin${updates === 1 ? "" : "s"} need updates.`,
@@ -545,7 +546,7 @@ export function MalCareSiteOverview({
       });
     }
     return items;
-  }, [updates, site.malware_status, sslDays, down, setTab]);
+  }, [isClientPortal, updates, site.malware_status, sslDays, down, setTab]);
 
   const domain = (() => {
     try {
@@ -621,12 +622,13 @@ export function MalCareSiteOverview({
 
                     <button
                       type="button"
-                      onClick={() => setTab("plugins")}
-                      className="flex max-w-fit items-center gap-2 transition-opacity hover:opacity-80"
+                      onClick={() => !isClientPortal && setTab("plugins")}
+                      disabled={isClientPortal}
+                      className={`flex max-w-fit items-center gap-2 ${isClientPortal ? "cursor-default" : "transition-opacity hover:opacity-80"}`}
                     >
                       <div className="relative flex h-7 w-7 items-center justify-center rounded-md bg-zinc-50">
                         <Plug size={16} strokeWidth={1} className="text-zinc-600" />
-                        {updates > 0 && (
+                        {!isClientPortal && updates > 0 && (
                           <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-xs font-medium text-zinc-600">
                             {updates}
                           </span>
@@ -637,6 +639,7 @@ export function MalCareSiteOverview({
                       </span>
                     </button>
 
+                    {!isClientPortal && (
                     <button
                       type="button"
                       onClick={() => setTab("plugins")}
@@ -647,6 +650,7 @@ export function MalCareSiteOverview({
                       </div>
                       <span className="truncate text-xs text-zinc-800">Manage themes & plugins</span>
                     </button>
+                    )}
                   </div>
                 </div>
 
