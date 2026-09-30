@@ -121,6 +121,14 @@ interface WritePreview {
   can_undo:       boolean;
   // Extra params for new operations
   plugin_path?:   string | null;
+  slug?:          string | null;
+  zip_url?:       string | null;
+  activate?:      boolean | null;
+  stylesheet?:    string | null;
+  file_path?:     string | null;
+  dir_path?:      string | null;
+  zone?:          string | null;
+  pattern?:       string | null;
   user_id?:       number | null;
   constant?:      string | null;
   value?:         unknown;
@@ -200,6 +208,14 @@ function WriteConfirmCard({ call, siteId, onSuccess, bulkTrigger }: {
         operation:      preview.operation,
         target_options: preview.target_options  ?? undefined,
         plugin_path:    preview.plugin_path     ?? undefined,
+        slug:           preview.slug            ?? undefined,
+        zip_url:        preview.zip_url         ?? undefined,
+        activate:       preview.activate        ?? undefined,
+        stylesheet:     preview.stylesheet      ?? undefined,
+        file_path:      preview.file_path       ?? undefined,
+        dir_path:       preview.dir_path        ?? undefined,
+        zone:           preview.zone            ?? undefined,
+        pattern:        preview.pattern         ?? undefined,
         user_id:        preview.user_id         ?? undefined,
         constant:       preview.constant        ?? undefined,
         value:          preview.value           ?? undefined,
