@@ -421,7 +421,7 @@ export function PlansBillingPage() {
                 </div>
               )}
 
-              {(rawPlan === "agency_plus" || rawPlan === "appsumo_studio" || rawPlan === "agency") && (
+              {(rawPlan === "agency_plus" || isAppsumo || isLegacyAgency) && (
                 <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-elevated-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <div>
                     <p className="text-sm font-medium text-zinc-900">Custom domain</p>

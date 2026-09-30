@@ -1,4 +1,4 @@
-export type Plan = "free" | "freemium" | "premium" | "agency" | "agency_plus";
+export type Plan = "free" | "freemium" | "premium" | "agency" | "agency_plus" | "appsumo_studio";
 
 export interface Agency {
   id: string;
