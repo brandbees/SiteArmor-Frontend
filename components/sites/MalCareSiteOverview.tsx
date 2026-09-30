@@ -39,6 +39,7 @@ import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { WordPressIcon } from "@/components/shared/WordPressIcon";
 import { SiteScreenshot } from "@/components/sites/SiteScreenshot";
 import type { SiteTab } from "@/components/sites/site-nav";
+import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
 import type { Audit, Plugin, Site } from "@/types";
@@ -339,6 +340,8 @@ export function MalCareSiteOverview({
   canRunAudit: boolean;
 }) {
   const router = useRouter();
+  const { agency } = useAuth();
+  const isClientPortal = agency?.is_client_portal ?? false;
   const scores = site.latest_scores;
   const updates = site.plugins_needing_updates ?? 0;
   const online = site.uptime_status === "up";
@@ -432,6 +435,10 @@ export function MalCareSiteOverview({
   }, [site.id]);
 
   useEffect(() => {
+    if (isClientPortal) {
+      setActivityLoading(false);
+      return;
+    }
     api
       .get<{ logs: { id: string; site_id: string | null; action: string; created_at: string }[] }>(
         `/activity?limit=20&offset=0`
@@ -441,14 +448,18 @@ export function MalCareSiteOverview({
       })
       .catch(() => {})
       .finally(() => setActivityLoading(false));
-  }, [site.id]);
+  }, [site.id, isClientPortal]);
 
   useEffect(() => {
+    if (isClientPortal) {
+      setAnalyticsConnected(false);
+      return;
+    }
     api
       .get<{ ga4_connected?: boolean }>(`/analytics/${site.id}/status`)
       .then(({ data }) => setAnalyticsConnected(!!data?.ga4_connected))
       .catch(() => setAnalyticsConnected(false));
-  }, [site.id]);
+  }, [site.id, isClientPortal]);
 
   const lastBackup = backups.find((b) => b.status === "completed");
   const backupsEnabled = backupSchedule !== "manual";
@@ -893,7 +904,8 @@ export function MalCareSiteOverview({
             </McWidgetCard>
           </WidgetSlot>
 
-          {/* Manage Updates */}
+          {/* Manage Updates — agency only (client portal is read-only) */}
+          {!isClientPortal && (
           <WidgetSlot width={1104}>
             <McWidgetCard className="gap-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -952,6 +964,7 @@ export function MalCareSiteOverview({
               </div>
             </McWidgetCard>
           </WidgetSlot>
+          )}
 
           {/* Scheduled Reports */}
           <WidgetSlot width={544}>
@@ -1051,7 +1064,7 @@ export function MalCareSiteOverview({
             </McWidgetCard>
           </WidgetSlot>
 
-          {/* Google Analytics */}
+          {/* Google Analytics — connect is agency-only */}
           <WidgetSlot width={544}>
             <McWidgetCard>
               <WidgetHeader
@@ -1059,7 +1072,13 @@ export function MalCareSiteOverview({
                 title="Google Analytics"
               />
               <div className="flex min-h-0 flex-1 flex-col">
-              {analyticsConnected === null ? (
+              {isClientPortal ? (
+                <EmptyWidget
+                  icon={<BarChart2 size={40} strokeWidth={1} className="text-zinc-300" />}
+                  title="Analytics managed by your agency"
+                  description="Traffic metrics appear here when your agency connects Google Analytics."
+                />
+              ) : analyticsConnected === null ? (
                 <CubeLoader label="Checking Analytics" sublabel="Looking up GA4 connection…" />
               ) : analyticsConnected ? (
                 <div className="w-full space-y-2 text-center">

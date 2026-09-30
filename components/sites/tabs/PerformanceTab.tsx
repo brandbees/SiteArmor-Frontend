@@ -17,6 +17,7 @@ import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { Button } from "@/components/ui/Button";
 import { CubeLoader } from "@/components/sites/SiteLoadingOverlay";
 import api from "@/lib/api";
+import { getAgency } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import type { Site, Audit } from "@/types";
 
@@ -162,6 +163,7 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
           </div>
         </div>
         {status?.connected && !status.ga4_connected ? (
+          !getAgency()?.is_client_portal ? (
           <button
             type="button"
             onClick={openPropertySelector}
@@ -169,11 +171,14 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
           >
             Select property
           </button>
+          ) : null
         ) : !status?.connected ? (
+          !getAgency()?.is_client_portal ? (
           <Button size="sm" onClick={connect} disabled={connecting} loading={connecting}>
             <ExternalLink size={11} />
             Connect Google
           </Button>
+          ) : null
         ) : status.ga4_connected ? (
           <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-600">
             {status.ga4_property_id}
@@ -216,12 +221,21 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
         </div>
       )}
 
-      {!status?.connected && (
+      {!status?.connected && !getAgency()?.is_client_portal && (
         <div className="flex flex-col items-center gap-2 py-8 text-center">
           <BarChart2 size={24} className="text-muted-foreground/40" />
           <p className="text-sm font-medium text-foreground">Connect Google Analytics</p>
           <p className="max-w-xs text-xs text-muted-foreground">
             See sessions, pageviews, bounce rate and top pages alongside your performance score.
+          </p>
+        </div>
+      )}
+      {!status?.connected && !!getAgency()?.is_client_portal && (
+        <div className="flex flex-col items-center gap-2 py-8 text-center">
+          <BarChart2 size={24} className="text-muted-foreground/40" />
+          <p className="text-sm font-medium text-foreground">Analytics managed by your agency</p>
+          <p className="max-w-xs text-xs text-muted-foreground">
+            Traffic metrics appear here when your agency connects Google Analytics.
           </p>
         </div>
       )}

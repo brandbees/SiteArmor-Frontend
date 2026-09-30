@@ -7,6 +7,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn, truncateUrl } from "@/lib/utils";
 import {
   SITE_NAV_GROUPS,
+  filterSiteNavForClient,
   isNavItemActive,
   parseSiteTab,
   resolveSiteNavHref,
@@ -14,6 +15,7 @@ import {
   type SiteNavLeaf,
 } from "@/components/sites/site-nav";
 import { useSiteContextOptional } from "@/components/sites/SiteContext";
+import { getAgency } from "@/lib/auth";
 
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -224,7 +226,8 @@ export function SiteSidebarNav({
   }, [activeTab, pathname, siteId]);
 
   const visibleGroups = useMemo(() => {
-    return SITE_NAV_GROUPS.filter((g) => {
+    const isClientPortal = !!getAgency()?.is_client_portal;
+    return filterSiteNavForClient(SITE_NAV_GROUPS, isClientPortal).filter((g) => {
       if (g.id === "commerce" && !site?.woocommerce_active) return false;
       return true;
     });

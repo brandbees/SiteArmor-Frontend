@@ -305,6 +305,9 @@ export interface MalwareFinding {
   ai_verdict: 'malware' | 'false_positive' | 'uncertain' | null;
   ai_confidence: number | null;
   dismissed?: boolean;
+  /** From dismissed_findings.notes — e.g. "quarantined" */
+  dismiss_notes?: string | null;
+  quarantined?: boolean;
 }
 
 export interface MalwareScanResult {

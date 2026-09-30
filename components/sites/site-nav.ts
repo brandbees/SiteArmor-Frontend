@@ -44,6 +44,8 @@ export type SiteNavLeaf = {
   /** External path template — use {siteId} */
   href?: string;
   badgeFrom?: "plugins";
+  /** Hidden from client-portal users (read-only) */
+  agencyOnly?: boolean;
 };
 
 export type SiteNavGroup = {
@@ -51,6 +53,8 @@ export type SiteNavGroup = {
   label: string;
   icon: LucideIcon;
   defaultOpen?: boolean;
+  /** Entire group hidden from client-portal users */
+  agencyOnly?: boolean;
   items: SiteNavLeaf[];
 };
 
@@ -69,7 +73,7 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     icon: Wrench,
     defaultOpen: true,
     items: [
-      { id: "plugins", label: "Plugins", tab: "plugins", icon: Plug, badgeFrom: "plugins" },
+      { id: "plugins", label: "Plugins", tab: "plugins", icon: Plug, badgeFrom: "plugins", agencyOnly: true },
       { id: "issues", label: "Issues", tab: "issues", icon: ListTodo },
       { id: "health", label: "Site Health", tab: "health", icon: HeartPulse },
     ],
@@ -79,6 +83,7 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     label: "Backups",
     icon: Cloud,
     defaultOpen: false,
+    agencyOnly: true,
     items: [
       { id: "backup-details", label: "Backup Details", tab: "backups", icon: HardDrive },
     ],
@@ -105,7 +110,8 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     label: "AI Agent",
     icon: Bot,
     defaultOpen: false,
-    items: [{ id: "agent", label: "AI Agent", tab: "agent", icon: Bot }],
+    agencyOnly: true,
+    items: [{ id: "agent", label: "AI Agent", tab: "agent", icon: Bot, agencyOnly: true }],
   },
   {
     id: "monitoring",
@@ -114,7 +120,7 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     defaultOpen: false,
     items: [
       { id: "uptime", label: "Uptime", tab: "uptime", icon: Wifi },
-      { id: "cron", label: "Cron Events", tab: "cron", icon: CalendarClock },
+      { id: "cron", label: "Cron Events", tab: "cron", icon: CalendarClock, agencyOnly: true },
     ],
   },
   {
@@ -122,8 +128,9 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     label: "Site Reports",
     icon: FileText,
     defaultOpen: false,
+    agencyOnly: true,
     items: [
-      { id: "reports", label: "Reports History", href: "/reports/{siteId}", icon: FileText },
+      { id: "reports", label: "Reports History", href: "/reports/{siteId}", icon: FileText, agencyOnly: true },
     ],
   },
   {
@@ -140,12 +147,24 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     label: "More",
     icon: Activity,
     defaultOpen: false,
+    agencyOnly: true,
     items: [
-      { id: "settings", label: "Activity Log", href: "/settings/activity", icon: Settings },
+      { id: "settings", label: "Activity Log", href: "/settings/activity", icon: Settings, agencyOnly: true },
     ],
   },
 ];
 
+/** Filter site nav for client-portal read-only sessions. */
+export function filterSiteNavForClient(groups: SiteNavGroup[], isClientPortal: boolean): SiteNavGroup[] {
+  if (!isClientPortal) return groups;
+  return groups
+    .filter((g) => !g.agencyOnly)
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => !item.agencyOnly),
+    }))
+    .filter((g) => g.items.length > 0);
+}
 export const SITE_TAB_LABELS: Record<SiteTab, string> = {
   overview: "Overview",
   issues: "Issues",

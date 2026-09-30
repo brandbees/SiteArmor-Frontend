@@ -13,12 +13,15 @@ export function SiteHeader({
   syncLoading,
   wpAdminHref,
   menu,
+  readOnly = false,
 }: {
   site: Site;
   onSync?: () => void;
   syncLoading?: boolean;
   wpAdminHref: string;
   menu?: React.ReactNode;
+  /** Client portal — hide WP Admin, token copy, sync, menus */
+  readOnly?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const url = site.url.startsWith("http") ? site.url : `https://${site.url}`;
@@ -61,57 +64,61 @@ export function SiteHeader({
                 <ExternalLink size={12} className="shrink-0 opacity-70" />
               </a>
             </div>
-            <button
-              type="button"
-              onClick={copySiteToken}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:border-accent/40 hover:text-accent"
-            >
-              {copied ? (
-                <>
-                  <Check size={12} strokeWidth={2} className="text-[var(--score-good)]" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy size={12} strokeWidth={2} />
-                  Copy Site Token
-                </>
-              )}
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={copySiteToken}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:border-accent/40 hover:text-accent"
+              >
+                {copied ? (
+                  <>
+                    <Check size={12} strokeWidth={2} className="text-[var(--score-good)]" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} strokeWidth={2} />
+                    Copy Site Token
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          {menu ?? (
-            <button
-              type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-950 shadow-xs transition-colors hover:bg-zinc-50"
-              aria-label="More actions"
+        {!readOnly && (
+          <div className="flex shrink-0 items-center gap-2">
+            {menu ?? (
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-950 shadow-xs transition-colors hover:bg-zinc-50"
+                aria-label="More actions"
+              >
+                <MoreVertical size={18} strokeWidth={1.5} />
+              </button>
+            )}
+            {onSync && (
+              <button
+                type="button"
+                onClick={onSync}
+                disabled={syncLoading}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-950 shadow-xs transition-colors hover:bg-zinc-50 disabled:opacity-50"
+                aria-label="Sync site"
+              >
+                <RefreshCw size={18} strokeWidth={1.5} className={syncLoading ? "animate-spin" : ""} />
+              </button>
+            )}
+            <a
+              href={wpAdminHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
             >
-              <MoreVertical size={18} strokeWidth={1.5} />
-            </button>
-          )}
-          {onSync && (
-            <button
-              type="button"
-              onClick={onSync}
-              disabled={syncLoading}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-950 shadow-xs transition-colors hover:bg-zinc-50 disabled:opacity-50"
-              aria-label="Sync site"
-            >
-              <RefreshCw size={18} strokeWidth={1.5} className={syncLoading ? "animate-spin" : ""} />
-            </button>
-          )}
-          <a
-            href={wpAdminHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
-          >
-            <WordPressIcon size={20} className="text-white" />
-            WP Admin
-          </a>
-        </div>
+              <WordPressIcon size={20} className="text-white" />
+              WP Admin
+            </a>
+          </div>
+        )}
       </div>
     </header>
   );

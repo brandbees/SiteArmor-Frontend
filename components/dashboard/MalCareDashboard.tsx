@@ -827,7 +827,8 @@ export function MalCareDashboard({
               </McWidgetCard>
             </div>
 
-            {/* Manage Updates */}
+            {/* Manage Updates — agency only */}
+            {!agency?.is_client_portal && (
             <div className="w-full grow lg:w-[1104px] lg:max-w-full">
               <McWidgetCard className="flex flex-col gap-6">
                 <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
@@ -876,6 +877,7 @@ export function MalCareDashboard({
                 </div>
               </McWidgetCard>
             </div>
+            )}
 
             {/* Performance */}
             <div className="flex w-full grow self-stretch lg:w-[544px] lg:max-w-full">

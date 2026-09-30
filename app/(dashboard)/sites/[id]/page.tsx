@@ -2445,12 +2445,13 @@ function SiteDetailContent() {
 
   const { site, loading, error, refetch } = useSiteContext();
   const { agency } = useAuth();
+  const isClientPortal = agency?.is_client_portal ?? false;
   const brandColor = agency?.accent_color ?? "#1f5fb8";
   const canUseBackups = planHasBackups(agency?.plan);
   const canUseSafeUpdates = planHasSafeUpdates(agency?.plan);
   const { roleCanDo } = useRole();
-  const canRunAudit = roleCanDo("run_audit");
-  const canDeleteSite = roleCanDo("delete_site");
+  const canRunAudit = !isClientPortal && roleCanDo("run_audit");
+  const canDeleteSite = !isClientPortal && roleCanDo("delete_site");
   const [pendingAuditId, setPendingAuditId] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -2475,6 +2476,15 @@ function SiteDetailContent() {
   const { status: sshStatus, refreshStatus: refreshSSHStatus } = useSSHSettings(id);
   const [tabLoading, setTabLoading] = useState(false);
   const prevTab = useRef(activeTab);
+
+  // Client portal is read-only — bounce away from agency-only tabs (BUG-034)
+  useEffect(() => {
+    if (!isClientPortal) return;
+    const blocked: SiteTab[] = ["agent", "plugins", "backups", "cron"];
+    if (blocked.includes(activeTab)) {
+      router.replace(`/sites/${id}`);
+    }
+  }, [isClientPortal, activeTab, id, router]);
 
   useEffect(() => {
     if (prevTab.current === activeTab) return;
@@ -2643,10 +2653,12 @@ function SiteDetailContent() {
       {activeTab !== "agent" && (
       <SiteHeader
         site={site}
+        readOnly={isClientPortal}
         wpAdminHref={wpAdminHref}
         onSync={canRunAudit ? runAudit : undefined}
         syncLoading={auditLoading || !!pendingAuditId}
         menu={
+          isClientPortal ? undefined : (
           <div className="relative" ref={actionsRef}>
             <button
               type="button"
@@ -2683,6 +2695,7 @@ function SiteDetailContent() {
               </div>
             )}
           </div>
+          )
         }
       />
       )}
@@ -2731,12 +2744,12 @@ function SiteDetailContent() {
           />
         )}
         {activeTab === "uptime"      && <UptimeTab site={site} brandColor={brandColor} />}
-        {activeTab === "plugins"     && <PluginsTab site={site} audits={site.audits} brandColor={brandColor} onSiteRefetch={refetch} canUseAdvancedFeatures={canUseSafeUpdates} />}
+        {activeTab === "plugins"     && !isClientPortal && <PluginsTab site={site} audits={site.audits} brandColor={brandColor} onSiteRefetch={refetch} canUseAdvancedFeatures={canUseSafeUpdates} />}
         {activeTab === "woocommerce" && <WooCommerceTab site={site} audits={site.audits} brandColor={brandColor} />}
-        {activeTab === "cron"        && <CronTab site={site} brandColor={brandColor} />}
+        {activeTab === "cron"        && !isClientPortal && <CronTab site={site} brandColor={brandColor} />}
         {activeTab === "health"      && <SiteHealthTab site={site} />}
-        {activeTab === "backups"     && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseBackups} />}
-        {activeTab === "agent"       && <AgentTab site={site} />}
+        {activeTab === "backups"     && !isClientPortal && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseBackups} />}
+        {activeTab === "agent"       && !isClientPortal && <AgentTab site={site} />}
       </div>
 
       {/* SSH Modal */}
