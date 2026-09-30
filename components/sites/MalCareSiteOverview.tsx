@@ -1039,7 +1039,7 @@ export function MalCareSiteOverview({
                 action={
                   <McSwitch
                     checked={activity.length > 0}
-                    onClick={() => router.push("/settings/activity")}
+                    onClick={() => router.push("/settings?tab=activity")}
                   />
                 }
               />

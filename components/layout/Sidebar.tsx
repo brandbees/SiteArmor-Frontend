@@ -261,11 +261,11 @@ export function Sidebar({
               <SiteSidebarNav siteId={activeSiteId} collapsed={collapsed} />
             </Suspense>
           ) : null}
-          {!isClientPortal && !isSiteDetail && (
+          {!isClientPortal && (
             <NavSection label="Account" items={settingsItems} collapsed={collapsed} pathname={pathname} />
           )}
 
-          {!isClientPortal && !isSiteDetail && !collapsed && (
+          {!isClientPortal && !collapsed && (
             <button
               type="button"
               onClick={() => setChangelogOpen(true)}

@@ -15,7 +15,6 @@ import {
   Cloud,
   FileText,
   Activity,
-  Settings,
   Wrench,
   Monitor,
   Bot,
@@ -149,7 +148,13 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     defaultOpen: false,
     agencyOnly: true,
     items: [
-      { id: "settings", label: "Activity Log", href: "/settings/activity", icon: Settings, agencyOnly: true },
+      {
+        id: "activity",
+        label: "Activity Log",
+        href: "/settings?tab=activity",
+        icon: Activity,
+        agencyOnly: true,
+      },
     ],
   },
 ];
@@ -210,11 +215,25 @@ export function parseSiteTab(raw: string | null): SiteTab {
   return valid.includes(raw as SiteTab) ? (raw as SiteTab) : "overview";
 }
 
-export function isNavItemActive(activeTab: SiteTab, item: SiteNavLeaf, pathname: string, siteId: string): boolean {
+export function isNavItemActive(
+  activeTab: SiteTab,
+  item: SiteNavLeaf,
+  pathname: string,
+  siteId: string,
+  search = ""
+): boolean {
   if (item.tab) return activeTab === item.tab;
   if (item.href) {
     const resolved = resolveSiteNavHref(siteId, item);
-    return pathname === resolved || pathname.startsWith(resolved.split("?")[0]);
+    const [pathOnly, query = ""] = resolved.split("?");
+    if (pathname !== pathOnly && !pathname.startsWith(pathOnly + "/")) return false;
+    if (!query) return true;
+    const want = new URLSearchParams(query);
+    const have = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    for (const [k, v] of want.entries()) {
+      if (have.get(k) !== v) return false;
+    }
+    return true;
   }
   return false;
 }

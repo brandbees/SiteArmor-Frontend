@@ -10,7 +10,7 @@ import {
   Package, Lock, Eye, EyeOff, Palette,
   Mail, Webhook, UserPlus, Trash2, ChevronDown,
   Activity, RefreshCw, ChevronLeft, ChevronRight,
-  AlertCircle,
+  AlertCircle, Plug, FileText, Shield, Search, Bot, HardDrive, UserPlus,
 } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { useBranding } from "@/contexts/BrandingContext";
@@ -67,16 +67,30 @@ const ROLE_OPTIONS: { value: Exclude<TeamRole, "owner">; label: string }[] = [
   { value: "viewer",  label: "Viewer"  },
 ];
 
-const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  site_added:        { label: "Site Added",       color: "bg-green-100 text-green-700"   },
-  site_deleted:      { label: "Site Deleted",     color: "bg-red-100 text-red-700"       },
-  bulk_run_audit:    { label: "Bulk Audit",        color: "bg-[var(--accent-light)] text-[var(--accent-hover)]" },
-  bulk_trigger_scan: { label: "Bulk Scan",         color: "bg-purple-100 text-purple-700" },
-  bulk_send_report:  { label: "Bulk Report",       color: "bg-blue-100 text-blue-700"    },
-  audit_triggered:   { label: "Audit Triggered",  color: "bg-[var(--accent-light)] text-[var(--accent-hover)]" },
-  report_sent:       { label: "Report Sent",       color: "bg-blue-100 text-blue-700"    },
-  plugin_connected:  { label: "Plugin Connected",  color: "bg-green-100 text-green-700"  },
+const ACTION_META: Record<string, { label: string; tone: string; Icon: React.ElementType }> = {
+  site_added:        { label: "Site Added",       tone: "bg-emerald-50 text-emerald-700 ring-emerald-100", Icon: Globe },
+  site_deleted:      { label: "Site Deleted",     tone: "bg-red-50 text-red-700 ring-red-100", Icon: Trash2 },
+  bulk_run_audit:    { label: "Bulk Audit",       tone: "bg-sky-50 text-sky-700 ring-sky-100", Icon: Search },
+  bulk_trigger_scan: { label: "Bulk Scan",        tone: "bg-violet-50 text-violet-700 ring-violet-100", Icon: Shield },
+  bulk_send_report:  { label: "Bulk Report",      tone: "bg-blue-50 text-blue-700 ring-blue-100", Icon: FileText },
+  audit_triggered:   { label: "Audit Triggered",  tone: "bg-sky-50 text-sky-700 ring-sky-100", Icon: Search },
+  report_sent:       { label: "Report Sent",      tone: "bg-blue-50 text-blue-700 ring-blue-100", Icon: FileText },
+  plugin_connected:  { label: "Plugin Connected", tone: "bg-emerald-50 text-emerald-700 ring-emerald-100", Icon: Plug },
+  settings_updated:  { label: "Settings Updated", tone: "bg-zinc-100 text-zinc-700 ring-zinc-200", Icon: Settings },
+  backup_run:        { label: "Backup",           tone: "bg-teal-50 text-teal-700 ring-teal-100", Icon: HardDrive },
+  member_invited:    { label: "Member Invited",   tone: "bg-indigo-50 text-indigo-700 ring-indigo-100", Icon: UserPlus },
+  agent_action:      { label: "AI Agent",         tone: "bg-amber-50 text-amber-800 ring-amber-100", Icon: Bot },
 };
+
+function actionMeta(action: string) {
+  return (
+    ACTION_META[action] ?? {
+      label: action.replace(/_/g, " "),
+      tone: "bg-zinc-100 text-zinc-600 ring-zinc-200",
+      Icon: Activity,
+    }
+  );
+}
 
 
 function initials(name: string) {
@@ -732,64 +746,146 @@ function ActivityTab() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-xs text-muted-foreground">All significant actions across your agency account</p>
-        <button onClick={() => fetchLogs(page * PAGE_SIZE)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
-          <RefreshCw size={12} className={logLoading ? "animate-spin" : ""} /> Refresh
-        </button>
+    <div className="w-full max-w-3xl space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-zinc-950">Activity Log</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Audits, scans, backups, and account changes across your portfolio.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {total > 0 && (
+            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium tabular-nums text-zinc-600">
+              {total.toLocaleString()} event{total === 1 ? "" : "s"}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => fetchLogs(page * PAGE_SIZE)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-800 shadow-xs hover:bg-zinc-50"
+          >
+            <RefreshCw size={12} className={logLoading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs">
         {logLoading ? (
-          <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+          <div className="flex flex-col items-center justify-center gap-3 py-20">
+            <LoadingSpinner size="lg" />
+            <p className="text-xs text-muted-foreground">Loading activity…</p>
+          </div>
         ) : logError ? (
-          <p className="text-sm text-destructive px-5 py-8">{logError}</p>
+          <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
+            <AlertCircle size={20} className="text-destructive" />
+            <p className="text-sm text-destructive">{logError}</p>
+            <button
+              type="button"
+              onClick={() => fetchLogs(page * PAGE_SIZE)}
+              className="mt-1 text-xs font-medium text-accent hover:underline"
+            >
+              Try again
+            </button>
+          </div>
         ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <Activity size={18} className="text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No activity recorded yet</p>
+          <div className="flex flex-col items-center justify-center gap-3 px-6 py-20 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+              <Activity size={22} strokeWidth={1.5} className="text-zinc-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900">No activity yet</p>
+              <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                Actions like audits, scans, and site changes will show up here.
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="divide-y divide-border">
-            {logs.map((log) => {
-              const meta = ACTION_LABELS[log.action] ?? { label: log.action.replace(/_/g, " "), color: "bg-gray-100 text-gray-600" };
+          <ul className="divide-y divide-zinc-100">
+            {logs.map((log, i) => {
+              const meta = actionMeta(log.action);
+              const Icon = meta.Icon;
+              const title = log.site_name
+                ?? (log.details && typeof log.details === "object" && "name" in log.details
+                  ? String(log.details.name)
+                  : meta.label);
               return (
-                <div key={log.id} className="flex items-start gap-4 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${meta.color}`}>{meta.label}</span>
-                  <div className="flex-1 min-w-0">
-                    {log.site_name ? (
-                      <Link href={log.site_id ? `/sites/${log.site_id}` : "#"}
-                        className="text-sm font-medium text-foreground hover:text-accent hover:underline truncate block">{log.site_name}</Link>
-                    ) : (
-                      <p className="text-sm font-medium text-foreground">
-                        {log.details && typeof log.details === "object" && "name" in log.details ? String(log.details.name) : "—"}
-                      </p>
+                <li key={log.id} className="relative flex gap-4 px-5 py-4 transition-colors hover:bg-zinc-50/80">
+                  <div className="relative flex flex-col items-center">
+                    <div
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset",
+                        meta.tone
+                      )}
+                    >
+                      <Icon size={15} strokeWidth={1.75} />
+                    </div>
+                    {i < logs.length - 1 && (
+                      <span className="mt-1 w-px flex-1 bg-zinc-100" aria-hidden />
                     )}
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {log.site_url && <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Globe size={9} />{log.site_url.replace(/^https?:\/\//, "")}</span>}
-                      {log.actor_email && <span className="text-[10px] text-muted-foreground">by {log.actor_email}</span>}
-                      {log.details && "count" in log.details && <span className="text-[10px] text-muted-foreground">{String(log.details.count)} site{Number(log.details.count) !== 1 ? "s" : ""}</span>}
+                  </div>
+                  <div className="min-w-0 flex-1 pb-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset", meta.tone)}>
+                        {meta.label}
+                      </span>
+                      <span className="text-[11px] tabular-nums text-zinc-400">{timeAgo(log.created_at)}</span>
+                    </div>
+                    {log.site_name && log.site_id ? (
+                      <Link
+                        href={`/sites/${log.site_id}`}
+                        className="mt-1.5 block truncate text-sm font-medium text-zinc-900 hover:text-accent hover:underline"
+                      >
+                        {title}
+                      </Link>
+                    ) : (
+                      <p className="mt-1.5 truncate text-sm font-medium text-zinc-900">{title}</p>
+                    )}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-500">
+                      {log.site_url && (
+                        <span className="inline-flex items-center gap-1 truncate">
+                          <Globe size={10} />
+                          {log.site_url.replace(/^https?:\/\//, "")}
+                        </span>
+                      )}
+                      {log.actor_email && <span>by {log.actor_email}</span>}
+                      {log.details && "count" in log.details && (
+                        <span>
+                          {String(log.details.count)} site{Number(log.details.count) !== 1 ? "s" : ""}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5 tabular-nums">{timeAgo(log.created_at)}</span>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
+
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-border">
-            <p className="text-xs text-muted-foreground">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}</p>
+          <div className="flex items-center justify-between border-t border-zinc-100 bg-zinc-50/60 px-5 py-3">
+            <p className="text-xs text-muted-foreground">
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+            </p>
             <div className="flex items-center gap-2">
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-                className="p-1.5 rounded-lg border border-border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
                 <ChevronLeft size={14} />
               </button>
-              <span className="text-xs font-medium text-foreground">{page + 1} / {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
-                className="p-1.5 rounded-lg border border-border bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <span className="min-w-[3rem] text-center text-xs font-medium text-zinc-800">
+                {page + 1} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
                 <ChevronRight size={14} />
               </button>
             </div>

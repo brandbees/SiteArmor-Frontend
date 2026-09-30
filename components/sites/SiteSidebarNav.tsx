@@ -101,6 +101,7 @@ function NavGroup({
   siteId,
   activeTab,
   pathname,
+  search,
   collapsed,
   open,
   onToggle,
@@ -110,6 +111,7 @@ function NavGroup({
   siteId: string;
   activeTab: ReturnType<typeof parseSiteTab>;
   pathname: string;
+  search: string;
   collapsed: boolean;
   open: boolean;
   onToggle: () => void;
@@ -117,7 +119,7 @@ function NavGroup({
 }) {
   const GroupIcon = group.icon;
   const hasActiveChild = group.items.some((item) =>
-    isNavItemActive(activeTab, item, pathname, siteId)
+    isNavItemActive(activeTab, item, pathname, siteId, search)
   );
 
   // Single-item groups render as direct links (MalCare: Performance, etc.)
@@ -127,7 +129,7 @@ function NavGroup({
       <SiteNavLeafLink
         siteId={siteId}
         item={item}
-        active={isNavItemActive(activeTab, item, pathname, siteId)}
+        active={isNavItemActive(activeTab, item, pathname, siteId, search)}
         collapsed={collapsed}
         badge={badges[item.id]}
       />
@@ -141,7 +143,7 @@ function NavGroup({
       <SiteNavLeafLink
         siteId={siteId}
         item={first}
-        active={isNavItemActive(activeTab, first, pathname, siteId)}
+        active={isNavItemActive(activeTab, first, pathname, siteId, search)}
         collapsed
         badge={badges[first.id]}
       />
@@ -173,7 +175,7 @@ function NavGroup({
               key={item.id}
               siteId={siteId}
               item={item}
-              active={isNavItemActive(activeTab, item, pathname, siteId)}
+              active={isNavItemActive(activeTab, item, pathname, siteId, search)}
               collapsed={false}
               badge={badges[item.id]}
               indent
@@ -194,6 +196,7 @@ export function SiteSidebarNav({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const search = searchParams.toString();
   const activeTab = parseSiteTab(searchParams.get("tab"));
   const siteCtx = useSiteContextOptional();
   const site = siteCtx?.site;
@@ -217,13 +220,13 @@ export function SiteSidebarNav({
     setOpenGroups((prev) => {
       const next = { ...prev };
       for (const group of SITE_NAV_GROUPS) {
-        if (group.items.some((item) => isNavItemActive(activeTab, item, pathname, siteId))) {
+        if (group.items.some((item) => isNavItemActive(activeTab, item, pathname, siteId, search))) {
           next[group.id] = true;
         }
       }
       return next;
     });
-  }, [activeTab, pathname, siteId]);
+  }, [activeTab, pathname, siteId, search]);
 
   const visibleGroups = useMemo(() => {
     const isClientPortal = !!getAgency()?.is_client_portal;
@@ -287,6 +290,7 @@ export function SiteSidebarNav({
             siteId={siteId}
             activeTab={activeTab}
             pathname={pathname}
+            search={search}
             collapsed={collapsed}
             open={!!openGroups[group.id]}
             onToggle={() =>

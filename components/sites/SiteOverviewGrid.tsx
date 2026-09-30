@@ -632,7 +632,7 @@ export function SiteOverviewGrid({
             </ul>
           )}
           <CardFooter
-            right={<FooterLink href="/settings/activity">View activity log →</FooterLink>}
+            right={<FooterLink href="/settings?tab=activity">View activity log →</FooterLink>}
           />
         </McCard>
       </div>
