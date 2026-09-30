@@ -10,7 +10,7 @@ import {
   Package, Lock, Eye, EyeOff, Palette,
   Mail, Webhook, UserPlus, Trash2, ChevronDown,
   Activity, RefreshCw, ChevronLeft, ChevronRight,
-  AlertCircle, Plug, FileText, Shield, Search, Bot, HardDrive, UserPlus,
+  AlertCircle, Plug, FileText, Shield, Search, Bot, HardDrive,
 } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { useBranding } from "@/contexts/BrandingContext";
