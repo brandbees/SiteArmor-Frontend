@@ -3,7 +3,7 @@
 import { WordPressIcon } from "@/components/shared/WordPressIcon";
 import type { SiteDetail } from "@/hooks/useSite";
 
-/** MalCare-style sticky sidebar footer — WP version + PHP badge */
+/** MalCare-style sticky sidebar footer — WP + plugin version + PHP badge */
 export function SiteSidebarFooter({
   site,
   collapsed,
@@ -13,13 +13,20 @@ export function SiteSidebarFooter({
 }) {
   const wpVersion = site?.plugin_data?.wp_version;
   const phpVersion = site?.plugin_data?.php_version;
+  const pluginVersion = site?.plugin_version;
+
+  const titleParts = [
+    wpVersion ? `WP ${wpVersion}` : null,
+    pluginVersion ? `SA ${pluginVersion}` : null,
+    phpVersion ? `PHP ${phpVersion}` : null,
+  ].filter(Boolean);
 
   if (collapsed) {
     return (
       <div className="flex justify-center p-2">
         <div
           className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-300 bg-white"
-          title={wpVersion ? `WP ${wpVersion}` : "Site environment"}
+          title={titleParts.length ? titleParts.join(" · ") : "Site environment"}
         >
           <WordPressIcon size={16} className="text-zinc-700" />
         </div>
@@ -37,6 +44,11 @@ export function SiteSidebarFooter({
             <p className="truncate text-sm font-bold leading-tight text-zinc-950">
               {wpVersion ?? "—"}
             </p>
+            {pluginVersion ? (
+              <p className="mt-0.5 truncate text-[10px] font-medium leading-none text-zinc-500">
+                Site Armor {pluginVersion}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">

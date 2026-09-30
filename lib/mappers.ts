@@ -37,6 +37,13 @@ export interface RawSite {
   last_audit_at?: string;
   created_at: string;
   updated_at?: string;
+  // Backups (sites.backup_schedule + LATERAL last backup row)
+  backup_schedule?: "manual" | "daily" | "weekly" | "monthly" | null;
+  last_backup_at?: string | null;
+  last_backup_status?: "pending" | "running" | "completed" | "failed" | null;
+  last_backup_type?: "db" | "files" | "full" | null;
+  last_backup_error?: string | null;
+  last_backup_created_at?: string | null;
   // Security signals
   xml_rpc_enabled?: boolean | null;
   file_editor_enabled?: boolean | null;
@@ -375,6 +382,16 @@ export function mapSite(raw: RawSite): Site {
     update_window_day:  raw.update_window_day  ?? null,
     update_window_hour: raw.update_window_hour ?? null,
     excluded_from_updates: Array.isArray(raw.excluded_from_updates) ? raw.excluded_from_updates : [],
+
+    // Backups — required for MalCareDashboard backups card (was dropped → always "Disabled")
+    backup_schedule: (raw.backup_schedule as Site["backup_schedule"]) ?? null,
+    last_backup_at: raw.last_backup_at ?? null,
+    last_backup_status: (raw.last_backup_status as Site["last_backup_status"]) ?? null,
+    last_backup_type: (raw.last_backup_type as Site["last_backup_type"]) ?? null,
+    last_backup_error: raw.last_backup_error ?? null,
+    last_backup_created_at: raw.last_backup_created_at ?? null,
+
+    plugin_version: raw.plugin_version ?? null,
   };
 }
 

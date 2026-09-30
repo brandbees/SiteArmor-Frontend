@@ -67,6 +67,8 @@ export interface Site {
   major_threat_count?: number | null;
   plugin_vuln_count?: number;
   plugin_data?: PluginData;
+  /** Site Armor WP plugin version reported by the connected site */
+  plugin_version?: string | null;
 
   // Security signals
   xml_rpc_enabled?: boolean | null;
