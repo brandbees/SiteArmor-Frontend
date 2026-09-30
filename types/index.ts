@@ -12,6 +12,7 @@ export interface Agency {
   brand_tagline?: string;
   accent_color?: string;
   favicon_url?: string;
+  custom_domain?: string | null;
   trial_ends_at?: string | null;
   onboarding_complete?: boolean;
   created_at?: string;
@@ -146,6 +147,14 @@ export interface Site {
   update_window_day?: number | null;
   update_window_hour?: number | null;
   excluded_from_updates?: string[];
+
+  // Backups
+  backup_schedule?: "manual" | "daily" | "weekly" | "monthly" | null;
+  last_backup_at?: string | null;
+  last_backup_status?: "pending" | "running" | "completed" | "failed" | null;
+  last_backup_type?: "db" | "files" | "full" | null;
+  last_backup_error?: string | null;
+  last_backup_created_at?: string | null;
 }
 
 export interface PillarScores {

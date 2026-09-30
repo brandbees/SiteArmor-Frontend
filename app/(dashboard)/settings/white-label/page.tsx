@@ -20,10 +20,11 @@ interface SettingsPayload {
   brand_tagline?: string;
   accent_color?: string;
   favicon_url?: string | null;
+  custom_domain?: string | null;
 }
 
 interface SettingsResponse extends SettingsPayload {
-  id: string;
+  id?: string;
 }
 
 export default function WhiteLabelPage() {
@@ -53,6 +54,7 @@ export default function WhiteLabelPage() {
   const [brandName, setBrandName] = useState("");
   const [tagline, setTagline] = useState("");
   const [accentColor, setAccentColor] = useState("#1f5fb8");
+  const [customDomain, setCustomDomain] = useState("");
   const [showPicker, setShowPicker] = useState(false);
   const [hexInput, setHexInput] = useState("#1f5fb8");
   const [dragging, setDragging] = useState(false);
@@ -71,12 +73,14 @@ export default function WhiteLabelPage() {
       if (data.brand_tagline) setTagline(data.brand_tagline);
       if (data.accent_color) { setAccentColor(data.accent_color); setHexInput(data.accent_color); }
       if (data.favicon_url) { setFaviconUrl(data.favicon_url); setFaviconPreview(data.favicon_url); }
+      if (data.custom_domain) setCustomDomain(data.custom_domain);
     }).catch(() => {
       if (agency) {
         if (agency.logo_url) { setLogoUrl(agency.logo_url); setLogoPreview(agency.logo_url); }
         if (agency.brand_name) setBrandName(agency.brand_name);
         if (agency.brand_tagline) setTagline(agency.brand_tagline);
         if (agency.accent_color) { setAccentColor(agency.accent_color); setHexInput(agency.accent_color); }
+        if (agency.custom_domain) setCustomDomain(agency.custom_domain);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,6 +182,11 @@ export default function WhiteLabelPage() {
     setHexInput(color);
   }
 
+  const previewName = brandName || agency?.name || "Your Agency";
+  const canCustomDomain = ["agency_plus", "agency", "appsumo_studio"].includes(
+    agency?.plan || ""
+  );
+
   async function save() {
     setSaving(true);
     try {
@@ -188,6 +197,9 @@ export default function WhiteLabelPage() {
         accent_color: accentColor,
         favicon_url: faviconUrl,
       };
+      if (canCustomDomain) {
+        payload.custom_domain = customDomain.trim() || null;
+      }
       const { data } = await api.put<SettingsResponse>("/settings", payload);
       // Sync updated agency into localStorage so branding applies globally
       if (agency) {
@@ -197,6 +209,7 @@ export default function WhiteLabelPage() {
           brand_name: data.brand_name ?? agency.brand_name,
           brand_tagline: data.brand_tagline ?? agency.brand_tagline,
           accent_color: data.accent_color ?? agency.accent_color,
+          custom_domain: data.custom_domain ?? agency.custom_domain,
         };
         setAgency(updated);
       }
@@ -206,15 +219,20 @@ export default function WhiteLabelPage() {
         accentColor: data.accent_color ?? null,
         faviconUrl: data.favicon_url ?? null,
       });
+      if (typeof data.custom_domain === "string" || data.custom_domain === null) {
+        setCustomDomain(data.custom_domain ?? "");
+      }
       toast.success("Brand settings saved.");
-    } catch {
-      toast.error("Failed to save. Please try again.");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      toast.error(msg || "Failed to save. Please try again.");
     } finally {
       setSaving(false);
     }
   }
-
-  const previewName = brandName || agency?.name || "Your Agency";
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -354,6 +372,49 @@ export default function WhiteLabelPage() {
                 Applied to report headers, score gauges, and portal accent elements.
               </p>
             </div>
+          </Card>
+
+          {/* Custom domain — Agency+ */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Domain</CardTitle>
+            </CardHeader>
+            {canCustomDomain ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    Client portal hostname
+                  </label>
+                  <Input
+                    value={customDomain}
+                    onChange={(e) => setCustomDomain(e.target.value)}
+                    placeholder="portal.youragency.com"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Hostname only — no https://. Point a CNAME to{" "}
+                    <span className="font-mono text-foreground">www.sitearmor.io</span>, then save here.
+                  </p>
+                </div>
+                {customDomain.trim() && (
+                  <div className="rounded-lg border border-border bg-zinc-50 px-3 py-2 text-xs text-muted-foreground">
+                    DNS: CNAME <span className="font-mono text-foreground">{customDomain.trim().toLowerCase()}</span>
+                    {" → "}
+                    <span className="font-mono text-foreground">www.sitearmor.io</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-zinc-50 px-3 py-3">
+                <Lock size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Agency+ feature</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Host the client portal on your own domain. Upgrade to Agency+ to configure it.
+                  </p>
+                </div>
+              </div>
+            )}
           </Card>
 
           <Button onClick={save} loading={saving} className="w-full">

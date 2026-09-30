@@ -311,6 +311,7 @@ function BrandingTab() {
   const [brandName, setBrandName]           = useState(agency?.brand_name ?? "");
   const [tagline, setTagline]               = useState(agency?.brand_tagline ?? "");
   const [accentColor, setAccentColor]       = useState(agency?.accent_color ?? "#1f5fb8");
+  const [customDomain, setCustomDomain]     = useState(agency?.custom_domain ?? "");
   const [showPicker, setShowPicker]         = useState(false);
   const [hexInput, setHexInput]             = useState(agency?.accent_color ?? "#1f5fb8");
   const [logoUploading, setLogoUploading]   = useState(false);
@@ -322,13 +323,14 @@ function BrandingTab() {
   const pickerRef   = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.get<{ logo_url?: string | null; brand_name?: string; brand_tagline?: string; accent_color?: string; favicon_url?: string | null }>("/settings")
+    api.get<{ logo_url?: string | null; brand_name?: string; brand_tagline?: string; accent_color?: string; favicon_url?: string | null; custom_domain?: string | null }>("/settings")
       .then(({ data }) => {
         if (data.logo_url)      { setLogoUrl(data.logo_url);       setLogoPreview(data.logo_url); }
         if (data.brand_name)    setBrandName(data.brand_name);
         if (data.brand_tagline) setTagline(data.brand_tagline);
         if (data.accent_color)  { setAccentColor(data.accent_color); setHexInput(data.accent_color); }
         if (data.favicon_url)   { setFaviconUrl(data.favicon_url);   setFaviconPreview(data.favicon_url); }
+        if (data.custom_domain) setCustomDomain(data.custom_domain);
       }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -374,15 +376,34 @@ function BrandingTab() {
   async function save() {
     setSaving(true);
     try {
-      const { data } = await api.put<{ logo_url?: string | null; brand_name?: string; brand_tagline?: string; accent_color?: string; favicon_url?: string | null }>("/settings", {
+      const canCustomDomain = ["agency_plus", "agency", "appsumo_studio"].includes(agency?.plan || "");
+      const body: Record<string, unknown> = {
         logo_url: logoUrl, brand_name: brandName, brand_tagline: tagline, accent_color: accentColor, favicon_url: faviconUrl,
-      });
+      };
+      if (canCustomDomain) body.custom_domain = customDomain.trim() || null;
+      const { data } = await api.put<{ logo_url?: string | null; brand_name?: string; brand_tagline?: string; accent_color?: string; favicon_url?: string | null; custom_domain?: string | null }>("/settings", body);
       if (agency) {
-        setAgency({ ...agency, logo_url: data.logo_url ?? agency.logo_url, brand_name: data.brand_name ?? agency.brand_name, brand_tagline: data.brand_tagline ?? agency.brand_tagline, accent_color: data.accent_color ?? agency.accent_color });
+        setAgency({
+          ...agency,
+          logo_url: data.logo_url ?? agency.logo_url,
+          brand_name: data.brand_name ?? agency.brand_name,
+          brand_tagline: data.brand_tagline ?? agency.brand_tagline,
+          accent_color: data.accent_color ?? agency.accent_color,
+          custom_domain: data.custom_domain ?? agency.custom_domain,
+        });
       }
       setBranding({ logoUrl: data.logo_url ?? null, brandName: data.brand_name ?? null, accentColor: data.accent_color ?? null, faviconUrl: data.favicon_url ?? null });
+      if (typeof data.custom_domain === "string" || data.custom_domain === null) {
+        setCustomDomain(data.custom_domain ?? "");
+      }
       toast.success("Brand settings saved.");
-    } catch { toast.error("Failed to save."); }
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      toast.error(msg || "Failed to save.");
+    }
     finally { setSaving(false); }
   }
 
@@ -397,6 +418,7 @@ function BrandingTab() {
   }
 
   const previewName = brandName || agency?.name || "Your Agency";
+  const canCustomDomain = ["agency_plus", "agency", "appsumo_studio"].includes(agency?.plan || "");
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -494,6 +516,32 @@ function BrandingTab() {
               placeholder="#1f5fb8" className="w-32 font-mono text-sm" />
             <p className="text-xs text-muted-foreground flex-1">Applied to report headers, score gauges, and portal accent elements.</p>
           </div>
+        </div>
+
+        {/* Custom domain — Agency+ */}
+        <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Custom Domain</h3>
+          {canCustomDomain ? (
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-muted-foreground">Client portal hostname</label>
+              <Input
+                value={customDomain}
+                onChange={(e) => setCustomDomain(e.target.value)}
+                placeholder="portal.youragency.com"
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                Hostname only. Point a CNAME to <span className="font-mono text-foreground">www.sitearmor.io</span>, then save.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <Lock size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                Host the client portal on your own domain. Available on Agency+.
+              </p>
+            </div>
+          )}
         </div>
 
         <Button onClick={save} loading={saving} className="w-full">Save Brand Settings</Button>

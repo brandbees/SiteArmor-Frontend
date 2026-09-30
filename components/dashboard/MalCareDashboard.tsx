@@ -362,6 +362,21 @@ export function MalCareDashboard({
     warnings: warningSites.length,
   };
 
+  const backupStats = useMemo(() => {
+    const scheduled = sites.filter(
+      (s) => s.backup_schedule && s.backup_schedule !== "manual"
+    );
+    const withHistory = sites.filter(
+      (s) => s.last_backup_at || s.last_backup_status || s.last_backup_created_at
+    );
+    const running = sites.filter((s) =>
+      s.last_backup_status === "running" || s.last_backup_status === "pending"
+    );
+    const failed = sites.filter((s) => s.last_backup_status === "failed");
+    const enabled = scheduled.length > 0 || withHistory.length > 0;
+    return { scheduled, withHistory, running, failed, enabled };
+  }, [sites]);
+
   const alertSitesWithIssues = sites.filter(
     (s) =>
       s.malware_status === "threat" ||
@@ -801,28 +816,116 @@ export function MalCareDashboard({
                   <WidgetHeader
                     icon={<CloudUpload size={20} strokeWidth={1} className="text-zinc-900" />}
                     title="Backups"
-                    badge={<McBadge variant="danger">Disabled</McBadge>}
+                    badge={
+                      backupStats.running.length > 0 ? (
+                        <McBadge variant="warn">Running</McBadge>
+                      ) : backupStats.failed.length > 0 ? (
+                        <McBadge variant="danger">Attention</McBadge>
+                      ) : backupStats.scheduled.length > 0 ? (
+                        <McBadge variant="success">Enabled</McBadge>
+                      ) : backupStats.withHistory.length > 0 ? (
+                        <McBadge variant="neutral">Manual</McBadge>
+                      ) : (
+                        <McBadge variant="danger">Disabled</McBadge>
+                      )
+                    }
                   />
                   {sites[0] && (
                     <Link
                       href={`/sites/${sites[0].id}?tab=backups`}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
-                      aria-label="Enable backups"
+                      aria-label="Open backups"
                     >
                       <ChevronRight size={16} className="rotate-[-45deg]" />
                     </Link>
                   )}
                 </div>
                 <div className="min-h-0 flex-1">
-                  <EmptyWidget
-                    title="Backups are turned off on all sites."
-                    description="Your sites are not protected. Enable backups to secure your content."
-                    bullets={[
-                      "Never lose data during updates",
-                      "Instant recovery from hacks or crashes",
-                      "Set it once — and forget it",
-                    ]}
-                  />
+                  {!backupStats.enabled ? (
+                    <EmptyWidget
+                      title="Backups are turned off on all sites."
+                      description="Your sites are not protected. Enable backups to secure your content."
+                      bullets={[
+                        "Never lose data during updates",
+                        "Instant recovery from hacks or crashes",
+                        "Set it once — and forget it",
+                      ]}
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-6 text-xs text-muted-foreground">
+                        <span>
+                          <span className="font-medium text-zinc-700">{backupStats.scheduled.length}</span>
+                          {" "}scheduled
+                        </span>
+                        <span>
+                          <span className="font-medium text-zinc-700">{backupStats.withHistory.length}</span>
+                          {" "}with history
+                        </span>
+                        {backupStats.failed.length > 0 && (
+                          <span className="text-destructive">
+                            <span className="font-medium">{backupStats.failed.length}</span>
+                            {" "}failed
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto">
+                        {(backupStats.scheduled.length
+                          ? backupStats.scheduled
+                          : backupStats.withHistory
+                        )
+                          .slice(0, 8)
+                          .map((s) => {
+                            const status = s.last_backup_status;
+                            const schedule =
+                              s.backup_schedule && s.backup_schedule !== "manual"
+                                ? s.backup_schedule
+                                : "manual";
+                            const when =
+                              s.last_backup_created_at || s.last_backup_at
+                                ? timeAgo(s.last_backup_created_at || s.last_backup_at!)
+                                : "never";
+                            const statusLabel =
+                              status === "running" || status === "pending"
+                                ? "Running"
+                                : status === "failed"
+                                  ? "Failed"
+                                  : status === "completed"
+                                    ? "OK"
+                                    : "—";
+                            return (
+                              <Link
+                                key={s.id}
+                                href={`/sites/${s.id}?tab=backups`}
+                                className="flex items-center justify-between gap-3 rounded-md px-0 py-2 transition-colors hover:bg-zinc-50"
+                              >
+                                <div className="min-w-0 flex-1 overflow-hidden">
+                                  <div className="truncate text-sm text-zinc-900">{s.name}</div>
+                                  <div className="truncate text-xs text-muted-foreground">
+                                    {schedule} · last {when}
+                                    {status === "failed" && s.last_backup_error
+                                      ? ` · ${s.last_backup_error}`
+                                      : ""}
+                                  </div>
+                                </div>
+                                <span
+                                  className={cn(
+                                    "shrink-0 text-xs font-medium",
+                                    status === "failed"
+                                      ? "text-destructive"
+                                      : status === "running" || status === "pending"
+                                        ? "text-amber-700"
+                                        : "text-emerald-700"
+                                  )}
+                                >
+                                  {statusLabel}
+                                </span>
+                              </Link>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </McWidgetCard>
             </div>

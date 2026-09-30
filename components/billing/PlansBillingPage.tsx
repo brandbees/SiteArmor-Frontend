@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, type ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   Check, AlertCircle, X, Tag, CreditCard, Zap, HardDrive,
@@ -73,7 +74,7 @@ const PLAN_COPY: Record<PlanKey, { tagline: string; points: string[] }> = {
   },
   agency_plus: {
     tagline: "Portfolio-scale, fully branded.",
-    points: ["Unlimited sites", "Unlimited seats", "100,000 AI tokens / month", "5 GB storage", "SSH & white-label"],
+    points: ["Unlimited sites", "Unlimited seats", "100,000 AI tokens / month", "5 GB storage", "SSH, white-label & custom domain"],
   },
 };
 
@@ -417,6 +418,23 @@ export function PlansBillingPage() {
                   >
                     Upgrade to Agency+
                   </Button>
+                </div>
+              )}
+
+              {(rawPlan === "agency_plus" || rawPlan === "appsumo_studio" || rawPlan === "agency") && (
+                <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-elevated-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">Custom domain</p>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      Point your client portal to your own hostname under Brand Settings.
+                    </p>
+                  </div>
+                  <Link
+                    href="/settings/white-label"
+                    className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-900 shadow-xs hover:bg-zinc-50"
+                  >
+                    Configure domain
+                  </Link>
                 </div>
               )}
 
