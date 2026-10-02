@@ -2546,6 +2546,16 @@ function SiteDetailContent() {
     scanInFlightRef.current = true;
     setScanLoading(true);
     setScanError(null);
+
+    const finishScanUi = () => {
+      if (scanPollRef.current) {
+        clearInterval(scanPollRef.current);
+        scanPollRef.current = null;
+      }
+      setScanLoading(false);
+      scanInFlightRef.current = false;
+    };
+
     try {
       const { data: triggerData } = await api.post<{ scan_id: string; mode?: string }>(`/scan/sites/${id}/trigger`);
       const newScanId = triggerData.scan_id;
@@ -2559,9 +2569,7 @@ function SiteDetailContent() {
       scanPollRef.current = setInterval(async () => {
         // Bail out past the deadline
         if (Date.now() > deadlineMs) {
-          clearInterval(scanPollRef.current!);
-          scanPollRef.current = null;
-          setScanLoading(false);
+          finishScanUi();
           setScanError(
             isPollingMode
               ? "Scan scheduled — the site's security scanner will run it automatically within 2 minutes. Refresh the page to see results."
@@ -2589,9 +2597,7 @@ function SiteDetailContent() {
           }
 
           if (data.status === "completed" || data.status === "failed") {
-            clearInterval(scanPollRef.current!);
-            scanPollRef.current = null;
-            setScanLoading(false);
+            finishScanUi();
             if (data.status === "completed") {
               window.dispatchEvent(new Event("bb:refresh"));
               toast.success("Malware scan complete — review findings in the Malware tab.");
@@ -2602,15 +2608,12 @@ function SiteDetailContent() {
             }
           }
         } catch {
-          clearInterval(scanPollRef.current!);
-          scanPollRef.current = null;
-          setScanLoading(false);
+          finishScanUi();
           setScanError("Failed to check scan status.");
         }
       }, 4000);
     } catch (err: unknown) {
-      setScanLoading(false);
-      scanInFlightRef.current = false;
+      finishScanUi();
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
       setScanError(msg || "Failed to start scan.");
     }
