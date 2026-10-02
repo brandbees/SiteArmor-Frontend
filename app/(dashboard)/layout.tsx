@@ -43,6 +43,7 @@ export default function DashboardLayout({
     isDashboard ||
     isSetup ||
     pathname === "/sites" ||
+    pathname === "/malware" ||
     pathname === "/billing" ||
     pathname === "/notifications" ||
     pathname === "/settings" ||
