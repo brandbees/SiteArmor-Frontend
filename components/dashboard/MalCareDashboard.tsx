@@ -33,6 +33,7 @@ import { PLAN_LIMITS } from "@/lib/constants";
 import type { Agency, Site } from "@/types";
 import type { PortfolioStats } from "@/hooks/useSites";
 import { mapReportRow, type RawReportRow, type ReportListItem } from "@/lib/reports";
+import { siteMalwareHref } from "@/components/sites/site-nav";
 
 export const DASHBOARD_GRADIENT =
   "linear-gradient(180deg, rgba(209, 250, 229, 0.15) 0%, rgba(236, 253, 245, 0.70) 0.98%, #F4F4F5 4.16%)";
@@ -703,16 +704,26 @@ export function MalCareDashboard({
                     ) : undefined
                   }
                   action={
-                    <McMenu
-                      value={alertFilter}
-                      options={[
-                        { id: "all", label: "All" },
-                        { id: "hacked", label: "Hacked" },
-                        { id: "critical", label: "Critical" },
-                        { id: "warnings", label: "Warnings" },
-                      ]}
-                      onChange={(id) => setAlertFilter(id as AlertFilter)}
-                    />
+                    <div className="flex items-center gap-2">
+                      {alertCounts.hacked > 0 && (
+                        <Link
+                          href="/malware"
+                          className="hidden text-xs font-medium text-red-600 hover:underline sm:inline"
+                        >
+                          Clean queue
+                        </Link>
+                      )}
+                      <McMenu
+                        value={alertFilter}
+                        options={[
+                          { id: "all", label: "All" },
+                          { id: "hacked", label: "Hacked" },
+                          { id: "critical", label: "Critical" },
+                          { id: "warnings", label: "Warnings" },
+                        ]}
+                        onChange={(id) => setAlertFilter(id as AlertFilter)}
+                      />
+                    </div>
                   }
                 />
 
@@ -800,7 +811,7 @@ export function MalCareDashboard({
                       return (
                         <Link
                           key={s.id}
-                          href={`/sites/${s.id}`}
+                          href={isHacked ? siteMalwareHref(s.id, "clean") : `/sites/${s.id}`}
                           className="flex h-[52px] min-h-[52px] w-full items-center gap-2.5 rounded-[10px] px-0 transition-colors hover:bg-zinc-50"
                         >
                           <div className="flex size-5 shrink-0 items-center justify-center rounded-lg bg-red-50">
@@ -1295,14 +1306,13 @@ export function MalCareDashboard({
                   <div className="inline-flex w-full items-center gap-2.5 rounded-lg bg-red-50 p-4 py-2">
                     <ShieldX size={24} strokeWidth={1.5} className="shrink-0 text-destructive" />
                     <div className="min-w-0 flex-1 text-xs leading-tight text-destructive">
-                      {threatCount} site{threatCount === 1 ? "" : "s"} with health issues. Review audits and fix
-                      outstanding problems.
+                      {threatCount} site{threatCount === 1 ? "" : "s"} with open malware infections. Clean without SSH from the portfolio queue.
                     </div>
                     <Link
-                      href="/sites?filter=malware"
+                      href="/malware"
                       className="inline-flex h-8 shrink-0 items-center gap-2 rounded-md bg-destructive px-4 text-sm font-medium text-white hover:opacity-90"
                     >
-                      Review sites
+                      Open clean queue
                     </Link>
                   </div>
                 )}

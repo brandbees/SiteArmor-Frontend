@@ -118,6 +118,7 @@ export interface RawSite {
   overall_threat_score?: number | null;
   malware_status?: string | null;
   major_threat_count?: number | null;
+  active_threat_count?: number | null;
   plugin_vuln_count?: number | null;
 }
 
@@ -293,6 +294,7 @@ export function mapSite(raw: RawSite): Site {
     overall_score: raw.overall_score ?? undefined,
     overall_threat_score: raw.overall_threat_score ?? null,
     major_threat_count: raw.major_threat_count ?? null,
+    active_threat_count: raw.active_threat_count ?? null,
     malware_status:
       // Backend derives malware_status from infection findings only (CVEs excluded).
       // major_threat_count may still include historical majors — do NOT treat it as "hacked".

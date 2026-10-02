@@ -15,6 +15,7 @@ import {
   LifeBuoy,
   Plus,
   CreditCard,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,7 @@ type NavItem = {
 const MANAGE_NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, clientVisible: true },
   { href: "/sites", label: "Sites", icon: Globe, clientVisible: true, quickAdd: true },
+  { href: "/malware", label: "Malware", icon: Bug, clientVisible: true },
   { href: "/clients", label: "Clients", icon: Users, clientVisible: false, agencyOnly: true },
   { href: "/notifications", label: "Notifications", icon: Bell, clientVisible: false },
 ];

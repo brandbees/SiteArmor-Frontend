@@ -64,7 +64,10 @@ export interface Site {
   overall_score?: number;
   malware_status?: "clean" | "threat";
   overall_threat_score?: number | null;
+  /** Total major findings on latest scan (incl. dismissed/quarantined/cleaned). */
   major_threat_count?: number | null;
+  /** Open infections still needing clean (activeMajor). */
+  active_threat_count?: number | null;
   plugin_vuln_count?: number;
   plugin_data?: PluginData;
   /** Site Armor WP plugin version reported by the connected site */

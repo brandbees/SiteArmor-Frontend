@@ -190,6 +190,16 @@ export function siteTabHref(siteId: string, tab: SiteTab) {
   return tab === "overview" ? `/sites/${siteId}` : `/sites/${siteId}?tab=${tab}`;
 }
 
+/** Deep-link into Malware tab modes (Issues / Clean / Protect / …). */
+export function siteMalwareHref(
+  siteId: string,
+  mode?: "overview" | "issues" | "clean" | "protect" | "vault" | "history"
+) {
+  const base = siteTabHref(siteId, "malware");
+  if (!mode || mode === "overview") return base;
+  return `${base}&mode=${mode}`;
+}
+
 export function resolveSiteNavHref(siteId: string, item: SiteNavLeaf): string {
   if (item.tab) return siteTabHref(siteId, item.tab);
   if (item.href) return item.href.replace("{siteId}", siteId);
