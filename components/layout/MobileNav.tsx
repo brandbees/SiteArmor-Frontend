@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Menu, X, Wifi,
   LayoutDashboard, Globe, Search, Zap, Shield,
-  Bug, Activity, FileText, Bot, Users, Settings, Bell, LogOut,
+  ShieldAlert, Activity, FileText, Bot, Users, Settings, Bell, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +19,7 @@ const ALL_NAV = [
   { href: "/seo",           label: "SEO",           icon: Search,          clientVisible: true  },
   { href: "/performance",   label: "Performance",   icon: Zap,             clientVisible: true  },
   { href: "/security",      label: "Security",      icon: Shield,          clientVisible: true  },
-  { href: "/malware",       label: "Malware",       icon: Bug,             clientVisible: true  },
+  { href: "/malware",       label: "Malware",       icon: ShieldAlert,     clientVisible: true  },
   { href: "/uptime",        label: "Uptime",        icon: Activity,        clientVisible: true  },
   { href: "/reports",       label: "Reports",       icon: FileText,        clientVisible: false },
   { href: "/clients",       label: "Clients",       icon: Users,           clientVisible: false },
