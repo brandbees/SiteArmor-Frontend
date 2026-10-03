@@ -313,6 +313,7 @@ export interface MalwareFinding {
   score_contribution: number;
   file_path: string | null;
   db_location: string | null;
+  affected_value?: string | null;
   cve_id: string | null;
   cve_url: string | null;
   description: string | null;
