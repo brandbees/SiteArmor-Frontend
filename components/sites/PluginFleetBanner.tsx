@@ -100,6 +100,18 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
   const needsManual = sites.filter((s) => s.plugin_needs_manual_once);
   const latest = fleet.manifest.latest_version;
 
+  function confirmTargetLabel(ids: string[]): string {
+    const named = ids
+      .map((id) => sites.find((s) => s.id === id)?.name?.trim())
+      .filter((n): n is string => !!n);
+    if (named.length === 1) return named[0];
+    if (named.length > 1 && named.length <= 3) return named.join(", ");
+    if (named.length > 3) {
+      return `${named.slice(0, 2).join(", ")}, and ${named.length - 2} more`;
+    }
+    return `${ids.length} site${ids.length === 1 ? "" : "s"}`;
+  }
+
   async function runUpdate(ids: string[]) {
     if (!ids.length) return;
     setUpdating(true);
@@ -209,7 +221,7 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
       <ConfirmDialog
         isOpen={confirmOpen}
         title="Update Site Armor?"
-        message={`This will download and install Site Armor ${latest} on ${pendingIds.length} selected site${pendingIds.length === 1 ? "" : "s"}. A health check runs after each update; failures roll back.`}
+        message={`This will download and install Site Armor ${latest} on ${confirmTargetLabel(pendingIds)}. A health check runs after each update; failures roll back.`}
         confirmText="Update now"
         onConfirm={() => void runUpdate(pendingIds)}
         onCancel={() => setConfirmOpen(false)}
