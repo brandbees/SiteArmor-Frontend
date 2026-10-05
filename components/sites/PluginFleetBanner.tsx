@@ -117,6 +117,10 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
         toast.success(
           `Updated ${ok} site${ok === 1 ? "" : "s"} to Site Armor ${data.target_version}.`
         );
+        // Refresh site detail / sidebar footer (plugin_version) across the app.
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("bb:refresh"));
+        }
       }
       if (failed.length) {
         toast.warning(

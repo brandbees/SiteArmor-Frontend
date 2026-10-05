@@ -2,9 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Package, RefreshCw, Upload } from "lucide-react";
+import { History, Package, RefreshCw, RotateCcw, Upload } from "lucide-react";
 import masterApi from "@/lib/masterApi";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+
+type VersionOption = {
+  version: string;
+  label: string;
+  source?: string;
+  recommended?: boolean;
+};
+
+type PublishedRelease = {
+  version: string;
+  filename: string;
+  sha256: string;
+  size_bytes: number;
+  mtime: string;
+  is_current: boolean;
+};
 
 type Manifest = {
   latest_version: string;
@@ -13,6 +30,10 @@ type Manifest = {
   min_push_version: string;
   release_notes: string;
   ready: boolean;
+  repo_version?: string | null;
+  selected_version?: string;
+  version_options?: VersionOption[];
+  published?: PublishedRelease[];
 };
 
 type FleetRow = {
@@ -26,14 +47,24 @@ type FleetRow = {
   plugin_needs_manual_once?: boolean;
 };
 
+function formatBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function MasterPluginReleasePage() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [fleet, setFleet] = useState<FleetRow[]>([]);
   const [summary, setSummary] = useState<{ outdated: number; push_ready: number; scanned: number } | null>(null);
-  const [version, setVersion] = useState("1.13.0");
+  const [versionOptions, setVersionOptions] = useState<VersionOption[]>([]);
+  const [published, setPublished] = useState<PublishedRelease[]>([]);
+  const [version, setVersion] = useState("");
   const [notes, setNotes] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [activating, setActivating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [rollbackTarget, setRollbackTarget] = useState<PublishedRelease | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -48,7 +79,16 @@ export default function MasterPluginReleasePage() {
       setManifest(m.data);
       setFleet(f.data.sites || []);
       setSummary(f.data.summary || null);
-      if (m.data.latest_version) setVersion(m.data.latest_version);
+      const opts = m.data.version_options || [];
+      setVersionOptions(opts);
+      setPublished(m.data.published || []);
+      const auto =
+        m.data.selected_version
+        || m.data.repo_version
+        || m.data.latest_version
+        || opts[0]?.version
+        || "";
+      setVersion(auto);
       if (m.data.release_notes) setNotes(m.data.release_notes);
     } catch {
       toast.error("Failed to load plugin release data");
@@ -62,6 +102,10 @@ export default function MasterPluginReleasePage() {
   }, [load]);
 
   async function publish() {
+    if (!version) {
+      toast.error("Select a version");
+      return;
+    }
     setPublishing(true);
     try {
       const { data } = await masterApi.post<{ ok: boolean; manifest: Manifest }>(
@@ -81,7 +125,37 @@ export default function MasterPluginReleasePage() {
     }
   }
 
+  async function activateRollback() {
+    if (!rollbackTarget) return;
+    setActivating(true);
+    try {
+      const { data } = await masterApi.post<{ ok: boolean; manifest: Manifest }>(
+        "/master/plugin-release/activate",
+        {
+          version: rollbackTarget.version,
+          release_notes: notes || `Rolled fleet target back to ${rollbackTarget.version}`,
+        }
+      );
+      setManifest(data.manifest);
+      toast.success(`Fleet target set to ${data.manifest.latest_version}`);
+      setRollbackTarget(null);
+      await load();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        "Rollback failed";
+      toast.error(msg);
+    } finally {
+      setActivating(false);
+    }
+  }
+
   const outdated = fleet.filter((s) => s.plugin_outdated);
+  const selectOptions = versionOptions.length
+    ? versionOptions
+    : version
+      ? [{ version, label: version }]
+      : [];
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -115,6 +189,10 @@ export default function MasterPluginReleasePage() {
               <dt className="text-zinc-500">Ready for push</dt>
               <dd className="font-medium text-zinc-900">{manifest?.ready ? "Yes" : "No"}</dd>
             </div>
+            <div>
+              <dt className="text-zinc-500">Repo code version</dt>
+              <dd className="font-medium text-zinc-900">{manifest?.repo_version || "—"}</dd>
+            </div>
             <div className="sm:col-span-2">
               <dt className="text-zinc-500">ZIP URL</dt>
               <dd className="break-all font-mono text-xs text-zinc-700">{manifest?.zip_url || "—"}</dd>
@@ -133,17 +211,26 @@ export default function MasterPluginReleasePage() {
           Zips <code className="rounded bg-zinc-100 px-1">wp-plugin/</code> as{" "}
           <code className="rounded bg-zinc-100 px-1">site-armor/</code>, hashes it, stores the
           package, and updates the manifest. Bump{" "}
-          <code className="rounded bg-zinc-100 px-1">BBSS_VERSION</code> in the plugin first.
+          <code className="rounded bg-zinc-100 px-1">BBSS_VERSION</code> in the plugin before
+          choosing a new version.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="block flex-1 text-xs font-medium text-zinc-600">
             Version
-            <input
+            <select
               value={version}
               onChange={(e) => setVersion(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-              placeholder="1.13.0"
-            />
+              className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+            >
+              {selectOptions.length === 0 && (
+                <option value="">No versions available</option>
+              )}
+              {selectOptions.map((opt) => (
+                <option key={opt.version} value={opt.version}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block flex-[2] text-xs font-medium text-zinc-600">
             Release notes
@@ -154,10 +241,78 @@ export default function MasterPluginReleasePage() {
               placeholder="Fleet self-update, …"
             />
           </label>
-          <Button onClick={() => void publish()} loading={publishing} disabled={publishing}>
+          <Button
+            onClick={() => void publish()}
+            loading={publishing}
+            disabled={publishing || !version}
+          >
             <Upload size={14} />
             Publish
           </Button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+          <History size={16} className="text-zinc-500" />
+          Published packages / rollback
+        </h2>
+        <p className="mt-1 text-xs text-zinc-500">
+          Activate a previous package as the fleet target. Sites still on an older build can update
+          to it. Sites already on a newer version are not auto-downgraded (WordPress will not install
+          a lower version).
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-100 text-xs uppercase tracking-wide text-zinc-400">
+                <th className="py-2 pr-3 font-medium">Version</th>
+                <th className="py-2 pr-3 font-medium">Size</th>
+                <th className="py-2 pr-3 font-medium">Published</th>
+                <th className="py-2 pr-3 font-medium">SHA-256</th>
+                <th className="py-2 font-medium">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {published.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-zinc-400">
+                    No published packages yet. Publish from repo first.
+                  </td>
+                </tr>
+              )}
+              {published.map((p) => (
+                <tr key={p.version} className="border-b border-zinc-50">
+                  <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-zinc-900">
+                    {p.version}
+                    {p.is_current && (
+                      <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
+                        Current
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3 text-zinc-600">{formatBytes(p.size_bytes)}</td>
+                  <td className="py-2.5 pr-3 text-zinc-600">
+                    {new Date(p.mtime).toLocaleString()}
+                  </td>
+                  <td className="max-w-[180px] truncate py-2.5 pr-3 font-mono text-[10px] text-zinc-500" title={p.sha256}>
+                    {p.sha256.slice(0, 16)}…
+                  </td>
+                  <td className="py-2.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={p.is_current || activating}
+                      onClick={() => setRollbackTarget(p)}
+                    >
+                      <RotateCcw size={13} />
+                      {p.is_current ? "Active" : "Set as current"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -207,6 +362,20 @@ export default function MasterPluginReleasePage() {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={!!rollbackTarget}
+        title="Set fleet target version?"
+        message={
+          rollbackTarget
+            ? `This sets Site Armor ${rollbackTarget.version} as the current fleet package (ZIP + checksum). Agencies will be offered this version for sites that are behind it. Sites already on a newer version will not auto-downgrade.`
+            : ""
+        }
+        confirmText="Set as current"
+        onConfirm={() => void activateRollback()}
+        onCancel={() => setRollbackTarget(null)}
+        isLoading={activating}
+      />
     </div>
   );
 }

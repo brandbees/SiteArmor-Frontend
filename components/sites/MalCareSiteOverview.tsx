@@ -564,7 +564,15 @@ export function MalCareSiteOverview({
     >
       <div className="mx-auto p-4 pr-6" style={{ width: "min(107.125rem, 100%)" }}>
         {!isClientPortal && site.plugin_connected && (
-          <PluginFleetBanner siteId={site.id} className="mb-4" />
+          <PluginFleetBanner
+            siteId={site.id}
+            className="mb-4"
+            onUpdated={() => {
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("bb:refresh"));
+              }
+            }}
+          />
         )}
         <div className="flex flex-wrap items-stretch gap-4">
           {/* Site Summary */}
