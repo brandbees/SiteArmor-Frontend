@@ -26,6 +26,7 @@ import {
   Megaphone,
   Download,
   Layers,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMasterPlatform } from "@/context/MasterPlatformContext";
@@ -40,6 +41,7 @@ const navGroups = [
       { href: "/master/dashboard",       label: "Dashboard",       icon: LayoutDashboard, minRole: "support"     },
       { href: "/master/agencies",        label: "Agencies",        icon: Building2,       minRole: "support"     },
       { href: "/master/sites",           label: "Sites",           icon: Globe,           minRole: "support"     },
+      { href: "/master/plugin-release",  label: "Plugin release",  icon: Package,         minRole: "admin"       },
       { href: "/master/queue",           label: "Queue",           icon: ListChecks,      minRole: "admin"       },
       { href: "/master/revenue",         label: "Revenue",         icon: DollarSign,      minRole: "admin"       },
       { href: "/master/trials",          label: "Trials",          icon: Clock,           minRole: "admin"       },

@@ -49,6 +49,9 @@ interface TokenState {
   monthly_limit: number;
   extra_used?: number;
   extra_remaining?: number;
+  malware_ai_passes_limit?: number;
+  malware_ai_passes_used?: number;
+  malware_ai_passes_remaining?: number;
 }
 
 const BILLING_TABS = [
@@ -70,11 +73,25 @@ const PLAN_COPY: Record<PlanKey, { tagline: string; points: string[] }> = {
   },
   premium: {
     tagline: "For agencies that need proof at scale.",
-    points: ["50 sites", "10 seats", "20,000 AI tokens / month", "1 GB storage", "Client portal & backups"],
+    points: [
+      "50 sites",
+      "10 seats",
+      "20,000 AI tokens / month",
+      "20 AI malware assist passes / month",
+      "1 GB storage",
+      "Client portal & backups",
+    ],
   },
   agency_plus: {
     tagline: "Portfolio-scale, fully branded.",
-    points: ["Unlimited sites", "Unlimited seats", "100,000 AI tokens / month", "5 GB storage", "SSH, white-label & custom domain"],
+    points: [
+      "Unlimited sites",
+      "Unlimited seats",
+      "100,000 AI tokens / month",
+      "50 AI malware assist passes / month",
+      "5 GB storage",
+      "SSH, white-label & custom domain",
+    ],
   },
 };
 
@@ -538,28 +555,44 @@ export function PlansBillingPage() {
                 onCta={() => setBillingTab("plans")}
               />
             ) : (
-              <AddonPanel
-                kicker="This month"
-                amount={fmtTokens(tokensLeft)}
-                caption={`remaining of ${fmtTokens(monthlyBase)} plan tokens`}
-                used={planUsed}
-                total={monthlyBase}
-                extra={extraTotal > 0 ? `${fmtTokens(extraLeft)} top-up left` : null}
-                note="Plan tokens refill each month. Top-ups never expire and are used after the monthly allowance runs out."
-                rows={tokenPkgList}
-                loading={tokenPkgList.length === 0}
-                renderRow={({ key, tokens, price_cents, label }) => (
-                  <AddonRow
-                    key={key}
-                    title={`${fmtTokens(tokens)} tokens`}
-                    label={label}
-                    price={fmtCents(price_cents)}
-                    loading={addonLoading === key}
-                    disabled={addonLoading !== null && addonLoading !== key}
-                    onBuy={() => handleAddonCheckout("tokens", key)}
-                  />
+              <>
+                <AddonPanel
+                  kicker="This month"
+                  amount={fmtTokens(tokensLeft)}
+                  caption={`remaining of ${fmtTokens(monthlyBase)} plan tokens`}
+                  used={planUsed}
+                  total={monthlyBase}
+                  extra={extraTotal > 0 ? `${fmtTokens(extraLeft)} top-up left` : null}
+                  note="Plan tokens refill each month. Top-ups never expire and are used after the monthly allowance runs out."
+                  rows={tokenPkgList}
+                  loading={tokenPkgList.length === 0}
+                  renderRow={({ key, tokens, price_cents, label }) => (
+                    <AddonRow
+                      key={key}
+                      title={`${fmtTokens(tokens)} tokens`}
+                      label={label}
+                      price={fmtCents(price_cents)}
+                      loading={addonLoading === key}
+                      disabled={addonLoading !== null && addonLoading !== key}
+                      onBuy={() => handleAddonCheckout("tokens", key)}
+                    />
+                  )}
+                />
+                {(tokenState?.malware_ai_passes_limit ?? 0) > 0 && (
+                  <p className="mt-4 text-sm text-zinc-600">
+                    AI assist used / remaining:{" "}
+                    <span className="font-medium text-zinc-900">
+                      {tokenState?.malware_ai_passes_used ?? 0} used
+                    </span>
+                    {" · "}
+                    <span className="font-medium text-zinc-900">
+                      {tokenState?.malware_ai_passes_remaining ?? 0}
+                    </span>
+                    {" "}of {tokenState?.malware_ai_passes_limit ?? 0} malware scan passes left this month.
+                    Separate from chat tokens; over-cap scans still complete rules-only.
+                  </p>
                 )}
-              />
+              </>
             )
           )}
 

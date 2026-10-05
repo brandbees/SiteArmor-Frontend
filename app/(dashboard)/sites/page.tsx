@@ -39,6 +39,7 @@ import { WordPressIcon } from "@/components/shared/WordPressIcon";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
+import { PluginFleetBanner } from "@/components/sites/PluginFleetBanner";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { Site } from "@/types";
 
@@ -599,6 +600,9 @@ export default function SitesPage() {
 
       {/* Scroll area + rounded card (filters + table only) */}
       <div className="min-h-0 flex-1 overflow-auto p-4 pr-6">
+        {!agency?.is_client_portal && (
+          <PluginFleetBanner className="mb-4" />
+        )}
         {loading && (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="lg" />

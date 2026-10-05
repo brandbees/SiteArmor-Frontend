@@ -45,6 +45,7 @@ import { cn, timeAgo } from "@/lib/utils";
 import type { Audit, Plugin, Site } from "@/types";
 import { toast } from "sonner";
 import { CubeLoader } from "@/components/sites/SiteLoadingOverlay";
+import { PluginFleetBanner } from "@/components/sites/PluginFleetBanner";
 
 export type SiteOverviewTab = Exclude<SiteTab, "overview">;
 
@@ -562,6 +563,9 @@ export function MalCareSiteOverview({
       style={{ background: DASHBOARD_GRADIENT }}
     >
       <div className="mx-auto p-4 pr-6" style={{ width: "min(107.125rem, 100%)" }}>
+        {!isClientPortal && site.plugin_connected && (
+          <PluginFleetBanner siteId={site.id} className="mb-4" />
+        )}
         <div className="flex flex-wrap items-stretch gap-4">
           {/* Site Summary */}
           <WidgetSlot width={648}>

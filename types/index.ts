@@ -350,6 +350,9 @@ export interface MalwareScanResult {
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
+  /** True when this scan consumed a dedicated malware AI pass (Growth/Agency+). */
+  malware_ai_pass_used?: boolean;
+  engine_version?: string | null;
   threats: MalwareFinding[];
 }
 
