@@ -126,9 +126,11 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
         (r) => r.status !== "success" && r.status !== "skipped"
       );
       if (ok > 0) {
-        toast.success(
-          `Updated ${ok} site${ok === 1 ? "" : "s"} to Site Armor ${data.target_version}.`
-        );
+        const successIds = (data.results || [])
+          .filter((r) => r.status === "success")
+          .map((r) => String(r.site_id));
+        const who = confirmTargetLabel(successIds.length ? successIds : ids);
+        toast.success(`Updated ${who} to Site Armor ${data.target_version}.`);
         // Refresh site detail / sidebar footer (plugin_version) across the app.
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("bb:refresh"));

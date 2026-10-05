@@ -7,13 +7,6 @@ import masterApi from "@/lib/masterApi";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
-type VersionOption = {
-  version: string;
-  label: string;
-  source?: string;
-  recommended?: boolean;
-};
-
 type PublishedRelease = {
   version: string;
   filename: string;
@@ -32,7 +25,6 @@ type Manifest = {
   ready: boolean;
   repo_version?: string | null;
   selected_version?: string;
-  version_options?: VersionOption[];
   published?: PublishedRelease[];
 };
 
@@ -57,9 +49,7 @@ export default function MasterPluginReleasePage() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [fleet, setFleet] = useState<FleetRow[]>([]);
   const [summary, setSummary] = useState<{ outdated: number; push_ready: number; scanned: number } | null>(null);
-  const [versionOptions, setVersionOptions] = useState<VersionOption[]>([]);
   const [published, setPublished] = useState<PublishedRelease[]>([]);
-  const [version, setVersion] = useState("");
   const [notes, setNotes] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [activating, setActivating] = useState(false);
@@ -79,16 +69,7 @@ export default function MasterPluginReleasePage() {
       setManifest(m.data);
       setFleet(f.data.sites || []);
       setSummary(f.data.summary || null);
-      const opts = m.data.version_options || [];
-      setVersionOptions(opts);
       setPublished(m.data.published || []);
-      const auto =
-        m.data.selected_version
-        || m.data.repo_version
-        || m.data.latest_version
-        || opts[0]?.version
-        || "";
-      setVersion(auto);
       if (m.data.release_notes) setNotes(m.data.release_notes);
     } catch {
       toast.error("Failed to load plugin release data");
@@ -102,15 +83,16 @@ export default function MasterPluginReleasePage() {
   }, [load]);
 
   async function publish() {
-    if (!version) {
-      toast.error("Select a version");
+    const repoVersion = manifest?.repo_version;
+    if (!repoVersion) {
+      toast.error("Set BBSS_VERSION in the plugin before publishing");
       return;
     }
     setPublishing(true);
     try {
       const { data } = await masterApi.post<{ ok: boolean; manifest: Manifest }>(
         "/master/plugin-release/publish",
-        { version, release_notes: notes }
+        { version: repoVersion, release_notes: notes }
       );
       setManifest(data.manifest);
       toast.success(`Published Site Armor ${data.manifest.latest_version}`);
@@ -151,12 +133,7 @@ export default function MasterPluginReleasePage() {
   }
 
   const outdated = fleet.filter((s) => s.plugin_outdated);
-  const selectOptions = versionOptions.length
-    ? versionOptions
-    : version
-      ? [{ version, label: version }]
-      : [];
-
+  const repoVersion = manifest?.repo_version || "";
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -208,30 +185,18 @@ export default function MasterPluginReleasePage() {
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-zinc-900">Publish from repo</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Zips <code className="rounded bg-zinc-100 px-1">wp-plugin/</code> as{" "}
-          <code className="rounded bg-zinc-100 px-1">site-armor/</code>, hashes it, stores the
-          package, and updates the manifest. Bump{" "}
-          <code className="rounded bg-zinc-100 px-1">BBSS_VERSION</code> in the plugin before
-          choosing a new version.
+          Builds a ZIP from the current <code className="rounded bg-zinc-100 px-1">wp-plugin/</code>{" "}
+          code using <code className="rounded bg-zinc-100 px-1">BBSS_VERSION</code>. To roll the
+          fleet back to an older ZIP, use <span className="font-medium text-zinc-700">Set as current</span>{" "}
+          below — do not republish an old version number.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="block flex-1 text-xs font-medium text-zinc-600">
-            Version
-            <select
-              value={version}
-              onChange={(e) => setVersion(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
-            >
-              {selectOptions.length === 0 && (
-                <option value="">No versions available</option>
-              )}
-              {selectOptions.map((opt) => (
-                <option key={opt.version} value={opt.version}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="block flex-1 text-xs font-medium text-zinc-600">
+            Version in repo
+            <p className="mt-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-900">
+              {repoVersion || "—"}
+            </p>
+          </div>
           <label className="block flex-[2] text-xs font-medium text-zinc-600">
             Release notes
             <input
@@ -244,7 +209,7 @@ export default function MasterPluginReleasePage() {
           <Button
             onClick={() => void publish()}
             loading={publishing}
-            disabled={publishing || !version}
+            disabled={publishing || !repoVersion}
           >
             <Upload size={14} />
             Publish
@@ -258,9 +223,8 @@ export default function MasterPluginReleasePage() {
           Published packages / rollback
         </h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Activate a previous package as the fleet target. Sites still on an older build can update
-          to it. Sites already on a newer version are not auto-downgraded (WordPress will not install
-          a lower version).
+          Activate a previous package as the fleet target with Set as current. Sites still on an
+          older build can update to it. Sites already on a newer version are not auto-downgraded.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
