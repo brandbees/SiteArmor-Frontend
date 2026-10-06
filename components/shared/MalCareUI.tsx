@@ -460,4 +460,46 @@ export function ScoreHistoryList({
   );
 }
 
+export function RoundedFilterTabs<T extends string>({
+  tabs,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  tabs: { id: T; label: string; count?: number }[];
+  value: T;
+  onChange: (id: T) => void;
+  ariaLabel: string;
+}) {
+  if (tabs.length === 0) return null;
+  return (
+    <div
+      role="tablist"
+      aria-label={ariaLabel}
+      className="flex w-fit max-w-full flex-wrap items-center gap-1 rounded-full bg-muted/50 p-1"
+    >
+      {tabs.map((t) => {
+        const selected = value === t.id;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(t.id)}
+            className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 ${
+              selected
+                ? "bg-white text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+            {typeof t.count === "number" ? ` · ${t.count}` : ""}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export { SEVERITY_META, type Severity, type Tone, type AlertVariant };

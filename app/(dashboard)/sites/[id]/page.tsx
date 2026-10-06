@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft, RefreshCw, ExternalLink, Trash2, Globe,
-  CheckCircle2, XCircle, AlertCircle, ChevronDown, ChevronUp,
+  CheckCircle2, XCircle, AlertCircle, ChevronDown,
   Shield, ShieldAlert, ShieldCheck, Package, ShoppingCart, Wifi, Key, Copy, Eye, EyeOff,
   Activity, TrendingUp, Clock, Zap, Server, Database, LayoutGrid,
   Bell, DollarSign, BarChart2, CalendarClock, HeartPulse, Search, AlertTriangle, Bot, Flame,
@@ -17,7 +17,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { UpgradeBanner } from "@/components/shared/UpgradeBanner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { McCard, McPill, McAlert } from "@/components/shared/MalCareUI";
+import { McCard, McPill, McAlert, RoundedFilterTabs } from "@/components/shared/MalCareUI";
 import { SecurityTab } from "@/components/sites/tabs/SecurityTab";
 import { PerformanceTab } from "@/components/sites/tabs/PerformanceTab";
 import { SeoTab } from "@/components/sites/tabs/SeoTab";
@@ -235,9 +235,7 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
   const [resolving, setResolving] = useState<string | null>(null);
   const [confirmFix, setConfirmFix] = useState<FixItem | null>(null);
   const [resolved, setResolved]   = useState<Set<string>>(new Set());
-  const [openFirst, setOpenFirst] = useState(true);
-  const [openReview, setOpenReview] = useState(true);
-  const [openResolved, setOpenResolved] = useState(false);
+  const [issueGroup, setIssueGroup] = useState<"first" | "review" | "resolved">("first");
 
   useEffect(() => {
     api.get<{ fixes: FixItem[] }>(`/sites/${site.id}/fix-queue`)
@@ -310,116 +308,42 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
         isLoading={!!resolving}
       />
 
-      {firstWave.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-xl border border-[var(--score-bad-border)] bg-[var(--score-bad-bg)]/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {firstWave.length} high-priority issue{firstWave.length === 1 ? "" : "s"}
-            </p>
+      {(() => {
+        type GroupId = "first" | "review" | "resolved";
+        const groups = (
+          [
+            { id: "first" as const, label: "Act first", items: firstWave },
+            { id: "review" as const, label: "Review", items: alsoReview },
+            { id: "resolved" as const, label: "Resolved", items: resolvedFixes, done: true },
+          ] as { id: GroupId; label: string; items: FixItem[]; done?: boolean }[]
+        ).filter((g) => g.items.length > 0);
+        const activeId = groups.some((g) => g.id === issueGroup) ? issueGroup : groups[0]!.id;
+        const active = groups.find((g) => g.id === activeId)!;
+        return (
+          <>
+            <RoundedFilterTabs
+              ariaLabel="Issue groups"
+              tabs={groups.map((g) => ({ id: g.id, label: g.label, count: g.items.length }))}
+              value={activeId}
+              onChange={setIssueGroup}
+            />
             <p className="text-[12px] text-muted-foreground">
               Plugin CVEs and hardening. Malware quarantine is under Malware.
             </p>
-          </div>
-        </div>
-      )}
-
-      {firstWave.length === 0 && activeFixes.length > 0 && (
-        <p className="text-[12px] leading-relaxed text-muted-foreground">
-          Plugin CVEs, hardening, and SEO/performance. Malware quarantine and restore are under{" "}
-          <span className="font-medium text-foreground">Malware</span>.
-        </p>
-      )}
-
-      {firstWave.length > 0 && (
-        <AuditFixSection
-          title="Act on these first"
-          count={firstWave.length}
-          accent="#dc2626"
-          open={openFirst}
-          onToggle={() => setOpenFirst((o) => !o)}
-          items={firstWave}
-          resolving={resolving}
-          onResolve={setConfirmFix}
-        />
-      )}
-      {alsoReview.length > 0 && (
-        <AuditFixSection
-          title="Also review"
-          count={alsoReview.length}
-          accent="#64748b"
-          open={openReview}
-          onToggle={() => setOpenReview((o) => !o)}
-          items={alsoReview}
-          resolving={resolving}
-          onResolve={setConfirmFix}
-        />
-      )}
-      {resolvedFixes.length > 0 && (
-        <AuditFixSection
-          title="Resolved"
-          count={resolvedFixes.length}
-          accent="#059669"
-          open={openResolved}
-          onToggle={() => setOpenResolved((o) => !o)}
-          items={resolvedFixes}
-          resolving={resolving}
-          resolved
-        />
-      )}
-    </div>
-  );
-}
-
-function AuditFixSection({
-  title,
-  count,
-  accent,
-  open,
-  onToggle,
-  items,
-  resolving,
-  onResolve,
-  resolved,
-}: {
-  title: string;
-  count: number;
-  accent: string;
-  open: boolean;
-  onToggle: () => void;
-  items: FixItem[];
-  resolving: string | null;
-  onResolve?: (fix: FixItem) => void;
-  resolved?: boolean;
-}) {
-  return (
-    <div className="border-b border-border/70 pb-4 last:border-b-0 last:pb-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-2 py-1 text-left"
-        aria-expanded={open}
-      >
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: accent }}>
-          {title}
-        </span>
-        <span className="text-[11px] tabular-nums text-muted-foreground">{count}</span>
-        <span className="ml-auto text-muted-foreground">
-          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </span>
-      </button>
-      {open && (
-        <div className="mt-3 space-y-2.5">
-          {items.map((fix) => (
-            <AuditFixRow
-              key={fix.title}
-              fix={fix}
-              resolving={resolving}
-              onResolve={onResolve}
-              resolved={resolved}
-            />
-          ))}
-        </div>
-      )}
+            <div className="space-y-2.5">
+              {active.items.map((fix) => (
+                <AuditFixRow
+                  key={fix.title}
+                  fix={fix}
+                  resolving={resolving}
+                  onResolve={active.done ? undefined : setConfirmFix}
+                  resolved={active.done}
+                />
+              ))}
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }
