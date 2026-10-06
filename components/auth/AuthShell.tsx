@@ -175,9 +175,10 @@ export function AuthShell({
         </div>
       </div>
 
-      {/* Proof / atmosphere column */}
+      {/* Proof / atmosphere column — sticky viewport height so a tall form
+          does not stretch justify-between into a huge gap between title & cards */}
       <aside
-        className="relative hidden overflow-hidden lg:flex lg:w-[54%] lg:flex-col lg:justify-between lg:px-12 lg:py-14 xl:px-16"
+        className="relative hidden overflow-hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[54%] lg:flex-col lg:justify-center lg:gap-10 lg:self-start lg:px-12 lg:py-14 xl:gap-12 xl:px-16"
         style={{
           background:
             "radial-gradient(120% 80% at 10% 0%, #dbe7ff 0%, transparent 55%), radial-gradient(90% 70% at 100% 100%, #e8eef8 0%, transparent 50%), linear-gradient(160deg, #f4f7fc 0%, #eef3fb 45%, #e8eef8 100%)",
