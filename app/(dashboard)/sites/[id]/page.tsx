@@ -303,7 +303,9 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
             : ""
         }
         confirmText="Mark resolved"
-        onConfirm={() => confirmFix && resolveFix(confirmFix)}
+        onConfirm={async () => {
+          if (confirmFix) await resolveFix(confirmFix);
+        }}
         onCancel={() => setConfirmFix(null)}
         isLoading={!!resolving}
       />
