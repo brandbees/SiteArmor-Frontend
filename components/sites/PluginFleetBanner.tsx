@@ -76,7 +76,7 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
   if (loading || !fleet?.manifest?.latest_version) return null;
 
   const sites = siteId
-    ? fleet.sites.filter((s) => s.id === siteId)
+    ? fleet.sites.filter((s) => s.id === siteId && s.plugin_outdated)
     : fleet.sites.filter((s) => s.plugin_outdated);
 
   if (!sites.length) {
