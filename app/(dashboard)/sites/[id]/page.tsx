@@ -270,8 +270,22 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
     );
   }
 
-  const activeFixes = fixes.filter((f) => !f.resolved && !resolved.has(f.title));
-  const resolvedFixes = fixes.filter((f) => f.resolved || resolved.has(f.title));
+  const purpose = (
+    <p className="text-[12px] leading-relaxed text-muted-foreground">
+      Plugin vulnerabilities, server hardening, and SEO/performance. Malware quarantine and restore are under{" "}
+      <span className="font-medium text-foreground">Malware</span>.
+    </p>
+  );
+
+  const isAuditMalwareDump = (f: FixItem) =>
+    f.component === "malware" || /^malware detected:/i.test(f.title || "");
+
+  const activeFixes = fixes.filter(
+    (f) => !f.resolved && !resolved.has(f.title) && !isAuditMalwareDump(f)
+  );
+  const resolvedFixes = fixes.filter(
+    (f) => (f.resolved || resolved.has(f.title)) && !isAuditMalwareDump(f)
+  );
 
   if (activeFixes.length === 0 && resolvedFixes.length === 0) {
     return (
@@ -279,7 +293,9 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
         <div className="flex flex-col items-center text-center">
           <McIconBox icon={<CheckCircle2 size={18} />} tone="good" size="lg" />
           <p className="mt-3 text-sm font-bold text-foreground">No issues found</p>
-          <p className="mt-1 text-xs text-muted-foreground">Run an audit to check for issues</p>
+          <p className="mt-1 max-w-md text-xs text-muted-foreground">
+            This list is plugin CVEs, hardening, and SEO/performance. Malware clean-up is under Malware.
+          </p>
         </div>
       </McCard>
     );
@@ -321,7 +337,9 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
       )}
 
       {/* Summary chips */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-2">
+        {purpose}
+        <div className="flex flex-wrap items-center gap-2">
         {PRIORITY_ORDER_LIST.map((p) => {
           const count = activeFixes.filter((f) => f.priority === p).length;
           if (!count) return null;
@@ -332,6 +350,7 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
             All issues resolved
           </McPill>
         )}
+        </div>
       </div>
 
       {/* Groups */}
