@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +45,14 @@ function ActivateInner() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [doneLabel, setDoneLabel] = useState("");
 
+  // OAuth codes are single-use. Share one in-flight exchange per code so React
+  // Strict Mode / effect re-runs cannot burn the code (that surfaces as AppSumo's
+  // "authorization grant … invalid … or was issued to another client").
+  const exchangeInflightRef = useRef<{
+    code: string;
+    promise: Promise<ExchangeResult>;
+  } | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -57,9 +65,17 @@ function ActivateInner() {
       }
 
       try {
-        const { data } = await api.post<ExchangeResult>("/appsumo/oauth/exchange", {
-          code: oauthCode,
-        });
+        let promise = exchangeInflightRef.current?.code === oauthCode
+          ? exchangeInflightRef.current.promise
+          : null;
+        if (!promise) {
+          promise = api
+            .post<ExchangeResult>("/appsumo/oauth/exchange", { code: oauthCode })
+            .then((r) => r.data);
+          exchangeInflightRef.current = { code: oauthCode, promise };
+        }
+
+        const data = await promise;
         if (cancelled) return;
         setExchange(data);
 
@@ -78,6 +94,9 @@ function ActivateInner() {
         setPhase("form");
       } catch (err: unknown) {
         if (cancelled) return;
+        if (exchangeInflightRef.current?.code === oauthCode) {
+          exchangeInflightRef.current = null;
+        }
         setError(
           (err as { response?: { data?: { error?: string } } })?.response?.data?.error
             || "Could not complete AppSumo activation. Try Activate now again from AppSumo."
@@ -90,7 +109,8 @@ function ActivateInner() {
     return () => {
       cancelled = true;
     };
-  }, [oauthCode, refreshAgency]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- exchange once per code only
+  }, [oauthCode]);
 
   async function claimAfterAuth() {
     if (!exchange?.claim_token) throw new Error("Missing claim token");
