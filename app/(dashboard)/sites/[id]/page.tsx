@@ -16,7 +16,8 @@ import { useAuditStatus } from "@/hooks/useAuditStatus";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { UpgradeBanner } from "@/components/shared/UpgradeBanner";
-import { McCard, McPill, McAlert, McSeverityChip, McSectionHeader, McTag, McIconBox } from "@/components/shared/MalCareUI";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { McCard, McPill, McAlert } from "@/components/shared/MalCareUI";
 import { SecurityTab } from "@/components/sites/tabs/SecurityTab";
 import { PerformanceTab } from "@/components/sites/tabs/PerformanceTab";
 import { SeoTab } from "@/components/sites/tabs/SeoTab";
@@ -207,31 +208,25 @@ interface FixItem {
 
 const PRIORITY_ORDER_LIST = ["critical", "high", "medium", "low"] as const;
 
-const EFFORT_TAG: Record<string, { label: string; tone: "good" | "warn" | "bad" }> = {
-  low: { label: "Quick fix", tone: "good" },
-  medium: { label: "Moderate", tone: "warn" },
-  high: { label: "Complex", tone: "bad" },
+const PRIORITY_DOT: Record<(typeof PRIORITY_ORDER_LIST)[number], string> = {
+  critical: "#dc2626",
+  high: "#ea580c",
+  medium: "#d97706",
+  low: "#64748b",
 };
 
-const COMPONENT_TAG: Record<string, "purple" | "cyan" | "accent" | "pink"> = {
-  security: "cyan",
-  malware: "purple",
-  performance: "accent",
-  seo: "pink",
+const PRIORITY_LABEL: Record<(typeof PRIORITY_ORDER_LIST)[number], string> = {
+  critical: "Critical",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
-const PRIORITY_ICON: Record<string, typeof ShieldAlert> = {
-  critical: ShieldAlert,
-  high: Flame,
-  medium: AlertCircle,
-  low: AlertTriangle,
-};
-
-const PRIORITY_TONE: Record<string, "bad" | "warn" | "accent"> = {
-  critical: "bad",
-  high: "warn",
-  medium: "warn",
-  low: "accent",
+const COMPONENT_LABEL: Record<string, string> = {
+  security: "Security",
+  performance: "Performance",
+  seo: "SEO",
+  malware: "Malware",
 };
 
 function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
@@ -240,6 +235,9 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
   const [resolving, setResolving] = useState<string | null>(null);
   const [confirmFix, setConfirmFix] = useState<FixItem | null>(null);
   const [resolved, setResolved]   = useState<Set<string>>(new Set());
+  const [openFirst, setOpenFirst] = useState(true);
+  const [openReview, setOpenReview] = useState(true);
+  const [openResolved, setOpenResolved] = useState(false);
 
   useEffect(() => {
     api.get<{ fixes: FixItem[] }>(`/sites/${site.id}/fix-queue`)
@@ -253,9 +251,9 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
     try {
       await api.post(`/sites/${site.id}/fix-queue/resolve`, { title: fix.title });
       setResolved((prev) => new Set([...prev, fix.title]));
-      toast.success("Fix marked as resolved");
+      toast.success("Marked resolved");
     } catch {
-      toast.error("Failed to mark fix as resolved");
+      toast.error("Failed to mark resolved");
     } finally {
       setResolving(null);
       setConfirmFix(null);
@@ -265,17 +263,10 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: `${brandColor}30`, borderTopColor: brandColor }} />
+        <div className="h-6 w-6 animate-spin rounded-full border-2" style={{ borderColor: `${brandColor}30`, borderTopColor: brandColor }} />
       </div>
     );
   }
-
-  const purpose = (
-    <p className="text-[12px] leading-relaxed text-muted-foreground">
-      Plugin vulnerabilities, server hardening, and SEO/performance. Malware quarantine and restore are under{" "}
-      <span className="font-medium text-foreground">Malware</span>.
-    </p>
-  );
 
   const isAuditMalwareDump = (f: FixItem) =>
     f.component === "malware" || /^malware detected:/i.test(f.title || "");
@@ -286,143 +277,210 @@ function IssuesTab({ site, brandColor }: { site: Site; brandColor: string }) {
   const resolvedFixes = fixes.filter(
     (f) => (f.resolved || resolved.has(f.title)) && !isAuditMalwareDump(f)
   );
+  const firstWave = activeFixes.filter((f) => f.priority === "critical" || f.priority === "high");
+  const alsoReview = activeFixes.filter((f) => f.priority === "medium" || f.priority === "low");
 
   if (activeFixes.length === 0 && resolvedFixes.length === 0) {
     return (
-      <McCard bodyClassName="py-12">
-        <div className="flex flex-col items-center text-center">
-          <McIconBox icon={<CheckCircle2 size={18} />} tone="good" size="lg" />
-          <p className="mt-3 text-sm font-bold text-foreground">No issues found</p>
-          <p className="mt-1 max-w-md text-xs text-muted-foreground">
-            This list is plugin CVEs, hardening, and SEO/performance. Malware clean-up is under Malware.
-          </p>
-        </div>
-      </McCard>
+      <div className="rounded-xl border border-[var(--score-good-border)] bg-[var(--score-good-bg)]/30 px-4 py-8 text-center">
+        <ShieldCheck size={22} className="mx-auto text-[var(--score-good)]" />
+        <p className="mt-2 text-sm font-semibold text-foreground">Nothing left to act on</p>
+        <p className="mx-auto mt-1 max-w-md text-[12px] text-muted-foreground">
+          This list is plugin CVEs, hardening, and SEO/performance. Malware clean-up is under Malware.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      {/* Confirmation modal */}
-      {confirmFix && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm space-y-4 rounded-[4px] border border-border bg-white p-6 shadow-elevated-lg">
-            <div className="flex items-start gap-3">
-              <McIconBox icon={<AlertTriangle size={17} />} tone="warn" size="md" />
-              <div>
-                <p className="text-sm font-bold text-foreground">Mark as resolved?</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Confirm you have applied this fix before marking it resolved.
-                </p>
-              </div>
-            </div>
-            <div className="rounded-[4px] border border-border bg-[#f7f9fc] p-3">
-              <p className="text-xs font-semibold text-foreground">{confirmFix.title}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={() => setConfirmFix(null)}>
-                Cancel
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => resolveFix(confirmFix)}
-                disabled={resolving === confirmFix.title}
-                loading={resolving === confirmFix.title}
-              >
-                Mark resolved
-              </Button>
-            </div>
+    <div className="space-y-4">
+      <ConfirmDialog
+        isOpen={!!confirmFix}
+        title="Mark as resolved?"
+        message={
+          confirmFix
+            ? `Confirm you have applied this fix: ${confirmFix.title}`
+            : ""
+        }
+        confirmText="Mark resolved"
+        onConfirm={() => confirmFix && resolveFix(confirmFix)}
+        onCancel={() => setConfirmFix(null)}
+        isLoading={!!resolving}
+      />
+
+      {firstWave.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-[var(--score-bad-border)] bg-[var(--score-bad-bg)]/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {firstWave.length} high-priority issue{firstWave.length === 1 ? "" : "s"}
+            </p>
+            <p className="text-[12px] text-muted-foreground">
+              Plugin CVEs and hardening. Malware quarantine is under Malware.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Summary chips */}
-      <div className="space-y-2">
-        {purpose}
-        <div className="flex flex-wrap items-center gap-2">
-        {PRIORITY_ORDER_LIST.map((p) => {
-          const count = activeFixes.filter((f) => f.priority === p).length;
-          if (!count) return null;
-          return <McSeverityChip key={p} severity={p} count={count} />;
-        })}
-        {activeFixes.length === 0 && (
-          <McPill tone="good" icon={<CheckCircle2 size={11} />}>
-            All issues resolved
-          </McPill>
-        )}
-        </div>
-      </div>
+      {firstWave.length === 0 && activeFixes.length > 0 && (
+        <p className="text-[12px] leading-relaxed text-muted-foreground">
+          Plugin CVEs, hardening, and SEO/performance. Malware quarantine and restore are under{" "}
+          <span className="font-medium text-foreground">Malware</span>.
+        </p>
+      )}
 
-      {/* Groups */}
-      {PRIORITY_ORDER_LIST.map((priority) => {
-        const group = activeFixes.filter((f) => f.priority === priority);
-        if (!group.length) return null;
-        const PIcon = PRIORITY_ICON[priority];
-        const tone = PRIORITY_TONE[priority];
-        return (
-          <div key={priority} className="space-y-3">
-            <McSectionHeader severity={priority} count={group.length} />
-            <div className="space-y-2">
-              {group.map((fix) => {
-                const effort = EFFORT_TAG[fix.effort] ?? EFFORT_TAG.medium;
-                const compTone = COMPONENT_TAG[fix.component] ?? "accent";
-                return (
-                  <div
-                    key={fix.title}
-                    className="rounded-[4px] border border-border bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]"
-                  >
-                    <div className="flex items-start gap-3">
-                      <McIconBox
-                        icon={<PIcon size={16} strokeWidth={2.25} />}
-                        tone={tone}
-                        size="md"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-foreground">{fix.title}</p>
-                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                          {fix.description}
-                        </p>
-                        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                          <McTag tone={effort.tone}>{effort.label}</McTag>
-                          <McTag tone={compTone}>{fix.component}</McTag>
-                        </div>
-                      </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setConfirmFix(fix)}
-                        disabled={!!resolving}
-                      >
-                        <CheckCircle2 size={12} />
-                        Resolve
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Resolved section */}
+      {firstWave.length > 0 && (
+        <AuditFixSection
+          title="Act on these first"
+          count={firstWave.length}
+          accent="#dc2626"
+          open={openFirst}
+          onToggle={() => setOpenFirst((o) => !o)}
+          items={firstWave}
+          resolving={resolving}
+          onResolve={setConfirmFix}
+        />
+      )}
+      {alsoReview.length > 0 && (
+        <AuditFixSection
+          title="Also review"
+          count={alsoReview.length}
+          accent="#64748b"
+          open={openReview}
+          onToggle={() => setOpenReview((o) => !o)}
+          items={alsoReview}
+          resolving={resolving}
+          onResolve={setConfirmFix}
+        />
+      )}
       {resolvedFixes.length > 0 && (
-        <div>
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Resolved ({resolvedFixes.length})
-          </p>
-          <div className="space-y-2">
-            {resolvedFixes.map((fix) => (
-              <div
-                key={fix.title}
-                className="flex items-center gap-3 rounded-[4px] border border-border bg-white px-4 py-3 opacity-60"
-              >
-                <McIconBox icon={<CheckCircle2 size={14} />} tone="good" size="sm" />
-                <p className="flex-1 text-sm text-foreground">{fix.title}</p>
-                <McPill tone="good">Resolved</McPill>
-              </div>
-            ))}
+        <AuditFixSection
+          title="Resolved"
+          count={resolvedFixes.length}
+          accent="#059669"
+          open={openResolved}
+          onToggle={() => setOpenResolved((o) => !o)}
+          items={resolvedFixes}
+          resolving={resolving}
+          resolved
+        />
+      )}
+    </div>
+  );
+}
+
+function AuditFixSection({
+  title,
+  count,
+  accent,
+  open,
+  onToggle,
+  items,
+  resolving,
+  onResolve,
+  resolved,
+}: {
+  title: string;
+  count: number;
+  accent: string;
+  open: boolean;
+  onToggle: () => void;
+  items: FixItem[];
+  resolving: string | null;
+  onResolve?: (fix: FixItem) => void;
+  resolved?: boolean;
+}) {
+  return (
+    <div className="border-b border-border/70 pb-4 last:border-b-0 last:pb-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-2 py-1 text-left"
+        aria-expanded={open}
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: accent }}>
+          {title}
+        </span>
+        <span className="text-[11px] tabular-nums text-muted-foreground">{count}</span>
+        <span className="ml-auto text-muted-foreground">
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </span>
+      </button>
+      {open && (
+        <div className="mt-3 space-y-2.5">
+          {items.map((fix) => (
+            <AuditFixRow
+              key={fix.title}
+              fix={fix}
+              resolving={resolving}
+              onResolve={onResolve}
+              resolved={resolved}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AuditFixRow({
+  fix,
+  resolving,
+  onResolve,
+  resolved,
+}: {
+  fix: FixItem;
+  resolving: string | null;
+  onResolve?: (fix: FixItem) => void;
+  resolved?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const dot = PRIORITY_DOT[fix.priority] || "#64748b";
+  const component = COMPONENT_LABEL[fix.component] || fix.component;
+
+  return (
+    <div className={`group rounded-lg border border-border/80 bg-white transition-colors ${resolved ? "opacity-70" : "hover:border-border"}`}>
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <span
+          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          style={{ background: resolved ? "#9ca3af" : dot }}
+          aria-hidden
+        />
+        <button type="button" onClick={() => setOpen((o) => !o)} className="min-w-0 flex-1 text-left">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <p className={`truncate text-[13px] font-medium ${resolved ? "text-muted-foreground" : "text-foreground"}`}>
+              {fix.title}
+            </p>
+            {resolved ? (
+              <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                Resolved
+              </span>
+            ) : (
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {PRIORITY_LABEL[fix.priority]}
+                <span className="mx-1 text-muted-foreground/50">·</span>
+                {component}
+              </span>
+            )}
           </div>
+          {!open && (
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{fix.description}</p>
+          )}
+        </button>
+        {!resolved && onResolve && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!!resolving}
+            loading={resolving === fix.title}
+            onClick={() => onResolve(fix)}
+          >
+            Resolve
+          </Button>
+        )}
+      </div>
+      {open && (
+        <div className="border-t border-border/60 px-3 py-2.5 pl-8">
+          <p className="text-[12px] leading-relaxed text-muted-foreground">{fix.description}</p>
         </div>
       )}
     </div>
