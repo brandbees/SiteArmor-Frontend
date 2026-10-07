@@ -227,16 +227,41 @@ export type CloudflareWafRule = {
   enabled: boolean;
   last_updated?: string | null;
   created_by_site_armor?: boolean;
+  kind?: "custom" | "rate_limit";
+  ratelimit?: {
+    characteristics?: string[];
+    period?: number;
+    requests_per_period?: number;
+    mitigation_timeout?: number;
+  } | null;
+};
+
+export type WafCondition = {
+  field: string;
+  operator: string;
+  value: string;
 };
 
 export type WafRuleInput = {
   action: "block" | "managed_challenge";
   description?: string;
-  preset?: "path" | "ip" | "country" | "advanced";
+  enabled?: boolean;
+  preset?: "path" | "ip" | "country" | "advanced" | "builder" | "expression";
   path?: string;
   ip?: string;
   country?: string;
   expression?: string;
+  conditions?: WafCondition[];
+  combinator?: "and" | "or";
+};
+
+export type RateLimitInput = {
+  action?: "block" | "managed_challenge";
+  description?: string;
+  expression?: string;
+  path?: string;
+  requests_per_period?: number;
+  enabled?: boolean;
 };
 
 export async function listWafRules(siteId: string) {
@@ -245,12 +270,16 @@ export async function listWafRules(siteId: string) {
       zone_id: string;
       zone_name: string;
       ruleset_id: string | null;
+      rate_limit_ruleset_id?: string | null;
       limit: number;
+      rate_limit_limit?: number;
       count: number;
+      rate_limit_count?: number;
       allowlist_configured?: boolean;
-      /** @deprecated never returned; kept for older clients */
-      allowlist_ips?: string[];
+      starter_applied?: boolean;
+      starter_available?: boolean;
       rules: CloudflareWafRule[];
+      rate_limit_rules?: CloudflareWafRule[];
     }>(`/sites/${siteId}/cloudflare/waf/rules`);
     return data;
   } catch (err) {
@@ -270,6 +299,22 @@ export async function createWafRule(siteId: string, input: WafRuleInput) {
   }
 }
 
+export async function updateWafRule(
+  siteId: string,
+  ruleId: string,
+  input: Partial<WafRuleInput> & { enabled?: boolean }
+) {
+  try {
+    const { data } = await api.patch<{ rule: CloudflareWafRule }>(
+      `/sites/${siteId}/cloudflare/waf/rules/${ruleId}`,
+      input
+    );
+    return data.rule;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to update WAF rule"));
+  }
+}
+
 export async function deleteWafRule(siteId: string, ruleId: string) {
   try {
     const { data } = await api.delete<{ success: boolean; id: string }>(
@@ -278,5 +323,68 @@ export async function deleteWafRule(siteId: string, ruleId: string) {
     return data;
   } catch (err) {
     throw new Error(errMessage(err, "Failed to delete WAF rule"));
+  }
+}
+
+export async function createRateLimitRule(siteId: string, input: RateLimitInput) {
+  try {
+    const { data } = await api.post<{ rule: CloudflareWafRule }>(
+      `/sites/${siteId}/cloudflare/waf/rate-limit`,
+      input
+    );
+    return data.rule;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to create rate limit rule"));
+  }
+}
+
+export async function deleteRateLimitRule(siteId: string, ruleId: string) {
+  try {
+    const { data } = await api.delete<{ success: boolean; id: string }>(
+      `/sites/${siteId}/cloudflare/waf/rate-limit/${ruleId}`
+    );
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to delete rate limit rule"));
+  }
+}
+
+export async function applyWafStarterPack(siteId: string, force = false) {
+  try {
+    const { data } = await api.post<{
+      skipped: boolean;
+      reason?: string;
+      created?: number;
+      errors?: string[];
+    }>(`/sites/${siteId}/cloudflare/waf/starter`, { force });
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to apply starter pack"));
+  }
+}
+
+export async function getWafTemplates(siteId: string) {
+  try {
+    const { data } = await api.get<{
+      custom: Array<{
+        key: string;
+        description: string;
+        action: string;
+        expression: string;
+      }>;
+      rate_limit: {
+        key: string;
+        description: string;
+        action: string;
+        expression: string;
+        period: number;
+        requests_per_period: number;
+      };
+      slots_used: number;
+      slots_left_for_agency: number;
+    }>(`/sites/${siteId}/cloudflare/waf/templates`);
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to load WAF templates"));
   }
 }
