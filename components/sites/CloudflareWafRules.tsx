@@ -5,15 +5,14 @@ import { toast } from "sonner";
 import {
   ChevronDown,
   Loader2,
+  MoreHorizontal,
   Plus,
   RefreshCw,
   Shield,
-  Trash2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { McCard, McPill } from "@/components/shared/MalCareUI";
 import { cn } from "@/lib/utils";
 import {
   applyWafStarterPack,
@@ -125,7 +124,6 @@ export function CloudflareWafRules({
   // Rate limit form
   const [rlDescription, setRlDescription] = useState("Rate-limit login");
   const [rlPath, setRlPath] = useState("/wp-login.php");
-  const [rlAction, setRlAction] = useState<"block" | "managed_challenge">("managed_challenge");
   const [rlRequests, setRlRequests] = useState("20");
 
   // Templates
@@ -232,7 +230,7 @@ export function CloudflareWafRules({
     setBusy(true);
     try {
       await createRateLimitRule(siteId, {
-        action: rlAction,
+        action: "block",
         description: rlDescription.trim() || "Rate limit rule",
         path: rlPath.trim(),
         requests_per_period: Number(rlRequests) || 20,
@@ -644,16 +642,9 @@ export function CloudflareWafRules({
             </label>
             <label className="block space-y-1.5">
               <span className="text-[12px] font-medium">Action</span>
-              <select
-                value={rlAction}
-                onChange={(e) =>
-                  setRlAction(e.target.value as "block" | "managed_challenge")
-                }
-                className={inputClass}
-              >
-                <option value="managed_challenge">Managed Challenge</option>
-                <option value="block">Block</option>
-              </select>
+              <div className={cn(inputClass, "flex items-center text-muted-foreground")}>
+                Block (Free plan)
+              </div>
             </label>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -699,9 +690,7 @@ export function CloudflareWafRules({
                       {t.summary || "Custom security rule"}
                     </p>
                   </div>
-                  <McPill tone={t.action === "block" ? "bad" : "warn"}>
-                    {t.action === "managed_challenge" ? "Challenge" : "Block"}
-                  </McPill>
+                  <ActionBadge action={t.action} />
                 </li>
               ))}
               <li className="flex flex-wrap items-start justify-between gap-2 px-3.5 py-3">
@@ -714,9 +703,9 @@ export function CloudflareWafRules({
                       `${templates.rate_limit.requests_per_period} requests per ${templates.rate_limit.period}s`}
                   </p>
                 </div>
-                <McPill tone="warn">
+                <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
                   Rate limit · {templates.rate_limit.requests_per_period}/{templates.rate_limit.period}s
-                </McPill>
+                </span>
               </li>
             </ul>
           ) : (
@@ -743,42 +732,26 @@ export function CloudflareWafRules({
         </div>
       )}
 
-      <section className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-[13px] font-bold text-foreground">Custom rules</h3>
-          <McPill tone={count >= limit ? "bad" : "neutral"}>
-            {count}/{limit} rules
-          </McPill>
-        </div>
-        <McCard flush>
-          <RuleList
-            rules={rules}
-            empty="No custom rules created"
-            busy={busy}
-            onToggle={handleToggleEnabled}
-            onDelete={(r) => setDeleteTarget({ rule: r, kind: "custom" })}
-          />
-        </McCard>
-      </section>
+      <RulesTable
+        title="Custom rules"
+        countLabel={`${count}/${limit} rules`}
+        rules={rules}
+        empty="No custom rules created"
+        busy={busy}
+        onToggle={handleToggleEnabled}
+        onDelete={(r) => setDeleteTarget({ rule: r, kind: "custom" })}
+      />
 
-      <section className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-[13px] font-bold text-foreground">Rate limiting rules</h3>
-          <McPill tone={rlCount >= rlLimit ? "bad" : "neutral"}>
-            {rlCount}/{rlLimit} rules
-          </McPill>
-        </div>
-        <McCard flush>
-          <RuleList
-            rules={rateLimits}
-            empty="No rate limiting rules created"
-            busy={busy}
-            showRateMeta
-            onToggle={handleToggleEnabled}
-            onDelete={(r) => setDeleteTarget({ rule: r, kind: "rate_limit" })}
-          />
-        </McCard>
-      </section>
+      <RulesTable
+        title="Rate limiting rules"
+        countLabel={`${rlCount}/${rlLimit} rules`}
+        rules={rateLimits}
+        empty="No rate limiting rules created"
+        busy={busy}
+        showRateMeta
+        onToggle={handleToggleEnabled}
+        onDelete={(r) => setDeleteTarget({ rule: r, kind: "rate_limit" })}
+      />
     </div>
   );
 }
@@ -834,7 +807,108 @@ function FieldSelect({
   );
 }
 
-function RuleList({
+function actionLabel(action: string) {
+  if (action === "managed_challenge") return "Managed Challenge";
+  if (action === "block") return "Block";
+  return action;
+}
+
+function ActionBadge({ action }: { action: string }) {
+  const isBlock = action === "block";
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+        isBlock ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800"
+      )}
+    >
+      {actionLabel(action)}
+    </span>
+  );
+}
+
+function StatusBadge({ enabled }: { enabled: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+        enabled ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-600"
+      )}
+    >
+      {enabled ? "Active" : "Disabled"}
+    </span>
+  );
+}
+
+function RuleRowMenu({
+  rule,
+  busy,
+  allowToggle,
+  onToggle,
+  onDelete,
+}: {
+  rule: CloudflareWafRule;
+  busy: boolean;
+  allowToggle: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-zinc-100 hover:text-foreground disabled:opacity-40"
+        aria-label="Rule actions"
+      >
+        <MoreHorizontal size={16} />
+      </button>
+      {open && (
+        <div className="absolute right-0 z-30 mt-1 min-w-[140px] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+          {allowToggle && (
+            <button
+              type="button"
+              className="block w-full px-3 py-1.5 text-left text-[13px] text-foreground hover:bg-zinc-50"
+              onClick={() => {
+                setOpen(false);
+                onToggle();
+              }}
+            >
+              {rule.enabled ? "Disable" : "Enable"}
+            </button>
+          )}
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left text-[13px] text-red-600 hover:bg-red-50"
+            onClick={() => {
+              setOpen(false);
+              onDelete();
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RulesTable({
+  title,
+  countLabel,
   rules,
   empty,
   busy,
@@ -842,6 +916,8 @@ function RuleList({
   onToggle,
   onDelete,
 }: {
+  title: string;
+  countLabel: string;
   rules: CloudflareWafRule[];
   empty: string;
   busy: boolean;
@@ -849,63 +925,67 @@ function RuleList({
   onToggle: (r: CloudflareWafRule) => void;
   onDelete: (r: CloudflareWafRule) => void;
 }) {
-  if (!rules.length) {
-    return (
-      <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{empty}</p>
-    );
-  }
   return (
-    <ul className="divide-y divide-zinc-100">
-      {rules.map((r) => (
-        <li
-          key={r.id}
-          className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
-        >
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[13px] font-semibold text-foreground">
-                {r.description || "Untitled rule"}
-              </p>
-              <McPill tone={r.action === "block" ? "bad" : "warn"}>
-                {r.action === "managed_challenge" ? "Challenge" : "Block"}
-              </McPill>
-              {showRateMeta && r.ratelimit?.requests_per_period != null && (
-                <McPill tone="neutral">
-                  {r.ratelimit.requests_per_period}/{r.ratelimit.period ?? 10}s
-                </McPill>
-              )}
-              {r.created_by_site_armor && <McPill tone="accent">Site Armor</McPill>}
-              {!r.enabled && <McPill tone="neutral">Disabled</McPill>}
-              {r.enabled && <McPill tone="good">Active</McPill>}
-            </div>
-            <code className="mt-1 block break-all font-mono text-[11px] text-muted-foreground">
-              {r.expression}
-            </code>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-1">
-            {!showRateMeta && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onToggle(r)}
-                className="rounded-[4px] border border-zinc-200 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
-              >
-                {r.enabled ? "Disable" : "Enable"}
-              </button>
-            )}
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onDelete(r)}
-              className="inline-flex items-center gap-1 rounded-[4px] border border-zinc-200 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:border-[var(--score-bad-border)] hover:text-[var(--score-bad)]"
-            >
-              <Trash2 size={12} />
-              Delete
-            </button>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
+        <h3 className="text-[13px] font-semibold text-foreground">
+          {title}{" "}
+          <span className="font-normal text-muted-foreground">{countLabel}</span>
+        </h3>
+      </div>
+      {!rules.length ? (
+        <p className="px-4 py-10 text-center text-[13px] italic text-muted-foreground">{empty}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-zinc-100 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="w-10 px-3 py-2.5 font-semibold">#</th>
+                <th className="px-3 py-2.5 font-semibold">Name</th>
+                <th className="px-3 py-2.5 font-semibold">Action</th>
+                {showRateMeta && <th className="px-3 py-2.5 font-semibold">Rate</th>}
+                <th className="px-3 py-2.5 font-semibold">Status</th>
+                <th className="w-12 px-3 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {rules.map((r, i) => (
+                <tr key={r.id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
+                  <td className="px-3 py-3 text-muted-foreground">{i + 1}</td>
+                  <td className="max-w-[280px] px-3 py-3">
+                    <p className="truncate font-medium text-foreground" title={r.description}>
+                      {r.description || "Untitled rule"}
+                    </p>
+                  </td>
+                  <td className="px-3 py-3">
+                    <ActionBadge action={r.action} />
+                  </td>
+                  {showRateMeta && (
+                    <td className="px-3 py-3 text-muted-foreground">
+                      {r.ratelimit?.requests_per_period != null
+                        ? `${r.ratelimit.requests_per_period} / ${r.ratelimit.period ?? 10}s`
+                        : "—"}
+                    </td>
+                  )}
+                  <td className="px-3 py-3">
+                    <StatusBadge enabled={r.enabled} />
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <RuleRowMenu
+                      rule={r}
+                      busy={busy}
+                      allowToggle={!showRateMeta}
+                      onToggle={() => onToggle(r)}
+                      onDelete={() => onDelete(r)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
