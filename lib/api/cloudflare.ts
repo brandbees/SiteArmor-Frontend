@@ -162,6 +162,63 @@ export async function deleteDnsRecord(
   }
 }
 
+export async function importPublicDns(siteId: string, force = false) {
+  try {
+    const { data } = await api.post<{
+      imported: number;
+      skipped: boolean;
+      reason?: string;
+      records?: CloudflareDnsRecord[];
+    }>(`/sites/${siteId}/cloudflare/dns/import-public`, { force });
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to import public DNS"));
+  }
+}
+
+export async function importZoneFile(siteId: string, zoneText: string) {
+  try {
+    const { data } = await api.post<{
+      imported: number;
+      skipped: number;
+      errors: string[];
+      records: CloudflareDnsRecord[];
+    }>(`/sites/${siteId}/cloudflare/dns/import-zone`, { zone_text: zoneText });
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to import zone file"));
+  }
+}
+
+/** Build a BIND-style zone file from records (Cloudflare-export compatible). */
+export function recordsToBindZone(
+  records: CloudflareDnsRecord[],
+  zoneName: string
+): string {
+  const lines = [
+    `; Site Armor DNS export for ${zoneName}`,
+    `; Exported ${new Date().toISOString()}`,
+    `$ORIGIN ${zoneName}.`,
+    `$TTL 3600`,
+    "",
+  ];
+  for (const r of records) {
+    const name = r.name === zoneName ? "@" : r.name.replace(new RegExp(`\\.${zoneName.replace(/\./g, "\\.")}$`), "");
+    const ttl = r.ttl === 1 ? 3600 : r.ttl;
+    if (r.type === "MX") {
+      lines.push(`${name}\t${ttl}\tIN\tMX\t${r.priority ?? 10}\t${r.content}.`);
+    } else if (r.type === "TXT") {
+      const escaped = r.content.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      lines.push(`${name}\t${ttl}\tIN\tTXT\t"${escaped}"`);
+    } else if (r.type === "CNAME") {
+      lines.push(`${name}\t${ttl}\tIN\tCNAME\t${r.content}.`);
+    } else {
+      lines.push(`${name}\t${ttl}\tIN\t${r.type}\t${r.content}`);
+    }
+  }
+  return lines.join("\n") + "\n";
+}
+
 export type CloudflareWafRule = {
   id: string;
   action: string;

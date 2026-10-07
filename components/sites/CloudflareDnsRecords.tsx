@@ -2,7 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Cloud, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Cloud,
+  Download,
+  Filter,
+  Loader2,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { McCard, McPill } from "@/components/shared/MalCareUI";
@@ -10,13 +24,18 @@ import { cn } from "@/lib/utils";
 import {
   createDnsRecord,
   deleteDnsRecord,
+  importPublicDns,
+  importZoneFile,
   listDnsRecords,
+  recordsToBindZone,
   updateDnsRecord,
   type CloudflareDnsRecord,
   type DnsRecordInput,
 } from "@/lib/api/cloudflare";
 
 const TYPES = ["A", "AAAA", "CNAME", "TXT", "MX"] as const;
+const PAGE_SIZE = 15;
+const ALL_TYPES = ["A", "AAAA", "CNAME", "TXT", "MX", "NS", "SOA", "SRV", "CAA"] as const;
 
 /** Cloudflare dashboard TTL options (seconds). Auto = 1 in the API. */
 const TTL_OPTIONS: { value: string; label: string }[] = [
@@ -95,7 +114,13 @@ export function CloudflareDnsRecords({
   const [records, setRecords] = useState<CloudflareDnsRecord[]>([]);
   const [count, setCount] = useState(0);
   const [limit, setLimit] = useState(200);
-  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set());
+  const [proxyFilter, setProxyFilter] = useState<"all" | "proxied" | "dns_only">("all");
+  const [page, setPage] = useState(1);
+  const [showImport, setShowImport] = useState(false);
+  const [zoneText, setZoneText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -124,18 +149,100 @@ export function CloudflareDnsRecords({
   }, [load]);
 
   const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return records;
-    return records.filter(
-      (r) =>
+    const q = search.trim().toLowerCase();
+    return records.filter((r) => {
+      if (typeFilters.size > 0 && !typeFilters.has(r.type)) return false;
+      if (proxyFilter === "proxied" && !r.proxied) return false;
+      if (proxyFilter === "dns_only" && r.proxied) return false;
+      if (!q) return true;
+      return (
         r.type.toLowerCase().includes(q) ||
         r.name.toLowerCase().includes(q) ||
         r.content.toLowerCase().includes(q)
-    );
-  }, [records, filter]);
+      );
+    });
+  }, [records, search, typeFilters, proxyFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageSlice = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, safePage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, typeFilters, proxyFilter]);
+
+  const activeFilterCount =
+    (typeFilters.size > 0 ? 1 : 0) + (proxyFilter !== "all" ? 1 : 0);
 
   const proxyable = form.type === "A" || form.type === "AAAA" || form.type === "CNAME";
   const isMx = form.type === "MX";
+
+  const handleExport = () => {
+    const bind = recordsToBindZone(records, zoneName);
+    const blob = new Blob([bind], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${zoneName}-dns.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${records.length} records`);
+  };
+
+  const handleImportPublic = async () => {
+    setBusy(true);
+    try {
+      const data = await importPublicDns(siteId, false);
+      if (data.skipped) {
+        toast.message("Zone already has records — import skipped");
+      } else {
+        toast.success(`Imported ${data.imported} record${data.imported === 1 ? "" : "s"} from public DNS`);
+      }
+      setShowImport(false);
+      await load();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleImportZone = async () => {
+    if (!zoneText.trim()) {
+      toast.error("Paste a zone file or choose a file first");
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await importZoneFile(siteId, zoneText);
+      const errHint = data.errors.length ? ` (${data.errors.length} errors)` : "";
+      toast.success(
+        `Imported ${data.imported}, skipped ${data.skipped}${errHint}`
+      );
+      if (data.errors.length) {
+        toast.message(data.errors.slice(0, 3).join(" · "));
+      }
+      setZoneText("");
+      setShowImport(false);
+      await load();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleTypeFilter = (t: string) => {
+    setTypeFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  };
 
   const buildInput = (): DnsRecordInput => ({
     type: form.type,
@@ -290,7 +397,7 @@ export function CloudflareDnsRecords({
           <h2 className="text-[15px] font-bold text-foreground">DNS records</h2>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
             Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
-            {" · "}Editable: A, AAAA, CNAME, TXT, MX. Free plan max {limit} records.
+            {" · "}Editable: A, AAAA, CNAME, TXT, MX.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -301,12 +408,186 @@ export function CloudflareDnsRecords({
             <RefreshCw size={13} />
             Refresh
           </Button>
-          <Button size="sm" onClick={startCreate} disabled={busy || count >= limit}>
-            <Plus size={13} />
-            Add record
-          </Button>
         </div>
       </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search DNS Records"
+            className={cn(inputClass, "pl-9")}
+          />
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowFilters((v) => !v)}
+          className={cn(showFilters || activeFilterCount > 0 ? "border-[#2563eb] text-[#2563eb]" : "")}
+        >
+          <Filter size={13} />
+          Filters
+          {activeFilterCount > 0 ? (
+            <span className="ml-0.5 rounded-full bg-[#2563eb] px-1.5 text-[10px] font-bold text-white">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </Button>
+      </div>
+
+      {showFilters && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-3">
+              <div>
+                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Type
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ALL_TYPES.map((t) => {
+                    const on = typeFilters.has(t);
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => toggleTypeFilter(t)}
+                        className={cn(
+                          "rounded-md border px-2 py-1 text-[11px] font-semibold transition",
+                          on
+                            ? "border-[#2563eb] bg-[#eff6ff] text-[#2563eb]"
+                            : "border-zinc-200 bg-white text-muted-foreground hover:border-zinc-300"
+                        )}
+                      >
+                        {t}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Proxy status
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(
+                    [
+                      ["all", "All"],
+                      ["proxied", "Proxied"],
+                      ["dns_only", "DNS only"],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setProxyFilter(val)}
+                      className={cn(
+                        "rounded-md border px-2 py-1 text-[11px] font-semibold transition",
+                        proxyFilter === val
+                          ? "border-[#2563eb] bg-[#eff6ff] text-[#2563eb]"
+                          : "border-zinc-200 bg-white text-muted-foreground hover:border-zinc-300"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="text-[12px] font-semibold text-[#2563eb] hover:underline"
+              onClick={() => {
+                setTypeFilters(new Set());
+                setProxyFilter("all");
+              }}
+            >
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => setShowImport(true)} disabled={busy}>
+          <Upload size={13} />
+          Import
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleExport} disabled={busy || records.length === 0}>
+          <Download size={13} />
+          Export
+        </Button>
+        <Button size="sm" onClick={startCreate} disabled={busy || count >= limit}>
+          <Plus size={13} />
+          Add record
+        </Button>
+      </div>
+
+      <p className="text-[12px] text-muted-foreground">
+        You have used <span className="font-semibold text-foreground">{count} of {limit}</span> available
+        DNS records in this domain.
+      </p>
+
+      {showImport && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-[15px] font-bold text-foreground">Import DNS records</h3>
+              <p className="mt-0.5 text-[12px] text-muted-foreground">
+                Pull from public DNS, or paste a BIND zone file (Cloudflare export works).
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setShowImport(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-muted-foreground transition hover:border-zinc-300 hover:text-foreground"
+              aria-label="Close"
+            >
+              <X size={15} />
+            </button>
+          </div>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={handleImportPublic} loading={busy} disabled={busy}>
+              Import from public DNS
+            </Button>
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-foreground transition hover:border-zinc-300">
+              <Upload size={13} />
+              Choose file
+              <input
+                type="file"
+                accept=".txt,.zone,text/plain"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const text = await file.text();
+                  setZoneText(text);
+                }}
+              />
+            </label>
+          </div>
+          <textarea
+            value={zoneText}
+            onChange={(e) => setZoneText(e.target.value)}
+            rows={8}
+            placeholder={`; BIND zone file example\n$ORIGIN ${zoneName}.\n@ 3600 IN A 192.0.2.1\nwww 3600 IN CNAME ${zoneName}.`}
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-[12px] text-foreground outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20"
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" onClick={handleImportZone} loading={busy} disabled={busy || !zoneText.trim()}>
+              Import zone file
+            </Button>
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => setShowImport(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       {showForm && (
           <div className="overflow-visible rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
@@ -473,14 +754,6 @@ export function CloudflareDnsRecords({
       )}
 
       <McCard flush>
-        <div className="border-b border-zinc-100 px-4 py-3">
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter by type, name, or content…"
-            className={inputClass}
-          />
-        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-[12px]">
             <thead className="bg-[#f7f8fa] text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
@@ -494,7 +767,7 @@ export function CloudflareDnsRecords({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r) => {
+              {pageSlice.map((r) => {
                 const editable = TYPES.includes(r.type as (typeof TYPES)[number]);
                 return (
                   <tr key={r.id} className="border-t border-zinc-100 bg-white">
@@ -577,6 +850,41 @@ export function CloudflareDnsRecords({
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3">
+            <p className="text-[12px] text-muted-foreground">
+              Showing{" "}
+              <span className="font-semibold text-foreground">
+                {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}
+              </span>{" "}
+              of <span className="font-semibold text-foreground">{filtered.length}</span>
+              {filtered.length !== count ? ` (filtered from ${count})` : ""}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-muted-foreground transition hover:border-zinc-300 hover:text-foreground disabled:opacity-40"
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="min-w-[4.5rem] text-center text-[12px] font-medium text-foreground">
+                {safePage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-muted-foreground transition hover:border-zinc-300 hover:text-foreground disabled:opacity-40"
+                aria-label="Next page"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </McCard>
     </div>
   );
