@@ -901,11 +901,12 @@ function RuleRowMenu({
 
   if (rowBusy) {
     return (
-      <span className="inline-flex h-8 w-8 items-center justify-center" aria-label="Working">
-        <span className="relative flex h-4 w-4">
-          <span className="absolute inset-0 animate-ping rounded-full bg-[#2563eb]/30" />
-          <Loader2 size={14} className="relative animate-spin text-[#2563eb]" />
-        </span>
+      <span
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[#eff6ff]"
+        aria-label="Working"
+        title="Updating…"
+      >
+        <Loader2 size={14} className="animate-spin text-[#2563eb]" />
       </span>
     );
   }
@@ -1076,17 +1077,12 @@ function RulesTable({
                       </td>
                     )}
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <StatusBadge enabled={r.enabled} />
-                        {rowBusy && rowBusyId === r.id && (
-                          <Loader2 size={13} className="animate-spin text-[#2563eb]" />
-                        )}
-                      </div>
+                      <StatusBadge enabled={r.enabled} />
                     </td>
                     <td className="px-3 py-3 text-right">
                       <RuleRowMenu
                         rule={r}
-                        rowBusy={rowBusy}
+                        rowBusy={rowBusyId === r.id}
                         allowToggle={!showRateMeta}
                         onToggle={() => onToggle(r)}
                         onDelete={() => onDelete(r)}
