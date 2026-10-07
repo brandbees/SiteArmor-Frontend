@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
   ChevronDown,
@@ -357,32 +358,44 @@ export function CloudflareWafRules({
         isLoading={busy}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[15px] font-bold text-foreground">Security rules</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
-            {" · "}Up to {limit} custom rules and {rlLimit} rate-limiting rule on Free.
-            {allowlistConfigured ? " Site Armor scanners are excluded from new rules." : ""}
-          </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <div className="flex min-w-0 items-start gap-3 sm:min-w-[200px]">
+          <Shield
+            size={22}
+            strokeWidth={1.25}
+            className="m-1 shrink-0 rounded-full bg-zinc-200 p-1.5 text-zinc-900 shadow-[0_0_0_4px_rgb(244,244,245)]"
+          />
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold leading-normal text-black">Security rules</h2>
+            <p className="text-xs font-normal leading-normal text-accent">
+              Zone {zoneName}
+              {allowlistConfigured ? " · Scanners excluded" : ""}
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => { setLoading(true); load(); }} disabled={busy}>
-            <RefreshCw size={13} />
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-10"
+            onClick={() => { setLoading(true); load(); }}
+            disabled={busy}
+          >
+            <RefreshCw size={14} />
             Refresh
           </Button>
           <div className="relative" ref={menuRef}>
             <Button
-              size="sm"
+              className="h-10 px-4"
               onClick={() => setMenuOpen((o) => !o)}
               disabled={busy}
             >
-              <Plus size={13} />
+              <Plus size={16} strokeWidth={1.5} />
               Create rule
-              <ChevronDown size={13} />
+              <ChevronDown size={14} />
             </Button>
             {menuOpen && (
-              <div className="absolute right-0 z-40 mt-1 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+              <div className="absolute right-0 top-full z-[80] mt-1 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
                 <MenuItem
                   label="Custom rules"
                   hint={`${count}/${limit} used`}
@@ -417,7 +430,7 @@ export function CloudflareWafRules({
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {!starterApplied && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200/80 bg-amber-50/60 px-3.5 py-2.5">
@@ -888,12 +901,44 @@ function RuleRowMenu({
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const placeMenu = useCallback(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const menuW = 148;
+    const menuH = allowToggle ? 72 : 40;
+    // Prefer opening above the button so it sits over the page, not clipped in the card
+    const openUp = true;
+    const top = openUp ? rect.top - menuH - 6 : rect.bottom + 6;
+    const left = Math.min(
+      Math.max(8, rect.right - menuW),
+      window.innerWidth - menuW - 8
+    );
+    setCoords({ top: Math.max(8, top), left });
+  }, [allowToggle]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    placeMenu();
+    const onWin = () => placeMenu();
+    window.addEventListener("resize", onWin);
+    window.addEventListener("scroll", onWin, true);
+    return () => {
+      window.removeEventListener("resize", onWin);
+      window.removeEventListener("scroll", onWin, true);
+    };
+  }, [open, placeMenu]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -912,42 +957,57 @@ function RuleRowMenu({
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-zinc-100 hover:text-foreground"
+        className={cn(
+          "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-zinc-100 hover:text-foreground",
+          open && "bg-[#eff6ff] text-[#2563eb] ring-1 ring-[#2563eb]/30"
+        )}
         aria-label="Rule actions"
+        aria-expanded={open}
       >
         <MoreHorizontal size={16} />
       </button>
-      {open && (
-        <div className="absolute right-0 z-30 mt-1 min-w-[140px] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
-          {allowToggle && (
+      {open &&
+        coords &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
+            className="min-w-[148px] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgb(15_23_42/0.12)]"
+          >
+            {allowToggle && (
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-3 py-1.5 text-left text-[13px] text-foreground hover:bg-zinc-50"
+                onClick={() => {
+                  setOpen(false);
+                  onToggle();
+                }}
+              >
+                {rule.enabled ? "Disable" : "Enable"}
+              </button>
+            )}
             <button
               type="button"
-              className="block w-full px-3 py-1.5 text-left text-[13px] text-foreground hover:bg-zinc-50"
+              role="menuitem"
+              className="block w-full px-3 py-1.5 text-left text-[13px] text-red-600 hover:bg-red-50"
               onClick={() => {
                 setOpen(false);
-                onToggle();
+                onDelete();
               }}
             >
-              {rule.enabled ? "Disable" : "Enable"}
+              Delete
             </button>
-          )}
-          <button
-            type="button"
-            className="block w-full px-3 py-1.5 text-left text-[13px] text-red-600 hover:bg-red-50"
-            onClick={() => {
-              setOpen(false);
-              onDelete();
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -990,7 +1050,7 @@ function RulesTable({
   };
 
   return (
-    <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
+    <section className="rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
       <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
         <h3 className="text-[13px] font-semibold text-foreground">
           {title}{" "}
@@ -1003,7 +1063,7 @@ function RulesTable({
       {!rules.length ? (
         <p className="px-4 py-10 text-center text-[13px] italic text-muted-foreground">{empty}</p>
       ) : (
-        <div className={cn("overflow-x-auto", reordering && "pointer-events-none opacity-70")}>
+        <div className={cn("overflow-x-auto overflow-y-visible", reordering && "pointer-events-none opacity-70")}>
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead>
               <tr className="border-b border-zinc-100 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

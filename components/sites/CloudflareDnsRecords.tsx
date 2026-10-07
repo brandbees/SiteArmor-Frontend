@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { McCard, McPill } from "@/components/shared/MalCareUI";
+import { McCard } from "@/components/shared/MalCareUI";
 import { cn } from "@/lib/utils";
 import {
   createDnsRecord,
@@ -392,53 +392,68 @@ export function CloudflareDnsRecords({
         isLoading={busy}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[15px] font-bold text-foreground">DNS records</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
-            {" · "}Editable types: A, AAAA, CNAME, TXT, and MX.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <McPill tone={count >= limit ? "bad" : "neutral"}>
-            {count} / {limit}
-          </McPill>
-          <Button size="sm" variant="outline" onClick={() => { setLoading(true); load(); }} disabled={busy}>
-            <RefreshCw size={13} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <div className="flex min-w-0 items-start gap-3 sm:min-w-[200px] sm:max-w-[40%]">
+          <Cloud
+            size={22}
+            strokeWidth={1.25}
+            className="m-1 shrink-0 rounded-full bg-zinc-200 p-1.5 text-zinc-900 shadow-[0_0_0_4px_rgb(244,244,245)]"
           />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search DNS Records"
-            className={cn(inputClass, "pl-9")}
-          />
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold leading-normal text-black">DNS records</h2>
+            <p className="text-xs font-normal leading-normal text-accent">
+              Zone {zoneName} · {count}/{limit} used
+            </p>
+          </div>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setShowFilters((v) => !v)}
-          className={cn(showFilters || activeFilterCount > 0 ? "border-[#2563eb] text-[#2563eb]" : "")}
-        >
-          <Filter size={13} />
-          Filters
-          {activeFilterCount > 0 ? (
-            <span className="ml-0.5 rounded-full bg-[#2563eb] px-1.5 text-[10px] font-bold text-white">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </Button>
-      </div>
+        <div className="flex h-auto flex-1 flex-col gap-2 sm:h-10 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          <div className="relative min-w-0 flex-1">
+            <div className="relative flex h-10 w-full items-center gap-2.5 rounded-lg bg-zinc-100 px-3">
+              <Search size={16} strokeWidth={1} className="pointer-events-none shrink-0 text-zinc-950" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search DNS records"
+                className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-0"
+              />
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10"
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <Filter size={14} />
+              Filters
+              {activeFilterCount > 0 ? (
+                <span className="ml-0.5 rounded-full bg-[#2563eb] px-1.5 text-[10px] font-bold text-white">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10"
+              onClick={() => { setLoading(true); load(); }}
+              disabled={busy}
+            >
+              <RefreshCw size={14} />
+            </Button>
+            <Button
+              className="h-10 px-4"
+              onClick={startCreate}
+              disabled={busy || count >= limit}
+            >
+              <Plus size={16} strokeWidth={1.5} />
+              Add record
+            </Button>
+          </div>
+        </div>
+      </header>
 
       {showFilters && (
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
@@ -521,15 +536,7 @@ export function CloudflareDnsRecords({
           <Download size={13} />
           Export
         </Button>
-        <Button size="sm" onClick={startCreate} disabled={busy || count >= limit}>
-          <Plus size={13} />
-          Add record
-        </Button>
       </div>
-
-      <p className="text-[12px] text-muted-foreground">
-        <span className="font-semibold text-foreground">{count} of {limit}</span> DNS records used on this zone.
-      </p>
 
       {showImport && (
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
