@@ -190,7 +190,7 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
                 )}
               </div>
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-                Cloudflare edge for this site — DNS and WAF managed from Site Armor.
+                Manage DNS and security rules for this site through Cloudflare.
               </p>
               <p className="mt-1.5 font-mono text-[11px] text-foreground/80">
                 Zone apex · {apex}
@@ -245,7 +245,7 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
           </nav>
           <div className="mt-3 border-t border-zinc-100 px-2.5 pt-3">
             <p className="text-[11px] leading-relaxed text-muted-foreground">
-              DNS and custom WAF (max 5 on Free) are managed here.
+              Free plan: up to 5 custom security rules and 1 rate-limiting rule.
             </p>
           </div>
         </aside>
@@ -272,19 +272,19 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
                   <ModeCard
                     icon={<KeyRound size={18} />}
                     tone="accent"
-                    title="Already on Cloudflare"
-                    body="Client keeps their account. Paste a scoped API token for this zone."
+                    title="Use an existing Cloudflare account"
+                    body="Connect with a scoped API token for this zone. The client retains ownership of their Cloudflare account."
                     cta="Connect with token"
                     onClick={() => setModePick("byo")}
                   />
                   <ModeCard
                     icon={<Cloud size={18} />}
                     tone="good"
-                    title="Host on Site Armor (Free)"
+                    title="Hosted Free on Site Armor"
                     body={
                       status?.hosted_available === false
-                        ? "Hosted Free is not configured on the server yet."
-                        : "We create the Free zone. You point nameservers at Cloudflare."
+                        ? "Hosted Free is not available on this server yet. Contact support if you need it enabled."
+                        : "Site Armor creates a Free Cloudflare zone. Update nameservers at the registrar to activate."
                     }
                     cta="Start Hosted Free"
                     disabled={status?.hosted_available === false}
@@ -382,8 +382,8 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
                       ))}
                     </ol>
                     <div className="flex flex-col justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4">
-                      <McAlert variant="warning" title="Nameserver change is live traffic">
-                        Wrong nameservers can break the site and email. Prefer a test domain first.
+                      <McAlert variant="warning" title="Nameserver changes affect live traffic">
+                        Incorrect nameservers can interrupt the website and email. Prefer testing on a non-production domain first.
                       </McAlert>
                       <Button onClick={handleHosted} loading={busy} disabled={busy}>
                         Create Free zone for {apex}
@@ -402,9 +402,8 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
                   )}
 
                   {status.status === "active" ? (
-                    <McAlert variant="success" title="Zone is active">
-                      <span className="font-semibold">{status.zone_name}</span> is live on Cloudflare.
-                      Open <span className="font-semibold">DNS records</span> in the sidebar to manage the zone.
+                    <McAlert variant="success" title={`${status.zone_name} is active`}>
+                      DNS records and security rules are available in the sidebar.
                     </McAlert>
                   ) : (
                     <McCard
@@ -424,8 +423,8 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
                       }
                     >
                       <p className="mb-3 text-[12px] leading-relaxed text-muted-foreground">
-                        At your registrar, replace current nameservers with these Cloudflare values,
-                        then click Refresh.
+                        Replace the domain&apos;s nameservers at the registrar with the Cloudflare values below,
+                        then click Refresh to verify.
                       </p>
                       <ul className="grid gap-2 sm:grid-cols-2">
                         {nameservers.map((ns, i) => (

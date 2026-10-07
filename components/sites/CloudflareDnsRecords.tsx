@@ -397,7 +397,7 @@ export function CloudflareDnsRecords({
           <h2 className="text-[15px] font-bold text-foreground">DNS records</h2>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
             Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
-            {" · "}Editable: A, AAAA, CNAME, TXT, MX.
+            {" · "}Editable types: A, AAAA, CNAME, TXT, and MX.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -528,8 +528,7 @@ export function CloudflareDnsRecords({
       </div>
 
       <p className="text-[12px] text-muted-foreground">
-        You have used <span className="font-semibold text-foreground">{count} of {limit}</span> available
-        DNS records in this domain.
+        <span className="font-semibold text-foreground">{count} of {limit}</span> DNS records used on this zone.
       </p>
 
       {showImport && (
@@ -538,7 +537,7 @@ export function CloudflareDnsRecords({
             <div>
               <h3 className="text-[15px] font-bold text-foreground">Import DNS records</h3>
               <p className="mt-0.5 text-[12px] text-muted-foreground">
-                Pull from public DNS, or paste a BIND zone file (Cloudflare export works).
+                Import from public DNS lookups, or paste a BIND zone file (including Cloudflare exports).
               </p>
             </div>
             <button

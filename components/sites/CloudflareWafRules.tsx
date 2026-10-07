@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { McAlert, McCard, McPill } from "@/components/shared/MalCareUI";
+import { McCard, McPill } from "@/components/shared/MalCareUI";
 import { cn } from "@/lib/utils";
 import {
   applyWafStarterPack,
@@ -328,7 +328,8 @@ export function CloudflareWafRules({
           <h2 className="text-[15px] font-bold text-foreground">Security rules</h2>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
             Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
-            {" · "}Free: {limit} custom + {rlLimit} rate limit. Managed Free ruleset stays on at Cloudflare.
+            {" · "}Up to {limit} custom rules and {rlLimit} rate-limiting rule on Free.
+            {allowlistConfigured ? " Site Armor scanners are excluded from new rules." : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -378,21 +379,18 @@ export function CloudflareWafRules({
         </div>
       </div>
 
-      {allowlistConfigured && (
-        <McAlert variant="info" title="Site Armor traffic is excluded">
-          New block and challenge rules automatically skip Site Armor scan traffic.
-        </McAlert>
-      )}
-
       {!starterApplied && (
-        <McAlert variant="warning" title="Starter protection not applied yet">
-          Apply the Site Armor Free starter pack (3 custom rules + 1 rate limit) to block common exploits and bot probes.
-          <div className="mt-2">
-            <Button size="sm" onClick={() => handleApplyStarter(false)} loading={busy} disabled={busy}>
-              Apply starter pack
-            </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200/80 bg-amber-50/60 px-3.5 py-2.5">
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-foreground">Recommended: apply starter protection</p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
+              Three custom rules and one rate limit for common WordPress and bot abuse. Uses 3 of {limit} custom slots.
+            </p>
           </div>
-        </McAlert>
+          <Button size="sm" onClick={() => handleApplyStarter(false)} loading={busy} disabled={busy}>
+            Apply starter pack
+          </Button>
+        </div>
       )}
 
       {createMode === "custom" && (
@@ -595,7 +593,7 @@ export function CloudflareWafRules({
             <div>
               <h3 className="text-[16px] font-bold text-foreground">Create rate limiting rule</h3>
               <p className="mt-0.5 text-[12px] text-muted-foreground">
-                Free plan: 1 rule, 10-second counting window, IP-based.
+                Free plan allows one rule with a 10-second window, counted by client IP.
               </p>
             </div>
             <button
@@ -665,8 +663,8 @@ export function CloudflareWafRules({
             <div>
               <h3 className="text-[16px] font-bold text-foreground">Templates</h3>
               <p className="mt-0.5 text-[12px] text-muted-foreground">
-                Site Armor Free starter pack — uses 3 of 5 custom slots + the 1 rate-limit slot.
-                Leaves 2 custom slots free for your rules.
+                Recommended Free starter pack: 3 custom rules and 1 rate-limiting rule.
+                Two custom rule slots remain available afterward.
               </p>
             </div>
             <button

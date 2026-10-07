@@ -286,11 +286,14 @@ export function McAlert({
   const tone = conf.tone;
   const DefaultIcon = conf.icon;
 
+  const compact = children == null || children === false || children === "";
+
   return (
     <div
       role="alert"
       className={cn(
-        "relative flex gap-3 overflow-hidden rounded-[4px] border border-border bg-white p-4 shadow-[0_1px_3px_rgb(15_23_42/0.05)]",
+        "relative flex overflow-hidden rounded-lg border border-border bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
+        compact ? "items-center gap-2.5 px-3 py-2.5" : "gap-3 p-3.5",
         className
       )}
     >
@@ -299,14 +302,16 @@ export function McAlert({
         aria-hidden
       />
       <McIconBox
-        icon={icon ?? <DefaultIcon size={17} strokeWidth={2.25} />}
+        icon={icon ?? <DefaultIcon size={compact ? 14 : 16} strokeWidth={2.25} />}
         tone={tone}
-        size="md"
+        size={compact ? "sm" : "md"}
       />
-      <div className="min-w-0 flex-1 pl-0.5">
-        <p className="text-[13px] font-bold text-foreground">{title}</p>
-        {children ? (
-          <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{children}</div>
+      <div className="min-w-0 flex-1">
+        <p className={cn("font-semibold text-foreground", compact ? "text-[12px]" : "text-[13px]")}>
+          {title}
+        </p>
+        {!compact ? (
+          <div className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{children}</div>
         ) : null}
       </div>
     </div>
