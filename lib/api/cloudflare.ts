@@ -77,3 +77,87 @@ export async function disconnectCloudflare(siteId: string): Promise<{ success: b
     throw new Error(errMessage(err, "Failed to disconnect"));
   }
 }
+
+export type CloudflareDnsRecord = {
+  id: string;
+  type: string;
+  name: string;
+  content: string;
+  ttl: number;
+  proxied: boolean;
+  proxiable: boolean;
+  priority: number | null;
+  locked: boolean;
+  created_on?: string | null;
+  modified_on?: string | null;
+};
+
+export type DnsRecordInput = {
+  type: string;
+  name: string;
+  content: string;
+  ttl?: number | "auto";
+  proxied?: boolean;
+  priority?: number;
+  confirm_mx?: boolean;
+};
+
+export async function listDnsRecords(siteId: string) {
+  try {
+    const { data } = await api.get<{
+      zone_id: string;
+      zone_name: string;
+      limit: number;
+      count: number;
+      records: CloudflareDnsRecord[];
+      editable_types: string[];
+    }>(`/sites/${siteId}/cloudflare/dns`);
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to load DNS records"));
+  }
+}
+
+export async function createDnsRecord(siteId: string, input: DnsRecordInput) {
+  try {
+    const { data } = await api.post<{ record: CloudflareDnsRecord }>(
+      `/sites/${siteId}/cloudflare/dns`,
+      input
+    );
+    return data.record;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to create DNS record"));
+  }
+}
+
+export async function updateDnsRecord(
+  siteId: string,
+  recordId: string,
+  input: DnsRecordInput
+) {
+  try {
+    const { data } = await api.patch<{ record: CloudflareDnsRecord }>(
+      `/sites/${siteId}/cloudflare/dns/${recordId}`,
+      input
+    );
+    return data.record;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to update DNS record"));
+  }
+}
+
+export async function deleteDnsRecord(
+  siteId: string,
+  recordId: string,
+  confirmMx = false
+) {
+  try {
+    const qs = confirmMx ? "?confirm_mx=true" : "";
+    const { data } = await api.delete<{ success: boolean; id: string }>(
+      `/sites/${siteId}/cloudflare/dns/${recordId}${qs}`
+    );
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to delete DNS record"));
+  }
+}

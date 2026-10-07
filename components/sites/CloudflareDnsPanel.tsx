@@ -24,6 +24,7 @@ import {
   verifyCloudflareConnection,
   type CloudflareConnectionStatus,
 } from "@/lib/api/cloudflare";
+import { CloudflareDnsRecords } from "@/components/sites/CloudflareDnsRecords";
 import type { Site } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -135,10 +136,12 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
 
   const connected = !!status?.connected;
   const nameservers = status?.nameservers || [];
-  const apex = status?.apex || "this domain";
+  const apex = status?.apex || status?.zone_name || "this domain";
   const statusTone =
     status?.status === "active" ? "good" : status?.status === "error" ? "bad" : "warn";
-  const zoneReady = connected && status?.status === "active";
+  /** DNS manageable as soon as a zone is linked; WAF waits for Active. */
+  const dnsReady = connected && !!status?.zone_id;
+  const zoneActive = connected && status?.status === "active";
 
   return (
     <div className="w-full space-y-4">
@@ -226,33 +229,32 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
               active={sideNav === "dns"}
               icon={<Cloud size={14} />}
               label="DNS records"
-              hint={zoneReady ? "Soon" : "Needs zone"}
-              disabled={!zoneReady}
-              onClick={() => zoneReady && setSideNav("dns")}
+              hint={dnsReady ? "Manage" : "Needs zone"}
+              disabled={!dnsReady}
+              onClick={() => dnsReady && setSideNav("dns")}
             />
             <SideItem
               active={sideNav === "waf"}
               icon={<Shield size={14} />}
               label="WAF rules"
-              hint={zoneReady ? "Soon" : "Needs zone"}
-              disabled={!zoneReady}
-              onClick={() => zoneReady && setSideNav("waf")}
+              hint={zoneActive ? "Soon" : "Needs active zone"}
+              disabled={!zoneActive}
+              onClick={() => zoneActive && setSideNav("waf")}
             />
           </nav>
           <div className="mt-3 border-t border-zinc-100 px-2.5 pt-3">
             <p className="text-[11px] leading-relaxed text-muted-foreground">
-              Phase A: connect only. DNS editor and WAF unlock after the zone is active.
+              DNS records are live. WAF custom rules ship in Phase C.
             </p>
           </div>
         </aside>
 
         <div className="min-w-0 space-y-4">
-          {sideNav === "dns" && (
-            <McCard title="DNS records" icon={<Cloud size={14} />}>
-              <p className="text-[13px] text-muted-foreground">
-                List, add, and edit A / AAAA / CNAME / TXT / MX ships in Phase B.
-              </p>
-            </McCard>
+          {sideNav === "dns" && dnsReady && (
+            <CloudflareDnsRecords
+              siteId={site.id}
+              zoneName={status?.zone_name || apex}
+            />
           )}
 
           {sideNav === "waf" && (
@@ -402,7 +404,7 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
                   {status.status === "active" ? (
                     <McAlert variant="success" title="Zone is active">
                       <span className="font-semibold">{status.zone_name}</span> is live on Cloudflare.
-                      Use the sidebar for DNS and WAF when those phases ship.
+                      Open <span className="font-semibold">DNS records</span> in the sidebar to manage the zone.
                     </McAlert>
                   ) : (
                     <McCard
