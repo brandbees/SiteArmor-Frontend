@@ -213,7 +213,7 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
 
       {/* Sidebar + main — full width */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-        <aside className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
+        <aside className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-[0_1px_2px_rgb(26_29_35/0.04)] lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
           <p className="px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
             Cloudflare
           </p>
