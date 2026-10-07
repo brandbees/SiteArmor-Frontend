@@ -161,3 +161,63 @@ export async function deleteDnsRecord(
     throw new Error(errMessage(err, "Failed to delete DNS record"));
   }
 }
+
+export type CloudflareWafRule = {
+  id: string;
+  action: string;
+  expression: string;
+  description: string;
+  enabled: boolean;
+  last_updated?: string | null;
+  created_by_site_armor?: boolean;
+};
+
+export type WafRuleInput = {
+  action: "block" | "managed_challenge";
+  description?: string;
+  preset?: "path" | "ip" | "country" | "advanced";
+  path?: string;
+  ip?: string;
+  country?: string;
+  expression?: string;
+};
+
+export async function listWafRules(siteId: string) {
+  try {
+    const { data } = await api.get<{
+      zone_id: string;
+      zone_name: string;
+      ruleset_id: string | null;
+      limit: number;
+      count: number;
+      allowlist_ips: string[];
+      rules: CloudflareWafRule[];
+    }>(`/sites/${siteId}/cloudflare/waf/rules`);
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to load WAF rules"));
+  }
+}
+
+export async function createWafRule(siteId: string, input: WafRuleInput) {
+  try {
+    const { data } = await api.post<{ rule: CloudflareWafRule }>(
+      `/sites/${siteId}/cloudflare/waf/rules`,
+      input
+    );
+    return data.rule;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to create WAF rule"));
+  }
+}
+
+export async function deleteWafRule(siteId: string, ruleId: string) {
+  try {
+    const { data } = await api.delete<{ success: boolean; id: string }>(
+      `/sites/${siteId}/cloudflare/waf/rules/${ruleId}`
+    );
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to delete WAF rule"));
+  }
+}

@@ -25,6 +25,7 @@ import {
   type CloudflareConnectionStatus,
 } from "@/lib/api/cloudflare";
 import { CloudflareDnsRecords } from "@/components/sites/CloudflareDnsRecords";
+import { CloudflareWafRules } from "@/components/sites/CloudflareWafRules";
 import type { Site } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -237,14 +238,14 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
               active={sideNav === "waf"}
               icon={<Shield size={14} />}
               label="WAF rules"
-              hint={zoneActive ? "Soon" : "Needs active zone"}
+              hint={zoneActive ? "Manage" : "Needs active zone"}
               disabled={!zoneActive}
               onClick={() => zoneActive && setSideNav("waf")}
             />
           </nav>
           <div className="mt-3 border-t border-zinc-100 px-2.5 pt-3">
             <p className="text-[11px] leading-relaxed text-muted-foreground">
-              DNS records are live. WAF custom rules ship in Phase C.
+              DNS and custom WAF (max 5 on Free) are managed here.
             </p>
           </div>
         </aside>
@@ -257,12 +258,11 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
             />
           )}
 
-          {sideNav === "waf" && (
-            <McCard title="WAF rules" icon={<Shield size={14} />}>
-              <p className="text-[13px] text-muted-foreground">
-                Custom WAF rules (up to 5 on Free) ships in Phase C.
-              </p>
-            </McCard>
+          {sideNav === "waf" && zoneActive && (
+            <CloudflareWafRules
+              siteId={site.id}
+              zoneName={status?.zone_name || apex}
+            />
           )}
 
           {sideNav === "connection" && (
