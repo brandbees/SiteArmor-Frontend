@@ -18,6 +18,22 @@ import {
 
 const TYPES = ["A", "AAAA", "CNAME", "TXT", "MX"] as const;
 
+/** Cloudflare dashboard TTL options (seconds). Auto = 1 in the API. */
+const TTL_OPTIONS: { value: string; label: string }[] = [
+  { value: "auto", label: "Auto" },
+  { value: "60", label: "1 min" },
+  { value: "120", label: "2 min" },
+  { value: "300", label: "5 min" },
+  { value: "600", label: "10 min" },
+  { value: "900", label: "15 min" },
+  { value: "1800", label: "30 min" },
+  { value: "3600", label: "1 hr" },
+  { value: "7200", label: "2 hr" },
+  { value: "18000", label: "5 hr" },
+  { value: "43200", label: "12 hr" },
+  { value: "86400", label: "1 day" },
+];
+
 type FormState = {
   type: (typeof TYPES)[number];
   name: string;
@@ -36,6 +52,12 @@ const emptyForm = (): FormState => ({
   priority: "10",
 });
 
+function ttlToFormValue(ttl: number): string {
+  if (ttl === 1) return "auto";
+  const match = TTL_OPTIONS.find((o) => o.value === String(ttl));
+  return match ? match.value : String(ttl);
+}
+
 function recordToForm(r: CloudflareDnsRecord): FormState {
   return {
     type: (TYPES.includes(r.type as (typeof TYPES)[number])
@@ -43,10 +65,22 @@ function recordToForm(r: CloudflareDnsRecord): FormState {
       : "A") as FormState["type"],
     name: r.name,
     content: r.content,
-    ttl: r.ttl === 1 ? "auto" : String(r.ttl),
+    ttl: ttlToFormValue(r.ttl),
     proxied: !!r.proxied,
     priority: r.priority != null ? String(r.priority) : "10",
   };
+}
+
+/** DKIM / mail CNAMEs must stay DNS-only. */
+function shouldForceDnsOnly(type: string, name: string) {
+  const n = name.toLowerCase();
+  return (
+    type === "MX" ||
+    type === "TXT" ||
+    n.includes("_domainkey") ||
+    n.startsWith("mail.") ||
+    n.includes(".mail.")
+  );
 }
 
 export function CloudflareDnsRecords({
@@ -251,32 +285,31 @@ export function CloudflareDnsRecords({
         isLoading={busy}
       />
 
-      <McCard
-        title="DNS records"
-        icon={<RefreshCw size={14} />}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <McPill tone={count >= limit ? "bad" : "neutral"}>
-              {count} / {limit}
-            </McPill>
-            <Button size="sm" variant="outline" onClick={() => { setLoading(true); load(); }} disabled={busy}>
-              <RefreshCw size={13} />
-              Refresh
-            </Button>
-            <Button size="sm" onClick={startCreate} disabled={busy || count >= limit}>
-              <Plus size={13} />
-              Add record
-            </Button>
-          </div>
-        }
-      >
-        <p className="mb-3 text-[12px] text-muted-foreground">
-          Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
-          {" · "}Editable: A, AAAA, CNAME, TXT, MX. Free plan max {limit} records.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[15px] font-bold text-foreground">DNS records</h2>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            Zone <span className="font-mono font-medium text-foreground">{zoneName}</span>
+            {" · "}Editable: A, AAAA, CNAME, TXT, MX. Free plan max {limit} records.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <McPill tone={count >= limit ? "bad" : "neutral"}>
+            {count} / {limit}
+          </McPill>
+          <Button size="sm" variant="outline" onClick={() => { setLoading(true); load(); }} disabled={busy}>
+            <RefreshCw size={13} />
+            Refresh
+          </Button>
+          <Button size="sm" onClick={startCreate} disabled={busy || count >= limit}>
+            <Plus size={13} />
+            Add record
+          </Button>
+        </div>
+      </div>
 
-        {showForm && (
-          <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
+      {showForm && (
+          <div className="overflow-visible rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
             <div className="mb-2 flex items-start justify-between gap-3">
               <h3 className="text-[16px] font-bold text-foreground">
                 {editingId ? "Edit record" : "Add record"}
@@ -303,15 +336,20 @@ export function CloudflareDnsRecords({
                 <Field label="Type">
                   <select
                     value={form.type}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        type: e.target.value as FormState["type"],
-                        proxied: ["A", "AAAA", "CNAME"].includes(e.target.value)
-                          ? f.proxied || true
-                          : false,
-                      }))
-                    }
+                    onChange={(e) => {
+                      const type = e.target.value as FormState["type"];
+                      setForm((f) => {
+                        const forceDns = shouldForceDnsOnly(type, f.name);
+                        const canProxy = ["A", "AAAA", "CNAME"].includes(type);
+                        const proxied = forceDns ? false : canProxy ? (f.proxied || true) : false;
+                        return {
+                          ...f,
+                          type,
+                          proxied,
+                          ttl: proxied ? "auto" : f.ttl,
+                        };
+                      });
+                    }}
                     className={inputClass}
                   >
                     {TYPES.map((t) => (
@@ -322,7 +360,19 @@ export function CloudflareDnsRecords({
                 <Field label="Name">
                   <input
                     value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setForm((f) => {
+                        const forceDns = shouldForceDnsOnly(f.type, name);
+                        const proxied = forceDns ? false : f.proxied;
+                        return {
+                          ...f,
+                          name,
+                          proxied,
+                          ttl: proxied ? "auto" : f.ttl,
+                        };
+                      });
+                    }}
                     placeholder="Use @ for root"
                     className={inputClass}
                   />
@@ -378,6 +428,7 @@ export function CloudflareDnsRecords({
                   <Field label="Proxy status">
                     <ProxyToggle
                       proxied={form.proxied}
+                      disabled={shouldForceDnsOnly(form.type, form.name)}
                       onChange={(proxied) =>
                         setForm((f) => ({
                           ...f,
@@ -389,19 +440,32 @@ export function CloudflareDnsRecords({
                   </Field>
                 )}
                 <Field label="TTL">
-                  <select
-                    value={form.ttl}
-                    onChange={(e) => setForm((f) => ({ ...f, ttl: e.target.value }))}
-                    className={inputClass}
-                    disabled={proxyable && form.proxied}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="300">5 min</option>
-                    <option value="3600">1 hour</option>
-                    <option value="86400">1 day</option>
-                  </select>
+                  {proxyable && form.proxied ? (
+                    <div
+                      className="flex h-10 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-[13px] text-muted-foreground"
+                      title="Cloudflare forces Auto TTL while the record is Proxied"
+                    >
+                      Auto
+                      <span className="ml-auto text-[10px] font-medium">while Proxied</span>
+                    </div>
+                  ) : (
+                    <TtlSelect
+                      value={form.ttl}
+                      onChange={(ttl) => setForm((f) => ({ ...f, ttl }))}
+                    />
+                  )}
                 </Field>
               </div>
+              {proxyable && form.proxied && (
+                <p className="text-[11px] text-muted-foreground">
+                  Turn Proxy off (DNS only) to choose a custom TTL — same as Cloudflare.
+                </p>
+              )}
+              {shouldForceDnsOnly(form.type, form.name) && form.type === "CNAME" && (
+                <p className="text-[11px] text-amber-700">
+                  Mail/DKIM names should stay DNS only — proxy is turned off for this record.
+                </p>
+              )}
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
@@ -420,9 +484,10 @@ export function CloudflareDnsRecords({
               </Button>
             </div>
           </div>
-        )}
+      )}
 
-        <div className="mb-3">
+      <McCard flush>
+        <div className="border-b border-zinc-100 px-4 py-3">
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -430,8 +495,7 @@ export function CloudflareDnsRecords({
             className={inputClass}
           />
         </div>
-
-        <div className="overflow-x-auto rounded-xl border border-zinc-200">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-[12px]">
             <thead className="bg-[#f7f8fa] text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
@@ -490,7 +554,7 @@ export function CloudflareDnsRecords({
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-muted-foreground">
-                      {r.ttl === 1 ? "Auto" : r.ttl}
+                      {r.ttl === 1 ? "Auto" : TTL_OPTIONS.find((o) => o.value === String(r.ttl))?.label || r.ttl}
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-end gap-1">
@@ -544,20 +608,93 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function TtlSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (ttl: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const label = TTL_OPTIONS.find((o) => o.value === value)?.label || value;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.("[data-ttl-select]")) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  return (
+    <div className="relative" data-ttl-select>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          inputClass,
+          "flex items-center justify-between gap-2 text-left"
+        )}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span>{label}</span>
+        <span className="text-[10px] leading-none text-muted-foreground">▴▾</span>
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-[80] max-h-56 overflow-y-auto rounded-md border border-zinc-300 bg-white py-1 shadow-lg"
+        >
+          {TTL_OPTIONS.map((o) => (
+            <li key={o.value}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === o.value}
+                className={cn(
+                  "flex w-full items-center justify-between px-3 py-1.5 text-left text-[13px] hover:bg-zinc-50",
+                  value === o.value && "bg-zinc-50 font-semibold"
+                )}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+              >
+                {o.label}
+                {value === o.value ? <span className="text-accent">✓</span> : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function ProxyToggle({
   proxied,
   onChange,
+  disabled,
 }: {
   proxied: boolean;
   onChange: (proxied: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={proxied}
-      onClick={() => onChange(!proxied)}
-      className="flex h-10 w-full items-center gap-2.5 rounded-md border border-zinc-300 bg-white px-2.5 transition hover:border-zinc-400"
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!proxied)}
+      className={cn(
+        "flex h-10 w-full items-center gap-2.5 rounded-md border border-zinc-300 bg-white px-2.5 transition hover:border-zinc-400",
+        disabled && "cursor-not-allowed opacity-60 hover:border-zinc-300"
+      )}
     >
       <span
         className={cn(
