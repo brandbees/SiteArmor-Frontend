@@ -247,7 +247,9 @@ export async function listWafRules(siteId: string) {
       ruleset_id: string | null;
       limit: number;
       count: number;
-      allowlist_ips: string[];
+      allowlist_configured?: boolean;
+      /** @deprecated never returned; kept for older clients */
+      allowlist_ips?: string[];
       rules: CloudflareWafRule[];
     }>(`/sites/${siteId}/cloudflare/waf/rules`);
     return data;

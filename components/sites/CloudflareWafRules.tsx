@@ -28,7 +28,7 @@ export function CloudflareWafRules({
   const [rules, setRules] = useState<CloudflareWafRule[]>([]);
   const [count, setCount] = useState(0);
   const [limit, setLimit] = useState(5);
-  const [allowlist, setAllowlist] = useState<string[]>([]);
+  const [allowlistConfigured, setAllowlistConfigured] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CloudflareWafRule | null>(null);
 
@@ -46,7 +46,7 @@ export function CloudflareWafRules({
       setRules(data.rules);
       setCount(data.count);
       setLimit(data.limit);
-      setAllowlist(data.allowlist_ips || []);
+      setAllowlistConfigured(!!data.allowlist_configured);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -157,13 +157,9 @@ export function CloudflareWafRules({
         </div>
       </div>
 
-      {allowlist.length > 0 ? (
-        <McAlert variant="info" title="Site Armor IPs are allowlisted">
-          New rules automatically skip: {allowlist.join(", ")}
-        </McAlert>
-      ) : (
-        <McAlert variant="warning" title="No SITEARMOR_EGRESS_IPS configured">
-          Set server egress IPs in env so new block rules do not lock out Site Armor scans.
+      {allowlistConfigured && (
+        <McAlert variant="info" title="Site Armor traffic is excluded">
+          New block and challenge rules automatically skip Site Armor scan traffic.
         </McAlert>
       )}
 
