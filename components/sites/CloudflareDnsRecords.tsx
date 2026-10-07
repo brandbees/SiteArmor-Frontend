@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Cloud, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { McCard, McPill } from "@/components/shared/MalCareUI";
+import { cn } from "@/lib/utils";
 import {
   createDnsRecord,
   deleteDnsRecord,
@@ -275,87 +276,139 @@ export function CloudflareDnsRecords({
         </p>
 
         {showForm && (
-          <div className="mb-4 space-y-3 rounded-xl border border-zinc-200 bg-[#fafafa] p-3.5">
-            <p className="text-[12px] font-bold text-foreground">
-              {editingId ? "Edit record" : "New record"}
+          <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <h3 className="text-[16px] font-bold text-foreground">
+                {editingId ? "Edit record" : "Add record"}
+              </h3>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-muted-foreground transition hover:border-zinc-300 hover:text-foreground"
+                aria-label="Close"
+              >
+                <X size={15} />
+              </button>
+            </div>
+            <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">
+              {recordSummary(form, zoneName, proxyable)}
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Field label="Type">
-                <select
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      type: e.target.value as FormState["type"],
-                      proxied: ["A", "AAAA", "CNAME"].includes(e.target.value) ? f.proxied : false,
-                    }))
-                  }
-                  className={inputClass}
-                >
-                  {TYPES.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Name">
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="@ or www"
-                  className={inputClass}
-                />
-              </Field>
-              <Field label={isMx ? "Mail server" : "Content"}>
-                <input
-                  value={form.content}
-                  onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                  placeholder={isMx ? "mail.example.com" : "Value"}
-                  className={inputClass}
-                />
-              </Field>
-              {isMx && (
-                <Field label="Priority">
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[120px_minmax(0,1fr)]">
+                <Field label="Type">
+                  <select
+                    value={form.type}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        type: e.target.value as FormState["type"],
+                        proxied: ["A", "AAAA", "CNAME"].includes(e.target.value)
+                          ? f.proxied || true
+                          : false,
+                      }))
+                    }
+                    className={inputClass}
+                  >
+                    {TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Name">
                   <input
-                    value={form.priority}
-                    onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Use @ for root"
                     className={inputClass}
                   />
                 </Field>
-              )}
-              <Field label="TTL">
-                <select
-                  value={form.ttl}
-                  onChange={(e) => setForm((f) => ({ ...f, ttl: e.target.value }))}
-                  className={inputClass}
+              </div>
+
+              <div
+                className={cn(
+                  "grid grid-cols-1 gap-3",
+                  isMx
+                    ? "sm:grid-cols-[minmax(0,1fr)_100px_120px]"
+                    : proxyable
+                      ? "sm:grid-cols-[minmax(0,1.2fr)_minmax(160px,auto)_120px]"
+                      : "sm:grid-cols-[minmax(0,1fr)_120px]"
+                )}
+              >
+                <Field
+                  label={
+                    form.type === "A"
+                      ? "IPv4 address"
+                      : form.type === "AAAA"
+                        ? "IPv6 address"
+                        : form.type === "CNAME"
+                          ? "Target"
+                          : isMx
+                            ? "Mail server"
+                            : "Content"
+                  }
                 >
-                  <option value="auto">Auto</option>
-                  <option value="300">5 min</option>
-                  <option value="3600">1 hour</option>
-                  <option value="86400">1 day</option>
-                </select>
-              </Field>
-              {proxyable && (
-                <Field label="Proxy">
-                  <button
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, proxied: !f.proxied }))}
-                    className={`rounded-lg border px-3 py-2 text-left text-[12px] font-semibold ${
-                      form.proxied
-                        ? "border-orange-200 bg-orange-50 text-orange-700"
-                        : "border-zinc-200 bg-white text-muted-foreground"
-                    }`}
-                  >
-                    {form.proxied ? "Proxied (orange cloud)" : "DNS only"}
-                  </button>
+                  <input
+                    value={form.content}
+                    onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                    placeholder={
+                      form.type === "A"
+                        ? "192.0.2.1"
+                        : isMx
+                          ? "mail.example.com"
+                          : "Value"
+                    }
+                    className={inputClass}
+                  />
                 </Field>
-              )}
+                {isMx && (
+                  <Field label="Priority">
+                    <input
+                      value={form.priority}
+                      onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
+                      className={inputClass}
+                    />
+                  </Field>
+                )}
+                {proxyable && (
+                  <Field label="Proxy status">
+                    <ProxyToggle
+                      proxied={form.proxied}
+                      onChange={(proxied) =>
+                        setForm((f) => ({
+                          ...f,
+                          proxied,
+                          ttl: proxied ? "auto" : f.ttl,
+                        }))
+                      }
+                    />
+                  </Field>
+                )}
+                <Field label="TTL">
+                  <select
+                    value={form.ttl}
+                    onChange={(e) => setForm((f) => ({ ...f, ttl: e.target.value }))}
+                    className={inputClass}
+                    disabled={proxyable && form.proxied}
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="300">5 min</option>
+                    <option value="3600">1 hour</option>
+                    <option value="86400">1 day</option>
+                  </select>
+                </Field>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={handleSaveClick} loading={busy} disabled={busy}>
-                {editingId ? "Save changes" : "Create record"}
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button onClick={handleSaveClick} loading={busy} disabled={busy}>
+                Save
               </Button>
               <Button
-                size="sm"
                 variant="outline"
                 disabled={busy}
                 onClick={() => {
@@ -415,13 +468,22 @@ export function CloudflareDnsRecords({
                           type="button"
                           disabled={busy || !editable}
                           onClick={() => toggleProxied(r)}
-                          className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-bold ${
-                            r.proxied
-                              ? "border-orange-200 bg-orange-50 text-orange-700"
-                              : "border-zinc-200 text-muted-foreground"
-                          }`}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-1 transition hover:border-zinc-300 disabled:opacity-40"
+                          title={r.proxied ? "Proxied — click for DNS only" : "DNS only — click to proxy"}
                         >
-                          {r.proxied ? "Proxied" : "DNS only"}
+                          <Cloud
+                            size={14}
+                            className={r.proxied ? "text-orange-500" : "text-zinc-400"}
+                            fill={r.proxied ? "currentColor" : "none"}
+                          />
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold",
+                              r.proxied ? "text-orange-600" : "text-muted-foreground"
+                            )}
+                          >
+                            {r.proxied ? "Proxied" : "DNS only"}
+                          </span>
                         </button>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -471,13 +533,83 @@ export function CloudflareDnsRecords({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/20";
+  "h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-[13px] text-foreground outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1">
-      <span className="text-[11px] font-semibold text-foreground">{label}</span>
+    <label className="block space-y-1.5">
+      <span className="text-[12px] font-medium text-foreground">{label}</span>
       {children}
     </label>
   );
+}
+
+function ProxyToggle({
+  proxied,
+  onChange,
+}: {
+  proxied: boolean;
+  onChange: (proxied: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={proxied}
+      onClick={() => onChange(!proxied)}
+      className="flex h-10 w-full items-center gap-2.5 rounded-md border border-zinc-300 bg-white px-2.5 transition hover:border-zinc-400"
+    >
+      <span
+        className={cn(
+          "relative h-[22px] w-[40px] shrink-0 rounded-full transition-colors",
+          proxied ? "bg-[#2563eb]" : "bg-zinc-300"
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow transition-transform",
+            proxied ? "left-[20px]" : "left-[2px]"
+          )}
+        />
+      </span>
+      <Cloud
+        size={18}
+        className={proxied ? "text-orange-500" : "text-zinc-400"}
+        fill={proxied ? "currentColor" : "none"}
+      />
+      <span
+        className={cn(
+          "text-[12px] font-semibold",
+          proxied ? "text-orange-600" : "text-muted-foreground"
+        )}
+      >
+        {proxied ? "Proxied" : "DNS only"}
+      </span>
+    </button>
+  );
+}
+
+function recordSummary(form: FormState, zoneName: string, proxyable: boolean) {
+  const name =
+    !form.name || form.name === "@"
+      ? zoneName
+      : form.name.includes(".")
+        ? form.name
+        : `${form.name}.${zoneName}`;
+  const target = form.content.trim() || (form.type === "A" ? "[IPv4 address]" : "[value]");
+
+  if (form.type === "A" || form.type === "AAAA") {
+    return proxyable && form.proxied
+      ? `${name} points to ${target} and has its traffic proxied through Cloudflare.`
+      : `${name} points to ${target} (DNS only — traffic goes straight to the origin).`;
+  }
+  if (form.type === "CNAME") {
+    return proxyable && form.proxied
+      ? `${name} is an alias of ${target} and is proxied through Cloudflare.`
+      : `${name} is an alias of ${target} (DNS only).`;
+  }
+  if (form.type === "MX") {
+    return `${name} mail is handled by ${target} (priority ${form.priority || "10"}). MX is always DNS only.`;
+  }
+  return `${name} has a ${form.type} record with value ${target}.`;
 }
