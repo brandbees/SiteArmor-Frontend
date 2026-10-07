@@ -32,7 +32,21 @@ import { cn } from "@/lib/utils";
 type ModePick = "choose" | "byo" | "hosted";
 type SideNav = "connection" | "dns" | "waf";
 
-export function CloudflareDnsPanel({ site }: { site: Site }) {
+export type CloudflareDnsChrome = {
+  status: CloudflareConnectionStatus | null;
+  busy: boolean;
+  refresh: () => void;
+  requestDisconnect: () => void;
+};
+
+export function CloudflareDnsPanel({
+  site,
+  onChromeChange,
+}: {
+  site: Site;
+  /** Lift status + actions into the site header so no extra strip is needed. */
+  onChromeChange?: (chrome: CloudflareDnsChrome | null) => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<CloudflareConnectionStatus | null>(null);
@@ -57,6 +71,13 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
     setLoading(true);
     load();
   }, [load]);
+
+  // Land on DNS records when the zone is already active
+  useEffect(() => {
+    if (status?.connected && status.status === "active" && status.zone_id) {
+      setSideNav((prev) => (prev === "connection" ? "dns" : prev));
+    }
+  }, [status?.connected, status?.status, status?.zone_id]);
 
   const copyText = async (value: string, label: string) => {
     try {
@@ -127,6 +148,21 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
     }
   };
 
+  useEffect(() => {
+    if (!onChromeChange) return;
+    onChromeChange({
+      status,
+      busy,
+      refresh: () => {
+        void handleVerify();
+      },
+      requestDisconnect: () => setShowDisconnect(true),
+    });
+    return () => onChromeChange(null);
+    // handleVerify is stable enough via status/busy; avoid stale chrome
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, busy, onChromeChange]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -161,56 +197,58 @@ export function CloudflareDnsPanel({ site }: { site: Site }) {
         isLoading={busy}
       />
 
-      {/* Full-width status strip */}
-      <McCard flush>
-        <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-start gap-3">
-            <McIconBox
-              icon={<Cloud size={17} />}
-              tone={connected ? statusTone : "accent"}
-              size="md"
-            />
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[15px] font-bold text-foreground">DNS / Cloudflare</h2>
-                {!connected && <McPill tone="neutral" dot>Not connected</McPill>}
-                {connected && status?.status === "active" && (
-                  <McPill tone="good" icon={<CheckCircle2 size={11} />}>Active</McPill>
-                )}
-                {connected && status?.status === "pending_ns" && (
-                  <McPill tone="warn" dot>Pending nameservers</McPill>
-                )}
-                {connected && status?.status === "error" && (
-                  <McPill tone="bad" dot>Error</McPill>
-                )}
-                {connected && (
-                  <McPill tone="neutral">
-                    {status?.mode === "hosted" ? "Hosted Free" : "Client token"}
-                  </McPill>
-                )}
+      {/* Full card only on Connection setup — status/actions live in the site header otherwise */}
+      {(!connected || sideNav === "connection") && (
+        <McCard flush>
+          <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <McIconBox
+                icon={<Cloud size={17} />}
+                tone={connected ? statusTone : "accent"}
+                size="md"
+              />
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-[15px] font-bold text-foreground">DNS / Cloudflare</h2>
+                  {!connected && <McPill tone="neutral" dot>Not connected</McPill>}
+                  {connected && status?.status === "active" && (
+                    <McPill tone="good" icon={<CheckCircle2 size={11} />}>Active</McPill>
+                  )}
+                  {connected && status?.status === "pending_ns" && (
+                    <McPill tone="warn" dot>Pending nameservers</McPill>
+                  )}
+                  {connected && status?.status === "error" && (
+                    <McPill tone="bad" dot>Error</McPill>
+                  )}
+                  {connected && (
+                    <McPill tone="neutral">
+                      {status?.mode === "hosted" ? "Hosted Free" : "Client token"}
+                    </McPill>
+                  )}
+                </div>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                  Manage DNS and security rules for this site through Cloudflare.
+                </p>
+                <p className="mt-1.5 font-mono text-[11px] text-foreground/80">
+                  Zone apex · {apex}
+                  {status?.zone_name ? ` · ${status.zone_name}` : ""}
+                </p>
               </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-                Manage DNS and security rules for this site through Cloudflare.
-              </p>
-              <p className="mt-1.5 font-mono text-[11px] text-foreground/80">
-                Zone apex · {apex}
-                {status?.zone_name ? ` · ${status.zone_name}` : ""}
-              </p>
             </div>
+            {connected && (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={handleVerify} disabled={busy} loading={busy}>
+                  {!busy && <RefreshCw size={13} />}
+                  Refresh
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowDisconnect(true)} disabled={busy}>
+                  Disconnect
+                </Button>
+              </div>
+            )}
           </div>
-          {connected && (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={handleVerify} disabled={busy} loading={busy}>
-                {!busy && <RefreshCw size={13} />}
-                Refresh
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowDisconnect(true)} disabled={busy}>
-                Disconnect
-              </Button>
-            </div>
-          )}
-        </div>
-      </McCard>
+        </McCard>
+      )}
 
       {/* Sidebar + main — full width */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">

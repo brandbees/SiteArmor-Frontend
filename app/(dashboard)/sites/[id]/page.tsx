@@ -10,7 +10,7 @@ import {
   Activity, TrendingUp, Clock, Zap, Server, Database, LayoutGrid,
   Bell, DollarSign, BarChart2, CalendarClock, HeartPulse, Search, AlertTriangle, Bot, Flame,
   Loader2, ToggleLeft, ToggleRight, Ban, ImageIcon, X, CalendarDays,
-  HardDrive, RotateCcw, Download, ListTodo, MoreVertical,
+  HardDrive, RotateCcw, Download, ListTodo, MoreVertical, Cloud,
 } from "lucide-react";
 import { useAuditStatus } from "@/hooks/useAuditStatus";
 import { useRole } from "@/hooks/useRole";
@@ -27,7 +27,10 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { SSHSettingsPanel } from "@/components/sites/SSHSettingsPanel";
-import { CloudflareDnsPanel } from "@/components/sites/CloudflareDnsPanel";
+import {
+  CloudflareDnsPanel,
+  type CloudflareDnsChrome,
+} from "@/components/sites/CloudflareDnsPanel";
 import { MalCareSiteOverview } from "@/components/sites/MalCareSiteOverview";
 import { SiteHeader } from "@/components/sites/SiteHeader";
 import { AgentTab } from "@/components/sites/tabs/AgentTab";
@@ -2466,6 +2469,7 @@ function SiteDetailContent() {
   const actionsRef = useRef<HTMLDivElement>(null);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [cfChrome, setCfChrome] = useState<CloudflareDnsChrome | null>(null);
   const scanPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanInFlightRef = useRef(false); // prevents double-trigger on fast double-click
   const narrativeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2671,6 +2675,77 @@ function SiteDetailContent() {
         wpAdminHref={wpAdminHref}
         onSync={canRunAudit ? runAudit : undefined}
         syncLoading={auditLoading || !!pendingAuditId}
+        meta={
+          activeTab === "dns" && canManageCloudflare && cfChrome?.status ? (
+            <span className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700">
+              <Cloud size={12} className="shrink-0 text-accent" />
+              <span className="font-medium text-zinc-900">Cloudflare</span>
+              <span className="text-zinc-300" aria-hidden>
+                ·
+              </span>
+              {!cfChrome.status.connected && (
+                <span className="text-zinc-500">Not connected</span>
+              )}
+              {cfChrome.status.connected && cfChrome.status.status === "active" && (
+                <span className="font-medium text-emerald-700">Active</span>
+              )}
+              {cfChrome.status.connected && cfChrome.status.status === "pending_ns" && (
+                <span className="font-medium text-amber-700">Pending NS</span>
+              )}
+              {cfChrome.status.connected && cfChrome.status.status === "error" && (
+                <span className="font-medium text-red-600">Error</span>
+              )}
+              {cfChrome.status.connected && (
+                <>
+                  <span className="text-zinc-300" aria-hidden>
+                    ·
+                  </span>
+                  <span>
+                    {cfChrome.status.mode === "hosted" ? "Hosted Free" : "Client token"}
+                  </span>
+                  {(cfChrome.status.zone_name || cfChrome.status.apex) && (
+                    <>
+                      <span className="text-zinc-300" aria-hidden>
+                        ·
+                      </span>
+                      <span className="truncate font-mono text-[11px] text-zinc-500">
+                        {cfChrome.status.zone_name || cfChrome.status.apex}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+            </span>
+          ) : undefined
+        }
+        actions={
+          activeTab === "dns" &&
+          canManageCloudflare &&
+          cfChrome?.status?.connected ? (
+            <>
+              <button
+                type="button"
+                disabled={cfChrome.busy}
+                onClick={cfChrome.refresh}
+                className="inline-flex h-10 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-xs transition-colors hover:bg-zinc-50 disabled:opacity-50"
+              >
+                <RefreshCw
+                  size={14}
+                  className={cfChrome.busy ? "animate-spin" : undefined}
+                />
+                Refresh
+              </button>
+              <button
+                type="button"
+                disabled={cfChrome.busy}
+                onClick={cfChrome.requestDisconnect}
+                className="inline-flex h-10 items-center rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-xs transition-colors hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Disconnect
+              </button>
+            </>
+          ) : undefined
+        }
         menu={
           isClientPortal ? undefined : (
           <div className="relative" ref={actionsRef}>
@@ -2764,7 +2839,9 @@ function SiteDetailContent() {
         {activeTab === "health"      && <SiteHealthTab site={site} />}
         {activeTab === "backups"     && !isClientPortal && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseBackups} />}
         {activeTab === "agent"       && !isClientPortal && <AgentTab site={site} />}
-        {activeTab === "dns"         && canManageCloudflare && <CloudflareDnsPanel site={site} />}
+        {activeTab === "dns" && canManageCloudflare && (
+          <CloudflareDnsPanel site={site} onChromeChange={setCfChrome} />
+        )}
       </div>
 
       {/* SSH Modal */}

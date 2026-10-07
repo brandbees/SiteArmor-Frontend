@@ -14,6 +14,8 @@ export function SiteHeader({
   wpAdminHref,
   menu,
   readOnly = false,
+  meta,
+  actions,
 }: {
   site: Site;
   onSync?: () => void;
@@ -22,6 +24,10 @@ export function SiteHeader({
   menu?: React.ReactNode;
   /** Client portal — hide WP Admin, token copy, sync, menus */
   readOnly?: boolean;
+  /** Optional compact status next to Copy Site Token (e.g. Cloudflare) */
+  meta?: React.ReactNode;
+  /** Optional actions before sync / WP Admin (e.g. CF Refresh / Disconnect) */
+  actions?: React.ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
   const url = site.url.startsWith("http") ? site.url : `https://${site.url}`;
@@ -64,30 +70,34 @@ export function SiteHeader({
                 <ExternalLink size={12} className="shrink-0 opacity-70" />
               </a>
             </div>
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={copySiteToken}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                {copied ? (
-                  <>
-                    <Check size={12} strokeWidth={2} className="text-[var(--score-good)]" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy size={12} strokeWidth={2} />
-                    Copy Site Token
-                  </>
-                )}
-              </button>
-            )}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={copySiteToken}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:border-accent/40 hover:text-accent"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={12} strokeWidth={2} className="text-[var(--score-good)]" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} strokeWidth={2} />
+                      Copy Site Token
+                    </>
+                  )}
+                </button>
+              )}
+              {meta}
+            </div>
           </div>
         </div>
 
         {!readOnly && (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {actions}
             {menu ?? (
               <button
                 type="button"
