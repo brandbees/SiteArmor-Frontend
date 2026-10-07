@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ChevronDown,
+  GripVertical,
   Loader2,
   MoreHorizontal,
   Plus,
@@ -22,6 +23,7 @@ import {
   deleteWafRule,
   getWafTemplates,
   listWafRules,
+  reorderWafRules,
   updateWafRule,
   type CloudflareWafRule,
   type WafCondition,
@@ -264,12 +266,14 @@ export function CloudflareWafRules({
     }
   };
 
+  const [rowBusyId, setRowBusyId] = useState<string | null>(null);
+
   const handleToggleEnabled = async (r: CloudflareWafRule) => {
     if (r.kind === "rate_limit") {
-      toast.message("Toggle rate-limit status from Cloudflare if needed — custom toggle supports custom rules");
+      toast.message("Enable/disable for rate limits is not available on Free yet");
       return;
     }
-    setBusy(true);
+    setRowBusyId(r.id);
     try {
       await updateWafRule(siteId, r.id, { enabled: !r.enabled });
       await load();
@@ -277,18 +281,20 @@ export function CloudflareWafRules({
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
-      setBusy(false);
+      setRowBusyId(null);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    const id = deleteTarget.rule.id;
+    setRowBusyId(id);
     setBusy(true);
     try {
       if (deleteTarget.kind === "rate_limit") {
-        await deleteRateLimitRule(siteId, deleteTarget.rule.id);
+        await deleteRateLimitRule(siteId, id);
       } else {
-        await deleteWafRule(siteId, deleteTarget.rule.id);
+        await deleteWafRule(siteId, id);
       }
       toast.success("Rule deleted");
       setDeleteTarget(null);
@@ -297,6 +303,32 @@ export function CloudflareWafRules({
       toast.error((err as Error).message);
     } finally {
       setBusy(false);
+      setRowBusyId(null);
+    }
+  };
+
+  const handleReorder = async (next: CloudflareWafRule[]) => {
+    const prev = rules;
+    setRules(next);
+    setRowBusyId("__reorder__");
+    try {
+      const data = await reorderWafRules(
+        siteId,
+        next.map((r) => r.id)
+      );
+      setRules(data.rules);
+      setRateLimits(data.rate_limit_rules || []);
+      setCount(data.count);
+      setRlCount(data.rate_limit_count ?? (data.rate_limit_rules || []).length);
+      setStarterApplied(!!data.starter_applied);
+      setStarterInstalled(data.starter_installed_count ?? 0);
+      setStarterTotal(data.starter_total ?? 4);
+      toast.success("Rule order updated");
+    } catch (err) {
+      setRules(prev);
+      toast.error((err as Error).message);
+    } finally {
+      setRowBusyId(null);
     }
   };
 
@@ -737,7 +769,9 @@ export function CloudflareWafRules({
         countLabel={`${count}/${limit} rules`}
         rules={rules}
         empty="No custom rules created"
-        busy={busy}
+        rowBusyId={rowBusyId}
+        reorderable
+        onReorder={handleReorder}
         onToggle={handleToggleEnabled}
         onDelete={(r) => setDeleteTarget({ rule: r, kind: "custom" })}
       />
@@ -747,7 +781,7 @@ export function CloudflareWafRules({
         countLabel={`${rlCount}/${rlLimit} rules`}
         rules={rateLimits}
         empty="No rate limiting rules created"
-        busy={busy}
+        rowBusyId={rowBusyId}
         showRateMeta
         onToggle={handleToggleEnabled}
         onDelete={(r) => setDeleteTarget({ rule: r, kind: "rate_limit" })}
@@ -842,13 +876,13 @@ function StatusBadge({ enabled }: { enabled: boolean }) {
 
 function RuleRowMenu({
   rule,
-  busy,
+  rowBusy,
   allowToggle,
   onToggle,
   onDelete,
 }: {
   rule: CloudflareWafRule;
-  busy: boolean;
+  rowBusy: boolean;
   allowToggle: boolean;
   onToggle: () => void;
   onDelete: () => void;
@@ -865,13 +899,23 @@ function RuleRowMenu({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  if (rowBusy) {
+    return (
+      <span className="inline-flex h-8 w-8 items-center justify-center" aria-label="Working">
+        <span className="relative flex h-4 w-4">
+          <span className="absolute inset-0 animate-ping rounded-full bg-[#2563eb]/30" />
+          <Loader2 size={14} className="relative animate-spin text-[#2563eb]" />
+        </span>
+      </span>
+    );
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
-        disabled={busy}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-zinc-100 hover:text-foreground disabled:opacity-40"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-zinc-100 hover:text-foreground"
         aria-label="Rule actions"
       >
         <MoreHorizontal size={16} />
@@ -911,8 +955,10 @@ function RulesTable({
   countLabel,
   rules,
   empty,
-  busy,
+  rowBusyId,
   showRateMeta,
+  reorderable,
+  onReorder,
   onToggle,
   onDelete,
 }: {
@@ -920,11 +966,28 @@ function RulesTable({
   countLabel: string;
   rules: CloudflareWafRule[];
   empty: string;
-  busy: boolean;
+  rowBusyId: string | null;
   showRateMeta?: boolean;
+  reorderable?: boolean;
+  onReorder?: (next: CloudflareWafRule[]) => void;
   onToggle: (r: CloudflareWafRule) => void;
   onDelete: (r: CloudflareWafRule) => void;
 }) {
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const reordering = rowBusyId === "__reorder__";
+
+  const move = (fromId: string, toId: string) => {
+    if (!onReorder || fromId === toId) return;
+    const from = rules.findIndex((r) => r.id === fromId);
+    const to = rules.findIndex((r) => r.id === toId);
+    if (from < 0 || to < 0) return;
+    const next = [...rules];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    onReorder(next);
+  };
+
   return (
     <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
       <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
@@ -932,15 +995,18 @@ function RulesTable({
           {title}{" "}
           <span className="font-normal text-muted-foreground">{countLabel}</span>
         </h3>
+        {reorderable && rules.length > 1 && (
+          <span className="text-[11px] text-muted-foreground">Drag to set priority</span>
+        )}
       </div>
       {!rules.length ? (
         <p className="px-4 py-10 text-center text-[13px] italic text-muted-foreground">{empty}</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className={cn("overflow-x-auto", reordering && "pointer-events-none opacity-70")}>
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead>
               <tr className="border-b border-zinc-100 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <th className="w-10 px-3 py-2.5 font-semibold">#</th>
+                <th className="w-14 px-3 py-2.5 font-semibold">Order</th>
                 <th className="px-3 py-2.5 font-semibold">Name</th>
                 <th className="px-3 py-2.5 font-semibold">Action</th>
                 {showRateMeta && <th className="px-3 py-2.5 font-semibold">Rate</th>}
@@ -949,40 +1015,94 @@ function RulesTable({
               </tr>
             </thead>
             <tbody>
-              {rules.map((r, i) => (
-                <tr key={r.id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
-                  <td className="px-3 py-3 text-muted-foreground">{i + 1}</td>
-                  <td className="max-w-[280px] px-3 py-3">
-                    <p className="truncate font-medium text-foreground" title={r.description}>
-                      {r.description || "Untitled rule"}
-                    </p>
-                  </td>
-                  <td className="px-3 py-3">
-                    <ActionBadge action={r.action} />
-                  </td>
-                  {showRateMeta && (
-                    <td className="px-3 py-3 text-muted-foreground">
-                      {r.ratelimit?.requests_per_period != null
-                        ? `${r.ratelimit.requests_per_period} / ${r.ratelimit.period ?? 10}s`
-                        : "—"}
+              {rules.map((r, i) => {
+                const rowBusy = rowBusyId === r.id || reordering;
+                return (
+                  <tr
+                    key={r.id}
+                    draggable={!!reorderable && !rowBusyId}
+                    onDragStart={() => {
+                      if (!reorderable) return;
+                      setDragId(r.id);
+                    }}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setOverId(null);
+                    }}
+                    onDragOver={(e) => {
+                      if (!reorderable || !dragId) return;
+                      e.preventDefault();
+                      setOverId(r.id);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragId) move(dragId, r.id);
+                      setDragId(null);
+                      setOverId(null);
+                    }}
+                    className={cn(
+                      "border-b border-zinc-50 last:border-0 transition",
+                      rowBusy ? "bg-zinc-50/80" : "hover:bg-zinc-50/60",
+                      overId === r.id && dragId !== r.id && "bg-[#eff6ff]",
+                      dragId === r.id && "opacity-50"
+                    )}
+                  >
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        {reorderable ? (
+                          <span
+                            className="inline-flex cursor-grab active:cursor-grabbing"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical size={15} className="text-zinc-400" />
+                          </span>
+                        ) : null}
+                        <span className="tabular-nums">{i + 1}</span>
+                      </div>
                     </td>
-                  )}
-                  <td className="px-3 py-3">
-                    <StatusBadge enabled={r.enabled} />
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <RuleRowMenu
-                      rule={r}
-                      busy={busy}
-                      allowToggle={!showRateMeta}
-                      onToggle={() => onToggle(r)}
-                      onDelete={() => onDelete(r)}
-                    />
-                  </td>
-                </tr>
-              ))}
+                    <td className="max-w-[280px] px-3 py-3">
+                      <p className="truncate font-medium text-foreground" title={r.description}>
+                        {r.description || "Untitled rule"}
+                      </p>
+                    </td>
+                    <td className="px-3 py-3">
+                      <ActionBadge action={r.action} />
+                    </td>
+                    {showRateMeta && (
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {r.ratelimit?.requests_per_period != null
+                          ? `${r.ratelimit.requests_per_period} / ${r.ratelimit.period ?? 10}s`
+                          : "—"}
+                      </td>
+                    )}
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <StatusBadge enabled={r.enabled} />
+                        {rowBusy && rowBusyId === r.id && (
+                          <Loader2 size={13} className="animate-spin text-[#2563eb]" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <RuleRowMenu
+                        rule={r}
+                        rowBusy={rowBusy}
+                        allowToggle={!showRateMeta}
+                        onToggle={() => onToggle(r)}
+                        onDelete={() => onDelete(r)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+          {reordering && (
+            <div className="flex items-center justify-center gap-2 border-t border-zinc-100 bg-zinc-50/80 px-4 py-2 text-[12px] text-muted-foreground">
+              <Loader2 size={13} className="animate-spin text-[#2563eb]" />
+              Updating priority…
+            </div>
+          )}
         </div>
       )}
     </section>

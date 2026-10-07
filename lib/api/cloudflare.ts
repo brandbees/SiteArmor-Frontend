@@ -317,6 +317,23 @@ export async function updateWafRule(
   }
 }
 
+export async function reorderWafRules(siteId: string, ruleIds: string[]) {
+  try {
+    const { data } = await api.put<{
+      rules: CloudflareWafRule[];
+      rate_limit_rules?: CloudflareWafRule[];
+      count: number;
+      rate_limit_count?: number;
+      starter_applied?: boolean;
+      starter_installed_count?: number;
+      starter_total?: number;
+    }>(`/sites/${siteId}/cloudflare/waf/rules/order`, { rule_ids: ruleIds });
+    return data;
+  } catch (err) {
+    throw new Error(errMessage(err, "Failed to reorder WAF rules"));
+  }
+}
+
 export async function deleteWafRule(siteId: string, ruleId: string) {
   try {
     const { data } = await api.delete<{ success: boolean; id: string }>(
