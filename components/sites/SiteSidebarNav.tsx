@@ -352,11 +352,19 @@ export function SiteSidebarNav({
   }, [activeTab, pathname, siteId, search]);
 
   const visibleGroups = useMemo(() => {
-    const isClientPortal = !!getAgency()?.is_client_portal;
-    return filterSiteNavForClient(SITE_NAV_GROUPS, isClientPortal).filter((g) => {
-      if (g.id === "commerce" && !site?.woocommerce_active) return false;
-      return true;
-    });
+    const agency = getAgency();
+    const isClientPortal = !!agency?.is_client_portal;
+    const role = agency?.role ?? "owner";
+    const canDns = !isClientPortal && (role === "owner" || role === "admin");
+    return filterSiteNavForClient(SITE_NAV_GROUPS, isClientPortal)
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((item) => (item.tab === "dns" ? canDns : true)),
+      }))
+      .filter((g) => {
+        if (g.id === "commerce" && !site?.woocommerce_active) return false;
+        return g.items.length > 0;
+      });
   }, [site?.woocommerce_active]);
 
   return (

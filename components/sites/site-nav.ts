@@ -18,6 +18,7 @@ import {
   Wrench,
   Monitor,
   Bot,
+  Globe2,
 } from "lucide-react";
 
 export type SiteTab =
@@ -33,7 +34,8 @@ export type SiteTab =
   | "woocommerce"
   | "cron"
   | "health"
-  | "agent";
+  | "agent"
+  | "dns";
 
 export type SiteNavLeaf = {
   id: string;
@@ -95,6 +97,7 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     items: [
       { id: "security", label: "Security", tab: "security", icon: Shield },
       { id: "malware", label: "Malware Scan", tab: "malware", icon: Bug },
+      { id: "dns", label: "DNS / Cloudflare", tab: "dns", icon: Globe2, agencyOnly: true },
     ],
   },
   {
@@ -184,6 +187,7 @@ export const SITE_TAB_LABELS: Record<SiteTab, string> = {
   cron: "Cron Events",
   health: "Site Health",
   agent: "AI Agent",
+  dns: "DNS / Cloudflare",
 };
 
 export function siteTabHref(siteId: string, tab: SiteTab) {
@@ -221,6 +225,7 @@ export function parseSiteTab(raw: string | null): SiteTab {
     "cron",
     "health",
     "agent",
+    "dns",
   ];
   return valid.includes(raw as SiteTab) ? (raw as SiteTab) : "overview";
 }
@@ -263,6 +268,7 @@ export function getSiteTabIcon(key: SiteTab): LucideIcon {
     cron: CalendarClock,
     health: HeartPulse,
     agent: Bot,
+    dns: Globe2,
   };
   return map[key];
 }

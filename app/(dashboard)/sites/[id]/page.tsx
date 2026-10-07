@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { SSHSettingsPanel } from "@/components/sites/SSHSettingsPanel";
+import { CloudflareDnsPanel } from "@/components/sites/CloudflareDnsPanel";
 import { MalCareSiteOverview } from "@/components/sites/MalCareSiteOverview";
 import { SiteHeader } from "@/components/sites/SiteHeader";
 import { AgentTab } from "@/components/sites/tabs/AgentTab";
@@ -2455,6 +2456,7 @@ function SiteDetailContent() {
   const { roleCanDo } = useRole();
   const canRunAudit = !isClientPortal && roleCanDo("run_audit");
   const canDeleteSite = !isClientPortal && roleCanDo("delete_site");
+  const canManageCloudflare = !isClientPortal && roleCanDo("manage_cloudflare");
   const [pendingAuditId, setPendingAuditId] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -2483,11 +2485,17 @@ function SiteDetailContent() {
   // Client portal is read-only — bounce away from agency-only tabs (BUG-034)
   useEffect(() => {
     if (!isClientPortal) return;
-    const blocked: SiteTab[] = ["agent", "plugins", "backups", "cron"];
+    const blocked: SiteTab[] = ["agent", "plugins", "backups", "cron", "dns"];
     if (blocked.includes(activeTab)) {
       router.replace(`/sites/${id}`);
     }
   }, [isClientPortal, activeTab, id, router]);
+
+  // DNS / Cloudflare: Owner + Admin only
+  useEffect(() => {
+    if (activeTab !== "dns") return;
+    if (!canManageCloudflare) router.replace(`/sites/${id}`);
+  }, [activeTab, canManageCloudflare, id, router]);
 
   useEffect(() => {
     if (prevTab.current === activeTab) return;
@@ -2756,6 +2764,7 @@ function SiteDetailContent() {
         {activeTab === "health"      && <SiteHealthTab site={site} />}
         {activeTab === "backups"     && !isClientPortal && <BackupsTab site={site} brandColor={brandColor} canUseAdvancedFeatures={canUseBackups} />}
         {activeTab === "agent"       && !isClientPortal && <AgentTab site={site} />}
+        {activeTab === "dns"         && canManageCloudflare && <CloudflareDnsPanel site={site} />}
       </div>
 
       {/* SSH Modal */}
