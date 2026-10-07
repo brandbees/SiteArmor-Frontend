@@ -101,6 +101,8 @@ export function CloudflareWafRules({
   const [rlLimit, setRlLimit] = useState(1);
   const [allowlistConfigured, setAllowlistConfigured] = useState(false);
   const [starterApplied, setStarterApplied] = useState(false);
+  const [starterInstalled, setStarterInstalled] = useState(0);
+  const [starterTotal, setStarterTotal] = useState(4);
   const [createMode, setCreateMode] = useState<CreateMode>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -142,6 +144,8 @@ export function CloudflareWafRules({
       setRlLimit(data.rate_limit_limit ?? 1);
       setAllowlistConfigured(!!data.allowlist_configured);
       setStarterApplied(!!data.starter_applied);
+      setStarterInstalled(data.starter_installed_count ?? 0);
+      setStarterTotal(data.starter_total ?? 4);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -369,8 +373,14 @@ export function CloudflareWafRules({
                 />
                 <div className="my-1 border-t border-zinc-100" />
                 <MenuItem
-                  label="Templates"
-                  hint="Starter pack for WP / bots"
+                  label="Starter protection"
+                  hint={
+                    starterApplied
+                      ? "Applied"
+                      : starterInstalled > 0
+                        ? `${starterInstalled}/${starterTotal} installed`
+                        : "Recommended Free pack"
+                  }
                   onClick={openTemplates}
                 />
               </div>
@@ -661,10 +671,12 @@ export function CloudflareWafRules({
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-[16px] font-bold text-foreground">Templates</h3>
+              <h3 className="text-[16px] font-bold text-foreground">Starter protection</h3>
               <p className="mt-0.5 text-[12px] text-muted-foreground">
-                Recommended Free starter pack: 3 custom rules and 1 rate-limiting rule.
-                Two custom rule slots remain available afterward.
+                Recommended Free pack: 3 custom rules and 1 rate-limiting rule.
+                Leaves 2 custom slots free. {starterInstalled > 0 && !starterApplied
+                  ? `Currently installed: ${starterInstalled} of ${starterTotal}.`
+                  : null}
               </p>
             </div>
             <button
@@ -678,33 +690,33 @@ export function CloudflareWafRules({
             </button>
           </div>
           {templates ? (
-            <ul className="mb-4 space-y-2">
+            <ul className="mb-4 divide-y divide-zinc-100 rounded-lg border border-zinc-200">
               {templates.custom.map((t) => (
-                <li
-                  key={t.key}
-                  className="rounded-lg border border-zinc-100 bg-[#fafafa] px-3 py-2"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[13px] font-semibold">{t.description}</span>
-                    <McPill tone={t.action === "block" ? "bad" : "warn"}>
-                      {t.action === "managed_challenge" ? "Challenge" : "Block"}
-                    </McPill>
+                <li key={t.key} className="flex flex-wrap items-start justify-between gap-2 px-3.5 py-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-foreground">{t.description}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                      {t.summary || "Custom security rule"}
+                    </p>
                   </div>
-                  <code className="mt-1 block break-all font-mono text-[11px] text-muted-foreground">
-                    {t.expression}
-                  </code>
+                  <McPill tone={t.action === "block" ? "bad" : "warn"}>
+                    {t.action === "managed_challenge" ? "Challenge" : "Block"}
+                  </McPill>
                 </li>
               ))}
-              <li className="rounded-lg border border-zinc-100 bg-[#fafafa] px-3 py-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[13px] font-semibold">
+              <li className="flex flex-wrap items-start justify-between gap-2 px-3.5 py-3">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-foreground">
                     {templates.rate_limit.description}
-                  </span>
-                  <McPill tone="warn">Rate limit · {templates.rate_limit.requests_per_period}/10s</McPill>
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    {templates.rate_limit.summary ||
+                      `${templates.rate_limit.requests_per_period} requests per ${templates.rate_limit.period}s`}
+                  </p>
                 </div>
-                <code className="mt-1 block break-all font-mono text-[11px] text-muted-foreground">
-                  {templates.rate_limit.expression}
-                </code>
+                <McPill tone="warn">
+                  Rate limit · {templates.rate_limit.requests_per_period}/{templates.rate_limit.period}s
+                </McPill>
               </li>
             </ul>
           ) : (
@@ -714,14 +726,18 @@ export function CloudflareWafRules({
           )}
           <div className="flex flex-wrap gap-2">
             <Button
-              onClick={() => handleApplyStarter(starterApplied)}
+              onClick={() => handleApplyStarter(starterInstalled > 0)}
               loading={busy}
-              disabled={busy}
+              disabled={busy || starterApplied}
             >
-              {starterApplied ? "Re-apply missing templates" : "Apply starter pack"}
+              {starterApplied
+                ? "Starter pack applied"
+                : starterInstalled > 0
+                  ? "Install remaining rules"
+                  : "Apply starter pack"}
             </Button>
             <Button variant="outline" disabled={busy} onClick={() => setCreateMode(null)}>
-              Cancel
+              Close
             </Button>
           </div>
         </div>

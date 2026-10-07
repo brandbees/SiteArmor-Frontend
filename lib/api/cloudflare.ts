@@ -278,6 +278,8 @@ export async function listWafRules(siteId: string) {
       allowlist_configured?: boolean;
       starter_applied?: boolean;
       starter_available?: boolean;
+      starter_installed_count?: number;
+      starter_total?: number;
       rules: CloudflareWafRule[];
       rate_limit_rules?: CloudflareWafRule[];
     }>(`/sites/${siteId}/cloudflare/waf/rules`);
@@ -371,6 +373,7 @@ export async function getWafTemplates(siteId: string) {
         description: string;
         action: string;
         expression: string;
+        summary?: string;
       }>;
       rate_limit: {
         key: string;
@@ -379,6 +382,7 @@ export async function getWafTemplates(siteId: string) {
         expression: string;
         period: number;
         requests_per_period: number;
+        summary?: string;
       };
       slots_used: number;
       slots_left_for_agency: number;
