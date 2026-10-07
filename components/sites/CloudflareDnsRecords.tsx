@@ -440,27 +440,13 @@ export function CloudflareDnsRecords({
                   </Field>
                 )}
                 <Field label="TTL">
-                  {proxyable && form.proxied ? (
-                    <div
-                      className="flex h-10 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-[13px] text-muted-foreground"
-                      title="Cloudflare forces Auto TTL while the record is Proxied"
-                    >
-                      Auto
-                      <span className="ml-auto text-[10px] font-medium">while Proxied</span>
-                    </div>
-                  ) : (
-                    <TtlSelect
-                      value={form.ttl}
-                      onChange={(ttl) => setForm((f) => ({ ...f, ttl }))}
-                    />
-                  )}
+                  <TtlSelect
+                    value={proxyable && form.proxied ? "auto" : form.ttl}
+                    disabled={proxyable && form.proxied}
+                    onChange={(ttl) => setForm((f) => ({ ...f, ttl }))}
+                  />
                 </Field>
               </div>
-              {proxyable && form.proxied && (
-                <p className="text-[11px] text-muted-foreground">
-                  Turn Proxy off (DNS only) to choose a custom TTL — same as Cloudflare.
-                </p>
-              )}
               {shouldForceDnsOnly(form.type, form.name) && form.type === "CNAME" && (
                 <p className="text-[11px] text-amber-700">
                   Mail/DKIM names should stay DNS only — proxy is turned off for this record.
@@ -611,15 +597,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function TtlSelect({
   value,
   onChange,
+  disabled,
 }: {
   value: string;
   onChange: (ttl: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const label = TTL_OPTIONS.find((o) => o.value === value)?.label || value;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || disabled) return;
     const onDoc = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (t?.closest?.("[data-ttl-select]")) return;
@@ -627,24 +615,31 @@ function TtlSelect({
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
+  }, [open, disabled]);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
 
   return (
     <div className="relative" data-ttl-select>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((o) => !o)}
         className={cn(
           inputClass,
-          "flex items-center justify-between gap-2 text-left"
+          "flex items-center justify-between gap-2 text-left",
+          disabled && "cursor-not-allowed bg-zinc-50 text-muted-foreground"
         )}
         aria-haspopup="listbox"
         aria-expanded={open}
+        title={disabled ? "TTL is Auto while Proxied" : undefined}
       >
         <span>{label}</span>
         <span className="text-[10px] leading-none text-muted-foreground">▴▾</span>
       </button>
-      {open && (
+      {open && !disabled && (
         <ul
           role="listbox"
           className="absolute left-0 right-0 top-[calc(100%+4px)] z-[80] max-h-56 overflow-y-auto rounded-md border border-zinc-300 bg-white py-1 shadow-lg"
