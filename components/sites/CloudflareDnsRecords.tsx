@@ -392,66 +392,78 @@ export function CloudflareDnsRecords({
         isLoading={busy}
       />
 
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-        <div className="flex min-w-0 items-start gap-3 sm:min-w-[200px] sm:max-w-[40%]">
-          <Cloud
-            size={22}
-            strokeWidth={1.25}
-            className="m-1 shrink-0 rounded-full bg-zinc-200 p-1.5 text-zinc-900 shadow-[0_0_0_4px_rgb(244,244,245)]"
-          />
-          <div className="min-w-0">
-            <h2 className="text-xl font-semibold leading-normal text-black">DNS records</h2>
-            <p className="text-xs font-normal leading-normal text-accent">
-              Zone {zoneName} · {count}/{limit} used
-            </p>
-          </div>
-        </div>
-        <div className="flex h-auto flex-1 flex-col gap-2 sm:h-10 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-          <div className="relative min-w-0 flex-1">
-            <div className="relative flex h-10 w-full items-center gap-2.5 rounded-lg bg-zinc-100 px-3">
-              <Search size={16} strokeWidth={1} className="pointer-events-none shrink-0 text-zinc-950" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search DNS records"
-                className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-0"
-              />
+      <header className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex min-w-0 items-start gap-3 sm:min-w-[200px] sm:max-w-[40%]">
+            <Cloud
+              size={22}
+              strokeWidth={1.25}
+              className="m-1 shrink-0 rounded-full bg-zinc-100 p-1.5 text-zinc-900 shadow-[0_0_0_4px_rgb(244,244,245)]"
+            />
+            <div className="min-w-0">
+              <h2 className="text-xl font-semibold leading-normal text-black">DNS records</h2>
+              <p className="text-xs font-normal leading-normal text-accent">
+                Zone {zoneName} · {count}/{limit} used
+              </p>
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-10"
-              onClick={() => setShowFilters((v) => !v)}
-            >
-              <Filter size={14} />
-              Filters
-              {activeFilterCount > 0 ? (
-                <span className="ml-0.5 rounded-full bg-[#2563eb] px-1.5 text-[10px] font-bold text-white">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-10"
-              onClick={() => { setLoading(true); load(); }}
-              disabled={busy}
-            >
-              <RefreshCw size={14} />
-            </Button>
-            <Button
-              className="h-10 px-4"
-              onClick={startCreate}
-              disabled={busy || count >= limit}
-            >
-              <Plus size={16} strokeWidth={1.5} />
-              Add record
-            </Button>
+          <div className="flex h-auto flex-1 flex-col gap-2 sm:h-10 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            <div className="relative min-w-0 flex-1">
+              <div className="relative flex h-10 w-full items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 shadow-[0_1px_1px_rgb(26_29_35/0.03)] focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-[#2563eb]/15">
+                <Search size={16} strokeWidth={1.5} className="pointer-events-none shrink-0 text-zinc-500" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search DNS records"
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-0"
+                />
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-10"
+                onClick={() => setShowFilters((v) => !v)}
+              >
+                <Filter size={14} />
+                Filters
+                {activeFilterCount > 0 ? (
+                  <span className="ml-0.5 rounded-full bg-[#2563eb] px-1.5 text-[10px] font-bold text-white">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-10"
+                onClick={() => { setLoading(true); load(); }}
+                disabled={busy}
+              >
+                <RefreshCw size={14} />
+              </Button>
+              <Button
+                className="h-10 px-4"
+                onClick={startCreate}
+                disabled={busy || count >= limit}
+              >
+                <Plus size={16} strokeWidth={1.5} />
+                Add record
+              </Button>
+            </div>
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
+          <Button size="sm" variant="outline" onClick={() => setShowImport(true)} disabled={busy}>
+            <Upload size={13} />
+            Import
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExport} disabled={busy || records.length === 0}>
+            <Download size={13} />
+            Export
+          </Button>
         </div>
       </header>
 
@@ -526,17 +538,6 @@ export function CloudflareDnsRecords({
           </div>
         </div>
       )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={() => setShowImport(true)} disabled={busy}>
-          <Upload size={13} />
-          Import
-        </Button>
-        <Button size="sm" variant="outline" onClick={handleExport} disabled={busy || records.length === 0}>
-          <Download size={13} />
-          Export
-        </Button>
-      </div>
 
       {showImport && (
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">

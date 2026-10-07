@@ -358,76 +358,78 @@ export function CloudflareWafRules({
         isLoading={busy}
       />
 
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-        <div className="flex min-w-0 items-start gap-3 sm:min-w-[200px]">
-          <Shield
-            size={22}
-            strokeWidth={1.25}
-            className="m-1 shrink-0 rounded-full bg-zinc-200 p-1.5 text-zinc-900 shadow-[0_0_0_4px_rgb(244,244,245)]"
-          />
-          <div className="min-w-0">
-            <h2 className="text-xl font-semibold leading-normal text-black">Security rules</h2>
-            <p className="text-xs font-normal leading-normal text-accent">
-              Zone {zoneName}
-              {allowlistConfigured ? " · Scanners excluded" : ""}
-            </p>
+      <header className="rounded-xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)] sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex min-w-0 items-start gap-3 sm:min-w-[200px]">
+            <Shield
+              size={22}
+              strokeWidth={1.25}
+              className="m-1 shrink-0 rounded-full bg-zinc-100 p-1.5 text-zinc-900 shadow-[0_0_0_4px_rgb(244,244,245)]"
+            />
+            <div className="min-w-0">
+              <h2 className="text-xl font-semibold leading-normal text-black">Security rules</h2>
+              <p className="text-xs font-normal leading-normal text-accent">
+                Zone {zoneName}
+                {allowlistConfigured ? " · Scanners excluded" : ""}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-10"
-            onClick={() => { setLoading(true); load(); }}
-            disabled={busy}
-          >
-            <RefreshCw size={14} />
-            Refresh
-          </Button>
-          <div className="relative" ref={menuRef}>
+          <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Button
-              className="h-10 px-4"
-              onClick={() => setMenuOpen((o) => !o)}
+              size="sm"
+              variant="outline"
+              className="h-10"
+              onClick={() => { setLoading(true); load(); }}
               disabled={busy}
             >
-              <Plus size={16} strokeWidth={1.5} />
-              Create rule
-              <ChevronDown size={14} />
+              <RefreshCw size={14} />
+              Refresh
             </Button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full z-[80] mt-1 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
-                <MenuItem
-                  label="Custom rules"
-                  hint={`${count}/${limit} used`}
-                  disabled={count >= limit}
-                  onClick={() => {
-                    setCreateMode("custom");
-                    setMenuOpen(false);
-                  }}
-                />
-                <MenuItem
-                  label="Rate limiting rules"
-                  hint={`${rlCount}/${rlLimit} used · Free: 10s window`}
-                  disabled={rlCount >= rlLimit}
-                  onClick={() => {
-                    setCreateMode("rate_limit");
-                    setMenuOpen(false);
-                  }}
-                />
-                <div className="my-1 border-t border-zinc-100" />
-                <MenuItem
-                  label="Starter protection"
-                  hint={
-                    starterApplied
-                      ? "Applied"
-                      : starterInstalled > 0
-                        ? `${starterInstalled}/${starterTotal} installed`
-                        : "Recommended Free pack"
-                  }
-                  onClick={openTemplates}
-                />
-              </div>
-            )}
+            <div className="relative" ref={menuRef}>
+              <Button
+                className="h-10 px-4"
+                onClick={() => setMenuOpen((o) => !o)}
+                disabled={busy}
+              >
+                <Plus size={16} strokeWidth={1.5} />
+                Create rule
+                <ChevronDown size={14} />
+              </Button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full z-[80] mt-1 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+                  <MenuItem
+                    label="Custom rules"
+                    hint={`${count}/${limit} used`}
+                    disabled={count >= limit}
+                    onClick={() => {
+                      setCreateMode("custom");
+                      setMenuOpen(false);
+                    }}
+                  />
+                  <MenuItem
+                    label="Rate limiting rules"
+                    hint={`${rlCount}/${rlLimit} used · Free: 10s window`}
+                    disabled={rlCount >= rlLimit}
+                    onClick={() => {
+                      setCreateMode("rate_limit");
+                      setMenuOpen(false);
+                    }}
+                  />
+                  <div className="my-1 border-t border-zinc-100" />
+                  <MenuItem
+                    label="Starter protection"
+                    hint={
+                      starterApplied
+                        ? "Applied"
+                        : starterInstalled > 0
+                          ? `${starterInstalled}/${starterTotal} installed`
+                          : "Recommended Free pack"
+                    }
+                    onClick={openTemplates}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
