@@ -137,8 +137,15 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
         }
       }
       if (failed.length) {
+        const detail = failed
+          .map((r) => r.error || r.health_error || r.status)
+          .filter(Boolean)
+          .slice(0, 2)
+          .join(" · ");
         toast.warning(
-          `${failed.length} site${failed.length === 1 ? "" : "s"} need attention — check results.`
+          detail
+            ? `Update failed: ${detail}`
+            : `${failed.length} site${failed.length === 1 ? "" : "s"} need attention — check results.`
         );
       }
       await load();
