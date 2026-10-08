@@ -314,6 +314,8 @@ export interface MalwareFinding {
   file_path: string | null;
   db_location: string | null;
   affected_value?: string | null;
+  /** Scan-time markup / grants window that triggered the finding (DB findings). */
+  evidence_excerpt?: string | null;
   cve_id: string | null;
   cve_url: string | null;
   description: string | null;
