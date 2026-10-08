@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,13 +55,16 @@ export function Modal({
   }, [open, onClose]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+  // Portal to body so overflow-hidden / stacking contexts in finding cards
+  // cannot clip the overlay or let list rows bleed through the footer.
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
         aria-label="Close dialog"
-        className="absolute inset-0 bg-[#0f172a]/40 backdrop-blur-[1px]"
+        className="absolute inset-0 bg-[#0f172a]/50 backdrop-blur-[2px]"
         onClick={onClose}
       />
       <div
@@ -107,13 +111,16 @@ export function Modal({
             </button>
           </div>
         )}
-        {children ? <div className="px-5 py-4">{children}</div> : null}
+        {children ? (
+          <div className="bg-white px-5 py-4">{children}</div>
+        ) : null}
         {footer ? (
-          <div className="flex items-center justify-end gap-2 px-5 pb-5 pt-1">
+          <div className="flex items-center justify-end gap-2 border-t border-[rgb(15_23_42/0.06)] bg-white px-5 pb-5 pt-4">
             {footer}
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
