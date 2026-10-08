@@ -41,6 +41,7 @@ type UpdateResult = {
   name?: string;
   status: string;
   error?: string | null;
+  health_error?: string | null;
   new_version?: string | null;
 };
 
