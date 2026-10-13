@@ -66,7 +66,7 @@ html.mkt-dark, html.dark {
           __html: `${brandCss}\n:root { ${rgbCss} }`,
         }}
       />
-      <GoogleAnalytics />
+      <GoogleTagManager />
       <MarketingNav cms={headerCms} initialDark />
       {children}
       <MarketingFooter cms={footerCms} />
