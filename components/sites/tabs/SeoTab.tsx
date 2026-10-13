@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, AlertCircle, RefreshCw, ExternalLink,
   Search, Wrench, TrendingUp,
@@ -9,6 +11,7 @@ import { McCard, McPill, ScoreHistoryList } from "@/components/shared/MalCareUI"
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { Button } from "@/components/ui/Button";
 import { SeoAuditPanel } from "@/components/sites/SeoAuditPanel";
+import { siteTabHref } from "@/components/sites/site-nav";
 import api from "@/lib/api";
 import type { Site, Audit } from "@/types";
 
@@ -368,6 +371,7 @@ export function SeoTab({
   audits: Audit[];
   brandColor: string;
 }) {
+  const router = useRouter();
   const score = site.latest_scores?.seo ?? null;
   const latestAudit = audits.find((a) => a.status === "completed");
   const seoData = latestAudit?.seo_data;
@@ -378,6 +382,19 @@ export function SeoTab({
     ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (seoData as any).checks
     : [];
+
+  /** Homepage checklist Fix was a dead button — send the issue to AI Agent with context. */
+  function fixHomepageCheck(check: SeoCheck) {
+    const prompt =
+      `Help me fix this homepage SEO issue on ${site.url}:\n\n` +
+      `Issue: ${check.label}\n` +
+      (check.detail ? `Detail: ${check.detail}\n\n` : "\n") +
+      `Prefer the Site Armor plugin (no SSH) when a safe write exists. Explain what you will change and wait for confirmation before writing.`;
+    toast.message("Opening AI Agent…");
+    router.push(
+      `${siteTabHref(site.id, "agent")}&prompt=${encodeURIComponent(prompt)}`
+    );
+  }
 
   const passCount = checksArray.filter((c) => c.status === "pass").length;
   const failCount = checksArray.filter((c) => c.status === "fail").length;
@@ -539,6 +556,7 @@ export function SeoTab({
                         <td className="px-4 py-2.5">
                           <button
                             type="button"
+                            onClick={() => fixHomepageCheck({ id, label, status, detail })}
                             className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted/40"
                           >
                             <Wrench size={10} /> Fix
