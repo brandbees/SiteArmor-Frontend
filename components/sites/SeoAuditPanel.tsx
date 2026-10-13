@@ -583,9 +583,12 @@ function IssueRow({ issue, onChange }: { issue: Issue; onChange: () => void }) {
     } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { detail?: string; error?: string; reason?: string } } };
       const d = e?.response?.data;
-      // 412 means SSH is not usable — say what to do about it, not just that it failed.
+      // 412 = this specific fix needs SSH (e.g. robots.txt) or plugin SEO write is unavailable.
       if (e?.response?.status === 412) {
-        toast.error(d?.detail ?? "SSH is required to apply SEO fixes. Connect it in the SSH tab first.");
+        toast.error(
+          d?.detail ??
+            "This fix needs SSH or a Site Armor plugin that supports SEO writes (1.9.0+)."
+        );
       } else {
         toast.error(d?.detail ?? d?.error ?? "Could not apply this fix.");
       }
