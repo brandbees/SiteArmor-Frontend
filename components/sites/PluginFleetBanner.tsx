@@ -143,9 +143,13 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
           .filter(Boolean)
           .slice(0, 2)
           .join(" · ");
+        const clean = detail.replace(/<!DOCTYPE[\s\S]*/i, "").trim() || detail.slice(0, 160);
+        const friendly = /<!DOCTYPE|<html[\s>]/i.test(detail)
+          ? "Could not reach the Site Armor update endpoint on the site (host returned a web page). Try reconnecting the plugin or updating the ZIP manually once."
+          : clean;
         toast.warning(
-          detail
-            ? `Update failed: ${detail}`
+          friendly
+            ? `Update failed: ${friendly}`
             : `${failed.length} site${failed.length === 1 ? "" : "s"} need attention — check results.`
         );
       }
