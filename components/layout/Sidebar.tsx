@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -187,10 +187,37 @@ export function Sidebar({
   const { roleCanDo } = useRole();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  /** Peek-open while pointer is over the rail (pinned collapse still reserved at 4rem). */
+  const [hoverExpanded, setHoverExpanded] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isClientPortal = agency?.is_client_portal ?? false;
   const isIndividual = agency?.account_type === "individual";
   const brand = agency?.brand_name || "Site Armor";
+  const railCollapsed = collapsed && !hoverExpanded;
+
+  useEffect(() => {
+    if (!collapsed) setHoverExpanded(false);
+  }, [collapsed]);
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    };
+  }, []);
+
+  function handleRailEnter() {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+    if (collapsed) setHoverExpanded(true);
+  }
+
+  function handleRailLeave() {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    leaveTimer.current = setTimeout(() => setHoverExpanded(false), 120);
+  }
 
   useEffect(() => {
     if (isClientPortal) return;
@@ -211,24 +238,35 @@ export function Sidebar({
 
   return (
     <>
-      <aside
+      {/* Width slot stays 4rem when pinned-collapsed so hover expand overlays instead of shifting content */}
+      <div
         className={cn(
-          "hidden shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width] duration-200 ease-linear md:flex",
+          "relative hidden shrink-0 self-stretch md:block",
           collapsed ? "w-[4rem]" : "w-[280px]"
         )}
       >
+        <aside
+          onMouseEnter={handleRailEnter}
+          onMouseLeave={handleRailLeave}
+          className={cn(
+            "flex h-full flex-col border-r border-zinc-200 bg-white transition-[width,box-shadow] duration-200 ease-linear",
+            collapsed ? "absolute inset-y-0 left-0 z-40" : "w-full",
+            railCollapsed ? "w-[4rem]" : "w-[280px]",
+            collapsed && hoverExpanded && "shadow-xl"
+          )}
+        >
         {/* Search trigger — MalCare pill */}
-        <div className={cn("shrink-0", collapsed ? "px-2 py-2" : "p-2 px-3")}>
+        <div className={cn("shrink-0", railCollapsed ? "px-2 py-2" : "p-2 px-3")}>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("bb:open-command-palette"))}
             className={cn(
               "flex w-full items-center rounded-lg bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200/80",
-              collapsed ? "h-9 justify-center" : "h-9 gap-2 px-3"
+              railCollapsed ? "h-9 justify-center" : "h-9 gap-2 px-3"
             )}
             title="Search (Ctrl+K)"
           >
-            {!collapsed && (
+            {!railCollapsed && (
               <>
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -245,29 +283,29 @@ export function Sidebar({
             )}
             <Search size={16} strokeWidth={1.5} className="shrink-0 text-zinc-950" />
           </button>
-          {!collapsed && !logoUrl && (
+          {!railCollapsed && !logoUrl && (
             <p className="mt-2 truncate px-1 text-[11px] font-semibold text-zinc-400">{brand}</p>
           )}
         </div>
 
         {/* Nav */}
-        <nav className={cn("mx-2 flex-1 overflow-y-auto overflow-x-hidden py-2", collapsed ? "px-1.5" : "px-2")}>
+        <nav className={cn("mx-2 flex-1 overflow-y-auto overflow-x-hidden py-2", railCollapsed ? "px-1.5" : "px-2")}>
           <NavSection
             label={isSiteDetail ? "Global" : "Manage"}
             items={globalItems}
-            collapsed={collapsed}
+            collapsed={railCollapsed}
             pathname={pathname}
           />
           {isSiteDetail && activeSiteId ? (
-            <Suspense fallback={<SiteSidebarNavFallback collapsed={collapsed} />}>
-              <SiteSidebarNav siteId={activeSiteId} collapsed={collapsed} />
+            <Suspense fallback={<SiteSidebarNavFallback collapsed={railCollapsed} />}>
+              <SiteSidebarNav siteId={activeSiteId} collapsed={railCollapsed} />
             </Suspense>
           ) : null}
           {!isClientPortal && (
-            <NavSection label="Account" items={settingsItems} collapsed={collapsed} pathname={pathname} />
+            <NavSection label="Account" items={settingsItems} collapsed={railCollapsed} pathname={pathname} />
           )}
 
-          {!isClientPortal && !collapsed && (
+          {!isClientPortal && !railCollapsed && (
             <button
               type="button"
               onClick={() => setChangelogOpen(true)}
@@ -285,13 +323,13 @@ export function Sidebar({
         </nav>
 
         {isSiteDetail && (
-          <SiteSidebarFooter site={siteCtx?.site} collapsed={collapsed} />
+          <SiteSidebarFooter site={siteCtx?.site} collapsed={railCollapsed} />
         )}
 
         {/* Support footer — hidden on site detail (WP/PHP sticky footer instead) */}
         {!isSiteDetail && (
-        <div className={cn("shrink-0 border-t border-zinc-200", collapsed ? "p-2" : "p-2 px-3")}>
-          {!collapsed ? (
+        <div className={cn("shrink-0 border-t border-zinc-200", railCollapsed ? "p-2" : "p-2 px-3")}>
+          {!railCollapsed ? (
             <a
               href="mailto:support@sitearmor.com"
               className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 transition-colors hover:bg-zinc-100"
@@ -319,7 +357,8 @@ export function Sidebar({
           onClose={() => setChangelogOpen(false)}
           onSeen={() => setUnreadCount(0)}
         />
-      </aside>
+        </aside>
+      </div>
     </>
   );
 }
