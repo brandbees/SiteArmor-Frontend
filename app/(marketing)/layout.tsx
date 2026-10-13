@@ -2,7 +2,7 @@ import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import { getGlobalContent } from "@/lib/cms";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
-import { GoogleAnalytics } from "@/components/marketing/GoogleAnalytics";
+import { GoogleTagManager } from "@/components/marketing/GoogleTagManager";
 import { OfferPopup } from "@/components/landing/OfferPopup";
 import { ScrollToTop } from "@/components/marketing/ScrollToTop";
 
