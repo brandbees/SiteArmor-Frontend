@@ -1,12 +1,22 @@
 "use client";
 
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import {
-  Shield, ShieldAlert, ShieldCheck, Key, CheckCircle2, XCircle, AlertCircle,
+  Shield, ShieldAlert, ShieldCheck, Key, CheckCircle2, XCircle, AlertCircle, Wrench,
 } from "lucide-react";
 import { McCard, McPill, ScoreHistoryList } from "@/components/shared/MalCareUI";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { Button } from "@/components/ui/Button";
+import api from "@/lib/api";
 import type { Site, Audit } from "@/types";
+
+type HardenAction =
+  | "disable_xmlrpc"
+  | "disable_file_editor"
+  | "disable_debug_mode"
+  | "lock_sensitive_files"
+  | "block_php_in_uploads";
 
 function sslDaysRemaining(date: string | null | undefined): number | null {
   if (!date) return null;
@@ -33,6 +43,8 @@ export function SecurityTab({
   canRunAudit?: boolean;
 }) {
   void brandColor;
+  const [fixing, setFixing] = useState<HardenAction | "batch" | null>(null);
+
   const score = site.latest_scores?.security;
   const sslDays = sslDaysRemaining(site.ssl_expiry_date);
   const sslTone =
@@ -41,6 +53,7 @@ export function SecurityTab({
     sslDays === null ? "Unknown" : sslDays <= 0 ? "Expired" : sslDays <= 30 ? "Expiring soon" : "Valid";
   const adminNames = site.admin_usernames ?? [];
   const hasDefaultAdmin = adminNames.some((n) => n.toLowerCase() === "admin");
+  const pluginReady = !!site.plugin_connected;
 
   const completed = audits.filter((a) => a.status === "completed" && a.scores);
   const trendPts = completed.slice(-10).map((a) => ({
@@ -48,22 +61,128 @@ export function SecurityTab({
     score: a.scores!.security,
   }));
 
-  const checks: { label: string; category: string; safe: boolean | null; detail: string }[] = [
-    { label: "XML-RPC", category: "Access", safe: site.xml_rpc_enabled === undefined ? null : !site.xml_rpc_enabled, detail: site.xml_rpc_enabled ? "Enabled — exposes attack surface" : "Disabled" },
-    { label: "Default Login URL", category: "Access", safe: site.login_url_default === undefined ? null : !site.login_url_default, detail: site.login_url_default ? "Using /wp-login.php — change it" : "Custom URL in use" },
-    { label: "Admin Username", category: "Accounts", safe: hasDefaultAdmin ? false : adminNames.length > 0 ? true : null, detail: hasDefaultAdmin ? '"admin" username found — rename it' : adminNames.length > 0 ? "No default usernames" : "Unknown" },
-    { label: "Admin Account Count", category: "Accounts", safe: site.admin_users_count == null ? null : site.admin_users_count <= 2, detail: site.admin_users_count == null ? "Unknown" : site.admin_users_count <= 2 ? `${site.admin_users_count} admin${site.admin_users_count !== 1 ? "s" : ""} — acceptable` : `${site.admin_users_count} admins — review and reduce` },
-    { label: "File Editor", category: "Files", safe: site.file_editor_enabled === undefined ? null : !site.file_editor_enabled, detail: site.file_editor_enabled ? "Enabled in admin panel" : "Disabled" },
-    { label: "Debug Mode", category: "Files", safe: site.wp_debug_enabled === undefined ? null : !site.wp_debug_enabled, detail: site.wp_debug_enabled ? "WP_DEBUG on — disable in production" : "Off" },
-    { label: "wp-config.php", category: "Files", safe: site.wp_config_writable === undefined ? null : !site.wp_config_writable, detail: site.wp_config_writable ? "Writable — fix file permissions" : "Protected" },
-    { label: ".htaccess", category: "Files", safe: site.htaccess_writable === undefined ? null : !site.htaccess_writable, detail: site.htaccess_writable ? "Writable — fix file permissions" : "Protected" },
-    { label: "PHP in Uploads", category: "Files", safe: site.uploads_php_enabled === undefined ? null : !site.uploads_php_enabled, detail: site.uploads_php_enabled ? "PHP execution allowed in /uploads" : "Blocked" },
-    { label: "SSL Certificate", category: "SSL", safe: sslDays === null ? null : sslDays > 30, detail: sslDays === null ? "Unknown" : sslDays <= 0 ? "Expired" : `${sslDays} days remaining` },
+  const checks: {
+    label: string;
+    category: string;
+    safe: boolean | null;
+    detail: string;
+    fixAction?: HardenAction;
+  }[] = [
+    {
+      label: "XML-RPC",
+      category: "Access",
+      safe: site.xml_rpc_enabled === undefined ? null : !site.xml_rpc_enabled,
+      detail: site.xml_rpc_enabled ? "Enabled — exposes attack surface" : "Disabled",
+      fixAction: site.xml_rpc_enabled ? "disable_xmlrpc" : undefined,
+    },
+    {
+      label: "Default Login URL",
+      category: "Access",
+      safe: site.login_url_default === undefined ? null : !site.login_url_default,
+      detail: site.login_url_default ? "Using /wp-login.php — change it" : "Custom URL in use",
+    },
+    {
+      label: "Admin Username",
+      category: "Accounts",
+      safe: hasDefaultAdmin ? false : adminNames.length > 0 ? true : null,
+      detail: hasDefaultAdmin
+        ? '"admin" username found — rename it'
+        : adminNames.length > 0
+          ? "No default usernames"
+          : "Unknown",
+    },
+    {
+      label: "Admin Account Count",
+      category: "Accounts",
+      safe: site.admin_users_count == null ? null : site.admin_users_count <= 2,
+      detail:
+        site.admin_users_count == null
+          ? "Unknown"
+          : site.admin_users_count <= 2
+            ? `${site.admin_users_count} admin${site.admin_users_count !== 1 ? "s" : ""} — acceptable`
+            : `${site.admin_users_count} admins — review and reduce`,
+    },
+    {
+      label: "File Editor",
+      category: "Files",
+      safe: site.file_editor_enabled === undefined ? null : !site.file_editor_enabled,
+      detail: site.file_editor_enabled ? "Enabled in admin panel" : "Disabled",
+      fixAction: site.file_editor_enabled ? "disable_file_editor" : undefined,
+    },
+    {
+      label: "Debug Mode",
+      category: "Files",
+      safe: site.wp_debug_enabled === undefined ? null : !site.wp_debug_enabled,
+      detail: site.wp_debug_enabled ? "WP_DEBUG on — disable in production" : "Off",
+      fixAction: site.wp_debug_enabled ? "disable_debug_mode" : undefined,
+    },
+    {
+      label: "wp-config.php",
+      category: "Files",
+      safe: site.wp_config_writable === undefined ? null : !site.wp_config_writable,
+      detail: site.wp_config_writable ? "Writable — fix file permissions" : "Protected",
+      fixAction: site.wp_config_writable ? "lock_sensitive_files" : undefined,
+    },
+    {
+      label: ".htaccess",
+      category: "Files",
+      safe: site.htaccess_writable === undefined ? null : !site.htaccess_writable,
+      detail: site.htaccess_writable ? "Writable — fix file permissions" : "Protected",
+      fixAction: site.htaccess_writable ? "lock_sensitive_files" : undefined,
+    },
+    {
+      label: "PHP in Uploads",
+      category: "Files",
+      safe: site.uploads_php_enabled === undefined ? null : !site.uploads_php_enabled,
+      detail: site.uploads_php_enabled ? "PHP execution allowed in /uploads" : "Blocked",
+      fixAction: site.uploads_php_enabled ? "block_php_in_uploads" : undefined,
+    },
+    {
+      label: "SSL Certificate",
+      category: "SSL",
+      safe: sslDays === null ? null : sslDays > 30,
+      detail:
+        sslDays === null ? "Unknown" : sslDays <= 0 ? "Expired" : `${sslDays} days remaining`,
+    },
   ];
 
   const knownChecks = checks.filter((c) => c.safe !== null);
   const safeCount = knownChecks.filter((c) => c.safe === true).length;
   const issueCount = knownChecks.filter((c) => c.safe === false).length;
+  const quickFixes = [...new Set(checks.map((c) => c.fixAction).filter(Boolean))] as HardenAction[];
+
+  const applyFix = useCallback(
+    async (actions: HardenAction[]) => {
+      if (!actions.length || fixing || !pluginReady) return;
+      const key = actions.length === 1 ? actions[0] : "batch";
+      setFixing(key);
+      try {
+        const { data } = await api.post<{
+          success?: boolean;
+          applied?: number;
+          results?: Array<{ action: string; success: boolean; error?: string; message?: string }>;
+        }>(`/scan/sites/${site.id}/protect/apply`, { actions });
+        const failed = (data.results || []).filter((r) => !r.success);
+        if (data.applied && data.applied > 0) {
+          toast.success(
+            data.results?.find((r) => r.success)?.message ||
+              `Applied ${data.applied} fix${data.applied === 1 ? "" : "es"}`
+          );
+        }
+        if (failed.length) {
+          toast.error(failed[0].error || failed[0].message || "Fix failed");
+        }
+        await api.post("/sites/cache/clear").catch(() => {});
+        window.dispatchEvent(new Event("bb:refresh"));
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+        toast.error(msg ?? "Could not apply fix — update Site Armor plugin to 1.13.11+");
+      } finally {
+        setFixing(null);
+      }
+    },
+    [fixing, pluginReady, site.id]
+  );
 
   return (
     <div className="space-y-4">
@@ -87,6 +206,17 @@ export function SecurityTab({
               >
                 {score >= 80 ? "Protected" : score >= 50 ? "Needs work" : "At risk"}
               </McPill>
+            )}
+            {quickFixes.length > 0 && pluginReady && (
+              <Button
+                size="sm"
+                loading={fixing === "batch"}
+                disabled={!!fixing}
+                onClick={() => void applyFix(quickFixes)}
+              >
+                <Wrench size={13} />
+                Fix all ({quickFixes.length})
+              </Button>
             )}
             {canRunAudit && runAudit && (
               <Button size="sm" variant="outline" onClick={runAudit}>
@@ -112,6 +242,11 @@ export function SecurityTab({
                 ? " — score drops to 0 when high-severity risks remain open"
                 : ""}
             </p>
+            {!pluginReady && quickFixes.length > 0 && (
+              <p className="mt-2 text-xs text-amber-800">
+                Connect / update the Site Armor plugin (1.13.11+) to enable one-click Fix.
+              </p>
+            )}
             {trendPts.length > 0 && (
               <div className="mt-4">
                 <p className="mb-2 text-xs font-semibold text-muted-foreground">Recent scores</p>
@@ -256,7 +391,7 @@ export function SecurityTab({
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["Check", "Category", "Status", "Details"].map((h) => (
+                {["Check", "Category", "Status", "Details", "Action"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground"
@@ -267,7 +402,7 @@ export function SecurityTab({
               </tr>
             </thead>
             <tbody>
-              {checks.map(({ label, category, safe, detail }) => (
+              {checks.map(({ label, category, safe, detail, fixAction }) => (
                 <tr key={label} className="border-b border-border last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-2.5 text-sm font-medium text-foreground">{label}</td>
                   <td className="px-4 py-2.5">
@@ -287,6 +422,27 @@ export function SecurityTab({
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-xs text-muted-foreground">{detail}</td>
+                  <td className="px-4 py-2.5">
+                    {fixAction && safe === false ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!pluginReady || !!fixing}
+                        loading={fixing === fixAction}
+                        onClick={() => void applyFix([fixAction])}
+                        title={
+                          pluginReady
+                            ? "Apply one-click fix via Site Armor plugin"
+                            : "Plugin required"
+                        }
+                      >
+                        <Wrench size={12} />
+                        Fix
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
