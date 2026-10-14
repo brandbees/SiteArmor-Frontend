@@ -238,23 +238,17 @@ export function Sidebar({
 
   return (
     <>
-      {/* Width slot stays 4rem when pinned-collapsed so hover expand overlays instead of shifting content */}
+      {/* Hover expand widens the slot (same as pin-toggle) so header/content shrink instead of overlay */}
       <div
         className={cn(
-          "relative hidden shrink-0 self-stretch md:block",
-          collapsed ? "w-[4rem]" : "w-[280px]"
+          "relative hidden shrink-0 self-stretch transition-[width] duration-200 ease-linear md:block",
+          railCollapsed ? "w-[4rem]" : "w-[280px]"
         )}
       >
         <aside
           onMouseEnter={handleRailEnter}
           onMouseLeave={handleRailLeave}
-          className={cn(
-            "flex h-full flex-col border-r border-zinc-200 bg-white transition-[width,box-shadow] duration-200 ease-linear",
-            // z-30: below TopBar (z-50) so hover-expand slides under the header, not through it
-            collapsed ? "absolute inset-y-0 left-0 z-30" : "w-full",
-            railCollapsed ? "w-[4rem]" : "w-[280px]",
-            collapsed && hoverExpanded && "shadow-[8px_0_24px_-8px_rgb(15_23_42/0.18)]"
-          )}
+          className="flex h-full w-full flex-col border-r border-zinc-200 bg-white"
         >
         {/* Search trigger — MalCare pill */}
         <div className={cn("shrink-0", railCollapsed ? "px-2 py-2" : "p-2 px-3")}>
