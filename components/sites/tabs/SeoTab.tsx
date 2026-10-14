@@ -159,6 +159,7 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
   );
   const [loadingData, setLoadingData] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     api
@@ -184,6 +185,28 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
       window.location.href = r.url;
     } catch {
       setConnecting(false);
+    }
+  }
+
+  async function disconnect() {
+    if (
+      !confirm(
+        "Disconnect Google for this site? This removes Analytics and Search Console access until you connect again."
+      )
+    ) {
+      return;
+    }
+    setDisconnecting(true);
+    try {
+      await api.delete(`/analytics/${site.id}/google`);
+      setStatus({ connected: false, sc_connected: false, sc_property_url: null });
+      setData(null);
+      setScProps(null);
+      toast.success("Google disconnected");
+    } catch {
+      toast.error("Could not disconnect Google");
+    } finally {
+      setDisconnecting(false);
     }
   }
 
@@ -214,24 +237,37 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
       title="Google Search Console"
       icon={<Search size={15} />}
       action={
-        status?.connected && !status.sc_connected ? (
-          <button
-            type="button"
-            onClick={openPropSelector}
-            className="text-xs font-bold text-accent hover:underline"
-          >
-            Select property
-          </button>
-        ) : !status?.connected ? (
-          <Button size="sm" onClick={connect} disabled={connecting} loading={connecting}>
-            <ExternalLink size={11} />
-            Connect Google
-          </Button>
-        ) : status.sc_connected ? (
-          <McPill tone="neutral">
-            <span className="max-w-[160px] truncate">{status.sc_property_url}</span>
-          </McPill>
-        ) : null
+        <div className="flex items-center gap-2">
+          {status?.connected && !status.sc_connected ? (
+            <button
+              type="button"
+              onClick={openPropSelector}
+              className="text-xs font-bold text-accent hover:underline"
+            >
+              Select property
+            </button>
+          ) : !status?.connected ? (
+            <Button size="sm" onClick={connect} disabled={connecting} loading={connecting}>
+              <ExternalLink size={11} />
+              Connect Google
+            </Button>
+          ) : status.sc_connected ? (
+            <McPill tone="neutral">
+              <span className="max-w-[160px] truncate">{status.sc_property_url}</span>
+            </McPill>
+          ) : null}
+          {status?.connected ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={disconnect}
+              disabled={disconnecting}
+              loading={disconnecting}
+            >
+              Disconnect
+            </Button>
+          ) : null}
+        </div>
       }
     >
       {scProps !== null && (

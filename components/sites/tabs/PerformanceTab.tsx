@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   BarChart2,
   CheckCircle2,
@@ -92,7 +93,9 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
   >(null);
   const [loadingData, setLoadingData] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
   const [selectingProp, setSelectingProp] = useState(false);
+  const isClient = !!getAgency()?.is_client_portal;
 
   useEffect(() => {
     api
@@ -118,6 +121,29 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
       window.location.href = r.url;
     } catch {
       setConnecting(false);
+    }
+  }
+
+  async function disconnect() {
+    if (
+      !confirm(
+        "Disconnect Google for this site? This removes Analytics and Search Console access until you connect again."
+      )
+    ) {
+      return;
+    }
+    setDisconnecting(true);
+    try {
+      await api.delete(`/analytics/${site.id}/google`);
+      setStatus({ connected: false, ga4_connected: false, ga4_property_id: null });
+      setData(null);
+      setProps(null);
+      setSelectingProp(false);
+      toast.success("Google disconnected");
+    } catch {
+      toast.error("Could not disconnect Google");
+    } finally {
+      setDisconnecting(false);
     }
   }
 
@@ -162,28 +188,37 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
             <p className="text-xs text-emerald-700">Traffic and engagement for this site</p>
           </div>
         </div>
-        {status?.connected && !status.ga4_connected ? (
-          !getAgency()?.is_client_portal ? (
-          <button
-            type="button"
-            onClick={openPropertySelector}
-            className="text-xs font-bold text-accent hover:underline"
-          >
-            Select property
-          </button>
-          ) : null
-        ) : !status?.connected ? (
-          !getAgency()?.is_client_portal ? (
-          <Button size="sm" onClick={connect} disabled={connecting} loading={connecting}>
-            <ExternalLink size={11} />
-            Connect Google
-          </Button>
-          ) : null
-        ) : status.ga4_connected ? (
-          <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-600">
-            {status.ga4_property_id}
-          </span>
-        ) : null}
+        <div className="flex flex-shrink-0 items-center gap-2">
+          {status?.connected && !status.ga4_connected && !isClient ? (
+            <button
+              type="button"
+              onClick={openPropertySelector}
+              className="text-xs font-bold text-accent hover:underline"
+            >
+              Select property
+            </button>
+          ) : !status?.connected && !isClient ? (
+            <Button size="sm" onClick={connect} disabled={connecting} loading={connecting}>
+              <ExternalLink size={11} />
+              Connect Google
+            </Button>
+          ) : status?.ga4_connected ? (
+            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-600">
+              {status.ga4_property_id}
+            </span>
+          ) : null}
+          {status?.connected && !isClient ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={disconnect}
+              disabled={disconnecting}
+              loading={disconnecting}
+            >
+              Disconnect
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {properties !== null && (
