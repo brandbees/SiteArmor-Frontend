@@ -250,9 +250,10 @@ export function Sidebar({
           onMouseLeave={handleRailLeave}
           className={cn(
             "flex h-full flex-col border-r border-zinc-200 bg-white transition-[width,box-shadow] duration-200 ease-linear",
-            collapsed ? "absolute inset-y-0 left-0 z-40" : "w-full",
+            // z-30: below TopBar (z-50) so hover-expand slides under the header, not through it
+            collapsed ? "absolute inset-y-0 left-0 z-30" : "w-full",
             railCollapsed ? "w-[4rem]" : "w-[280px]",
-            collapsed && hoverExpanded && "shadow-xl"
+            collapsed && hoverExpanded && "shadow-[8px_0_24px_-8px_rgb(15_23_42/0.18)]"
           )}
         >
         {/* Search trigger — MalCare pill */}
