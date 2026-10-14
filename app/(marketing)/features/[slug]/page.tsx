@@ -111,13 +111,17 @@ export default async function FeatureDetailPage({ params }: Props) {
   const Icon = meta.icon;
   const pillarInfo = PILLARS.find((p) => p.key === meta.pillar);
 
+  // Google requires absolute URLs for BreadcrumbList item/@id (relative paths → GSC "Invalid URL in field id")
+  const site =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "https://www.sitearmor.io";
+  const abs = (path: string) => `${site}${path.startsWith("/") ? path : `/${path}`}`;
   const breadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "/" },
-      { "@type": "ListItem", position: 2, name: "Features", item: "/features" },
-      { "@type": "ListItem", position: 3, name: meta.title, item: meta.href },
+      { "@type": "ListItem", position: 1, name: "Home", item: `${site}/` },
+      { "@type": "ListItem", position: 2, name: "Features", item: abs("/features") },
+      { "@type": "ListItem", position: 3, name: meta.title, item: abs(meta.href) },
     ],
   };
 
