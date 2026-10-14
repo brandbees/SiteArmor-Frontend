@@ -7,6 +7,7 @@ import {
   CheckCircle2, XCircle, AlertCircle, RefreshCw, ExternalLink,
   Search, Wrench, TrendingUp,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { McCard, McPill, ScoreHistoryList } from "@/components/shared/MalCareUI";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { Button } from "@/components/ui/Button";
@@ -160,6 +161,7 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
   const [loadingData, setLoadingData] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [showDisconnect, setShowDisconnect] = useState(false);
 
   useEffect(() => {
     api
@@ -189,19 +191,13 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
   }
 
   async function disconnect() {
-    if (
-      !confirm(
-        "Disconnect Google for this site? This removes Analytics and Search Console access until you connect again."
-      )
-    ) {
-      return;
-    }
     setDisconnecting(true);
     try {
       await api.delete(`/analytics/${site.id}/google`);
       setStatus({ connected: false, sc_connected: false, sc_property_url: null });
       setData(null);
       setScProps(null);
+      setShowDisconnect(false);
       toast.success("Google disconnected");
     } catch {
       toast.error("Could not disconnect Google");
@@ -260,9 +256,8 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
             <Button
               size="sm"
               variant="outline"
-              onClick={disconnect}
+              onClick={() => setShowDisconnect(true)}
               disabled={disconnecting}
-              loading={disconnecting}
             >
               Disconnect
             </Button>
@@ -270,6 +265,17 @@ function SearchConsoleSection({ site, brandColor }: { site: Site; brandColor: st
         </div>
       }
     >
+      <ConfirmDialog
+        isOpen={showDisconnect}
+        title="Disconnect Google?"
+        message="This removes Analytics and Search Console access for this site until you connect again."
+        confirmText="Disconnect"
+        cancelText="Keep Connected"
+        isDangerous
+        isLoading={disconnecting}
+        onConfirm={disconnect}
+        onCancel={() => setShowDisconnect(false)}
+      />
       {scProps !== null && (
         <div className="mb-4 space-y-1.5 border-b border-border pb-4">
           <p className="mb-2 text-xs font-semibold text-foreground">

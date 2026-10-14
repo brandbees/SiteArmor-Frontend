@@ -14,6 +14,7 @@ import {
   Gauge,
   TriangleAlert,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
 import { Button } from "@/components/ui/Button";
 import { CubeLoader } from "@/components/sites/SiteLoadingOverlay";
@@ -94,6 +95,7 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
   const [loadingData, setLoadingData] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [showDisconnect, setShowDisconnect] = useState(false);
   const [selectingProp, setSelectingProp] = useState(false);
   const isClient = !!getAgency()?.is_client_portal;
 
@@ -125,13 +127,6 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
   }
 
   async function disconnect() {
-    if (
-      !confirm(
-        "Disconnect Google for this site? This removes Analytics and Search Console access until you connect again."
-      )
-    ) {
-      return;
-    }
     setDisconnecting(true);
     try {
       await api.delete(`/analytics/${site.id}/google`);
@@ -139,6 +134,7 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
       setData(null);
       setProps(null);
       setSelectingProp(false);
+      setShowDisconnect(false);
       toast.success("Google disconnected");
     } catch {
       toast.error("Could not disconnect Google");
@@ -211,15 +207,26 @@ function GoogleAnalyticsSection({ site }: { site: Site }) {
             <Button
               size="sm"
               variant="outline"
-              onClick={disconnect}
+              onClick={() => setShowDisconnect(true)}
               disabled={disconnecting}
-              loading={disconnecting}
             >
               Disconnect
             </Button>
           ) : null}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDisconnect}
+        title="Disconnect Google?"
+        message="This removes Analytics and Search Console access for this site until you connect again."
+        confirmText="Disconnect"
+        cancelText="Keep Connected"
+        isDangerous
+        isLoading={disconnecting}
+        onConfirm={disconnect}
+        onCancel={() => setShowDisconnect(false)}
+      />
 
       {properties !== null && (
         <div className="mb-4 space-y-1.5 border-b border-border pb-4">
