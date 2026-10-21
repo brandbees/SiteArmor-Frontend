@@ -545,7 +545,7 @@ export default function SitesPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-transparent">
       {bulkMsg && (
         <div
           className={cn(
@@ -560,7 +560,7 @@ export default function SitesPage() {
       )}
 
       {/* Page header + filter toolbar (refine: chips in toolbar, not a side column) */}
-      <header className="sticky top-0 z-10 shrink-0 border-b border-zinc-200 bg-white">
+      <header className="sa-topbar sticky top-0 z-10 shrink-0">
         <div className="flex flex-col gap-3 p-4 pr-6 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex min-w-0 items-center gap-3 sm:min-w-[200px]">
             <AppWindow

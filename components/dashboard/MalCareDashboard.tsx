@@ -48,7 +48,7 @@ function McWidgetCard({
   return (
     <div
       className={cn(
-        "mc-shell flex w-full flex-col justify-stretch overflow-visible bg-[#FDFDFD] p-4 sm:p-5",
+        "mc-shell flex w-full flex-col justify-stretch overflow-visible p-4 sm:p-5",
         className
       )}
     >

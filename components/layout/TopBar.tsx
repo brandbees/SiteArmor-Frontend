@@ -92,7 +92,7 @@ function useBreadcrumbs(pathname: string, siteName?: string | null, activeTab?: 
 
 /** Header icon control — light chrome on white topbar */
 const headerIconBtn =
-  "inline-flex aspect-square shrink-0 items-center justify-center rounded-md border border-zinc-200/90 bg-white p-2 transition-colors hover:bg-zinc-50 active:bg-zinc-100 [&_svg]:size-[18px] [&_svg]:stroke-[1.5] [&_svg]:text-zinc-800";
+  "inline-flex aspect-square shrink-0 items-center justify-center rounded-md border border-white/80 bg-white/55 p-2 shadow-[inset_0_1px_0_rgb(255_255_255/0.85)] backdrop-blur-md transition-colors hover:bg-white/75 active:bg-white/90 [&_svg]:size-[18px] [&_svg]:stroke-[1.5] [&_svg]:text-zinc-800";
 
 export function TopBar({
   collapsed,
@@ -116,7 +116,7 @@ function TopBarFallback({
   onToggleSidebar: () => void;
 }) {
   return (
-    <header className="sticky z-50 flex h-12 w-full shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-3 md:h-14 md:px-4">
+    <header className="sa-topbar sticky z-50 flex h-12 w-full shrink-0 items-center gap-2 px-3 md:h-14 md:px-4">
       <button
         type="button"
         onClick={onToggleSidebar}
@@ -228,7 +228,7 @@ function TopBarInner({
 
   return (
     <>
-      <header className="sticky z-50 flex h-12 w-full shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-3 md:h-14 md:px-4">
+      <header className="sa-topbar sticky z-50 flex h-12 w-full shrink-0 items-center gap-2 px-3 md:h-14 md:px-4">
         {/* Left: collapse + breadcrumbs */}
         <button
           type="button"

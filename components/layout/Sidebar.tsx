@@ -62,8 +62,8 @@ function QuickAddButton({ active }: { active?: boolean }) {
       className={cn(
         "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors",
         active
-          ? "text-white/80 hover:bg-white/10"
-          : "text-slate-500 hover:bg-white/10 hover:text-slate-200"
+          ? "text-accent hover:bg-accent/10"
+          : "text-slate-400 hover:bg-slate-200/60 hover:text-slate-600"
       )}
       onClick={(e) => {
         e.preventDefault();
@@ -108,7 +108,7 @@ function NavLink({
       <Icon
         size={18}
         strokeWidth={1.5}
-        className={cn("shrink-0", active ? "text-white" : "text-slate-400 group-hover:text-slate-200")}
+        className={cn("shrink-0", active ? "text-accent" : "text-slate-500 group-hover:text-slate-700")}
       />
       {!collapsed && (
         <>
@@ -139,7 +139,7 @@ function NavSection({
           {label}
         </p>
       )}
-      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-white/10" />}
+      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-slate-200/80" />}
       <div className="space-y-0.5">
         {items.map((item) => (
           <NavLink
@@ -173,7 +173,6 @@ export function Sidebar({
   const { roleCanDo } = useRole();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  /** Peek-open while pointer is over the rail — widens layout slot like pin-toggle. */
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -224,7 +223,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Hover expand widens the slot (same as pin-toggle) so header/content shrink instead of overlay */}
       <div
         className={cn(
           "relative hidden shrink-0 self-stretch transition-[width] duration-200 ease-linear md:block",
@@ -241,7 +239,7 @@ export function Sidebar({
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("bb:open-command-palette"))}
             className={cn(
-              "flex w-full items-center rounded-lg bg-white/5 text-slate-400 transition-colors hover:bg-white/8 hover:text-slate-200",
+              "flex w-full items-center rounded-lg border border-white/70 bg-white/50 text-slate-500 shadow-[inset_0_1px_0_rgb(255_255_255/0.8)] backdrop-blur-md transition-colors hover:bg-white/70 hover:text-slate-700",
               railCollapsed ? "h-9 justify-center" : "h-9 gap-2 px-3"
             )}
             title="Search (Ctrl+K)"
@@ -256,7 +254,7 @@ export function Sidebar({
                     <Wifi size={11} className="text-white" />
                   </div>
                 )}
-                <span className="flex-1 truncate text-left text-xs font-light text-slate-400">
+                <span className="flex-1 truncate text-left text-xs font-light text-slate-500">
                   Search or press Ctrl+K / ⌘K
                 </span>
               </>
@@ -264,7 +262,7 @@ export function Sidebar({
             <Search size={18} strokeWidth={1.5} className="shrink-0" />
           </button>
           {!railCollapsed && !logoUrl && (
-            <p className="font-portal-display mt-2 truncate px-1 text-[11px] font-semibold tracking-wide text-slate-500">
+            <p className="font-portal-display mt-2 truncate px-1 text-[11px] font-semibold tracking-wide text-slate-400">
               {brand}
             </p>
           )}
@@ -292,7 +290,7 @@ export function Sidebar({
               onClick={() => setChangelogOpen(true)}
               className="sa-nav-item mt-1 h-9 w-full gap-2.5 px-3 text-sm"
             >
-              <Sparkles size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />
+              <Sparkles size={18} strokeWidth={1.5} className="shrink-0 text-slate-500" />
               What&apos;s new
               {unreadCount > 0 && (
                 <span className="ml-auto rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -308,15 +306,15 @@ export function Sidebar({
         )}
 
         {!isSiteDetail && (
-        <div className={cn("shrink-0 border-t border-white/6", railCollapsed ? "p-2" : "p-2 px-3")}>
+        <div className={cn("shrink-0 border-t border-slate-200/60", railCollapsed ? "p-2" : "p-2 px-3")}>
           {!railCollapsed ? (
             <a
               href="mailto:support@sitearmor.com"
-              className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/4 px-3 py-2.5 transition-colors hover:bg-white/8"
+              className="flex items-center gap-3 rounded-lg border border-white/80 bg-white/45 px-3 py-2.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.85)] backdrop-blur-md transition-colors hover:bg-white/65"
             >
-              <LifeBuoy size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />
+              <LifeBuoy size={18} strokeWidth={1.5} className="shrink-0 text-slate-500" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-slate-200">Support</p>
+                <p className="text-xs font-semibold text-slate-800">Support</p>
                 <p className="truncate text-[11px] text-slate-500">support@sitearmor.com</p>
               </div>
             </a>
@@ -324,7 +322,7 @@ export function Sidebar({
             <a
               href="mailto:support@sitearmor.com"
               title="Support"
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-white/8 hover:text-slate-200"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-accent/8 hover:text-slate-700"
             >
               <LifeBuoy size={18} strokeWidth={1.5} />
             </a>

@@ -317,7 +317,7 @@ export function PlansBillingPage() {
   const isFree = currentPlan === "free";
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-transparent">
       <nav className="shrink-0 border-b border-zinc-200 bg-white">
         <ScrollFadeRow fadeFrom="from-white" innerClassName="flex px-4 sm:px-8">
           {BILLING_TABS.map(({ id, label }) => {

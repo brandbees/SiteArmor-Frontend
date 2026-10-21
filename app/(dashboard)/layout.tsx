@@ -169,20 +169,20 @@ export default function DashboardLayout({
   if (!ready) return null;
 
   const dashboardShell = (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
+    <div className="sa-atmosphere flex h-screen flex-col overflow-hidden">
       <CommandPalette />
       <AnnouncementBanner />
       <TrialBanner />
       <div className="flex min-h-0 flex-1">
         <Sidebar collapsed={sidebarCollapsed} />
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
           <div className="shrink-0">
             <TopBar collapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
           </div>
           <main
             className={cn(
-              "min-w-0 flex-1 overflow-x-auto",
-              isDashboard ? "flex flex-col bg-background" : "bg-background",
+              "min-w-0 flex-1 overflow-x-auto bg-transparent",
+              isDashboard && "flex flex-col",
               isFullBleed ? "p-0" : "p-4 md:p-5",
               isAgent || isSiteDetail || isSetup || pathname === "/billing" || pathname?.startsWith("/reports")
                 ? "flex flex-col overflow-hidden"

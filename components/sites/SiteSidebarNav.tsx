@@ -21,7 +21,7 @@ import { getAgency } from "@/lib/auth";
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-white/10 px-1.5 text-[10px] font-bold tabular-nums text-slate-300">
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-200/80 px-1.5 text-[10px] font-bold tabular-nums text-slate-600">
       {count > 9 ? "9+" : count}
     </span>
   );
@@ -30,7 +30,7 @@ function NavBadge({ count }: { count: number }) {
 function ActiveBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-accent/30 px-1.5 text-[10px] font-bold tabular-nums text-white">
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-accent/15 px-1.5 text-[10px] font-bold tabular-nums text-accent">
       {count > 9 ? "9+" : count}
     </span>
   );
@@ -68,7 +68,7 @@ function SiteNavLeafLink({
       <Icon
         size={18}
         strokeWidth={1.5}
-        className={cn("shrink-0", active ? "text-white" : "text-slate-400 group-hover:text-slate-200")}
+        className={cn("shrink-0", active ? "text-accent" : "text-slate-500 group-hover:text-slate-700")}
       />
       {!collapsed && (
         <>
@@ -135,7 +135,7 @@ function CollapsedGroupFlyout({
           onMouseEnter={show}
           onMouseLeave={hide}
           style={{ top: pos.top, left: pos.left }}
-          className="fixed z-[80] min-w-[220px] rounded-2xl border border-zinc-200/90 bg-white py-2 shadow-[0_12px_40px_rgb(15_23_42/0.14)]"
+          className="fixed z-[80] min-w-[220px] rounded-xl border border-white/70 bg-white/85 py-2 shadow-[0_12px_40px_rgb(15_23_42/0.14)] backdrop-blur-xl"
         >
           {group.items.map((item) => {
             const Icon = item.icon;
@@ -193,7 +193,7 @@ function CollapsedGroupFlyout({
           strokeWidth={2.5}
           className={cn(
             "absolute -right-0.5 top-1/2 -translate-y-1/2",
-            hasActiveChild ? "text-white/90" : "text-slate-500"
+            hasActiveChild ? "text-accent" : "text-slate-400"
           )}
         />
       </button>
@@ -263,19 +263,19 @@ function NavGroup({
         onClick={onToggle}
         className={cn(
           "sa-nav-item h-9 w-full gap-2.5 px-2 text-sm font-medium",
-          hasActiveChild && "text-white"
+          hasActiveChild && "text-accent"
         )}
       >
-        <GroupIcon size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />
+        <GroupIcon size={18} strokeWidth={1.5} className="shrink-0 text-slate-500" />
         <span className="min-w-0 flex-1 truncate text-left">{group.label}</span>
         {open ? (
-          <ChevronDown size={14} className="shrink-0 text-slate-500" />
+          <ChevronDown size={14} className="shrink-0 text-slate-400" />
         ) : (
-          <ChevronRight size={14} className="shrink-0 text-slate-500" />
+          <ChevronRight size={14} className="shrink-0 text-slate-400" />
         )}
       </button>
       {open && (
-        <div className="mt-0.5 space-y-0.5 border-l border-white/10 pl-1">
+        <div className="mt-0.5 space-y-0.5 border-l border-slate-200/80 pl-1">
           {group.items.map((item) => (
             <SiteNavLeafLink
               key={item.id}
@@ -357,14 +357,14 @@ export function SiteSidebarNav({
           Site Navigation
         </p>
       )}
-      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-white/10" />}
+      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-slate-200/80" />}
 
       {!collapsed && site && (
         <Link
           href={`/sites/${siteId}`}
           className={cn(
-            "mb-3 flex items-start gap-2.5 rounded-lg border border-white/8 bg-white/5 px-2.5 py-2.5 transition-colors hover:bg-white/8",
-            activeTab === "overview" && "bg-white/8 ring-1 ring-accent/40"
+            "mb-3 flex items-start gap-2.5 rounded-lg border border-white/80 bg-white/45 px-2.5 py-2.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.85)] backdrop-blur-md transition-colors hover:bg-white/65",
+            activeTab === "overview" && "bg-accent/8 ring-1 ring-accent/25"
           )}
         >
           <span
@@ -375,8 +375,8 @@ export function SiteSidebarNav({
             aria-hidden
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-100">{site.name}</p>
-            <p className="truncate text-xs font-medium text-slate-400">{truncateUrl(site.url, 36)}</p>
+            <p className="truncate text-sm font-semibold text-slate-900">{site.name}</p>
+            <p className="truncate text-xs font-medium text-slate-500">{truncateUrl(site.url, 36)}</p>
           </div>
         </Link>
       )}
@@ -385,14 +385,14 @@ export function SiteSidebarNav({
         <Link
           href={`/sites/${siteId}`}
           title={site.name}
-          className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/8 text-xs font-bold text-slate-200"
+          className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-lg border border-white/70 bg-white/50 text-xs font-bold text-accent backdrop-blur-md"
         >
           {site.name[0]?.toUpperCase()}
         </Link>
       )}
 
       {!collapsed && !site && (
-        <div className="mb-3 h-[52px] animate-pulse rounded-lg bg-white/5" />
+        <div className="mb-3 h-[52px] animate-pulse rounded-lg bg-white/40" />
       )}
 
       <div className="space-y-0.5">
@@ -421,12 +421,12 @@ export function SiteSidebarNavFallback({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="mb-2 space-y-1">
       {!collapsed && (
-        <div className="mb-3 h-14 animate-pulse rounded-lg bg-white/5" />
+        <div className="mb-3 h-14 animate-pulse rounded-lg bg-white/40" />
       )}
       {SITE_NAV_GROUPS.slice(0, 4).map((g) => (
         <div
           key={g.id}
-          className={cn("h-9 animate-pulse rounded-lg bg-white/5", collapsed ? "mx-auto w-9" : "w-full")}
+          className={cn("h-9 animate-pulse rounded-lg bg-white/40", collapsed ? "mx-auto w-9" : "w-full")}
         />
       ))}
     </div>
