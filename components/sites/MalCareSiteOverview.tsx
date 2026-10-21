@@ -58,7 +58,7 @@ function McWidgetCard({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 w-full flex-col justify-stretch gap-8 overflow-hidden rounded-3xl border border-zinc-200 bg-[#FDFDFD] p-6 shadow-xs",
+        "mc-shell flex h-full min-h-0 w-full flex-col justify-stretch gap-4 overflow-hidden bg-[#FDFDFD] p-4 sm:p-5",
         className
       )}
     >
@@ -79,10 +79,12 @@ function WidgetHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex w-full shrink-0 items-center justify-between gap-4">
-      <header className="flex min-w-0 flex-1 items-end gap-2 overflow-hidden">
-        {icon}
-        <span className="truncate text-lg font-medium leading-none text-zinc-900">{title}</span>
+    <div className="flex w-full shrink-0 items-center justify-between gap-3">
+      <header className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        <span className="[&_svg]:size-[18px]">{icon}</span>
+        <span className="truncate text-[15px] font-semibold leading-tight tracking-tight text-zinc-900">
+          {title}
+        </span>
         {badge}
       </header>
       {action ? <div className="shrink-0">{action}</div> : null}
@@ -161,7 +163,7 @@ function EmptyWidget({
   action?: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-sm flex-1 flex-col items-center justify-center gap-6 py-4 text-center">
+    <div className="mx-auto flex max-w-sm flex-1 flex-col items-center justify-center gap-3 py-2 text-center">
       <div className="flex h-32 w-32 items-center justify-center rounded-full bg-zinc-100/80">
         {icon ?? <CloudUpload size={40} strokeWidth={1} className="text-zinc-300" />}
       </div>
@@ -576,58 +578,65 @@ export function MalCareSiteOverview({
         <div className="flex flex-wrap items-stretch gap-4">
           {/* Site Summary */}
           <WidgetSlot width={648}>
-            <div className="flex w-full flex-col overflow-hidden rounded-3xl border border-accent/40 bg-[#FDFDFD] shadow-xs">
-              <div className="flex flex-col gap-8 p-6 pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <header className="flex items-end gap-2">
-                      <Globe size={20} strokeWidth={1} className="text-zinc-900" />
-                      <span className="text-lg font-medium leading-none text-zinc-900">Site Summary</span>
-                    </header>
-                    <div className="flex h-6 items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1">
-                      <span className="text-sm font-medium text-zinc-800">
-                        {site.plugin_connected ? "Connected" : "Free"}
-                      </span>
-                    </div>
+            <div className="mc-shell flex w-full flex-col overflow-hidden border-accent/35 bg-[#FDFDFD]">
+              <div className="flex flex-col gap-4 p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Globe size={18} strokeWidth={1.5} className="shrink-0 text-zinc-900" />
+                    <span className="text-[15px] font-semibold tracking-tight text-zinc-900">
+                      Site Summary
+                    </span>
+                    <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-700">
+                      {site.plugin_connected ? "Connected" : "Free"}
+                    </span>
                   </div>
-                  {!site.plugin_connected && (
-                    <span className="inline-flex h-6 items-center rounded-md border border-zinc-200 bg-white px-2 text-xs font-normal text-muted-foreground shadow-xs">
-                      Not connected
+                  {online ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-green-100 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-zinc-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      Online
+                    </span>
+                  ) : down ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-red-100 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                      Down
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600">
+                      Unknown
                     </span>
                   )}
                 </div>
 
-                <div className="flex gap-6">
+                <div className="flex gap-4">
                   <div className="relative shrink-0">
-                    <div className="h-[112px] w-[184px] overflow-hidden rounded-xl border border-zinc-100 bg-zinc-100">
+                    <div className="h-[88px] w-[144px] overflow-hidden rounded-lg border border-zinc-100 bg-zinc-100">
                       <SiteScreenshot
                         url={site.url}
                         connected={site.plugin_connected}
                         hacked={site.malware_status === "threat"}
-                        width={368}
+                        width={288}
                         className="h-full w-full"
                       />
                     </div>
-                    <button
-                      type="button"
-                      className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover"
+                    <span
+                      className="absolute right-1.5 top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-accent text-white"
                       aria-label="Site lock status"
                     >
-                      {online ? <LockOpen size={12} /> : <Lock size={12} />}
-                    </button>
+                      {online ? <LockOpen size={11} /> : <Lock size={11} />}
+                    </span>
                   </div>
 
-                  <div className="min-w-0 flex-1 space-y-4">
-                    <div className="flex flex-wrap items-center gap-6 pl-1">
-                      <div className="flex items-center gap-2">
-                        <WordPressIcon size={16} className="text-muted-foreground" />
-                        <span className="text-sm font-medium text-muted-foreground">{wpVersion}</span>
+                  <div className="min-w-0 flex-1 space-y-2.5">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <WordPressIcon size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">{wpVersion}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] font-bold lowercase text-white">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded bg-zinc-900 px-1 py-0.5 text-[9px] font-bold lowercase text-white">
                           php
                         </span>
-                        <span className="text-sm font-medium text-muted-foreground">{phpVersion}</span>
+                        <span className="text-xs font-medium text-muted-foreground">{phpVersion}</span>
                       </div>
                     </div>
 
@@ -637,87 +646,73 @@ export function MalCareSiteOverview({
                       disabled={isClientPortal}
                       className={`flex max-w-fit items-center gap-2 ${isClientPortal ? "cursor-default" : "transition-opacity hover:opacity-80"}`}
                     >
-                      <div className="relative flex h-7 w-7 items-center justify-center rounded-md bg-zinc-50">
-                        <Plug size={16} strokeWidth={1} className="text-zinc-600" />
+                      <div className="relative flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50">
+                        <Plug size={14} strokeWidth={1.5} className="text-zinc-600" />
                         {!isClientPortal && updates > 0 && (
-                          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-xs font-medium text-zinc-600">
+                          <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-white px-0.5 text-[10px] font-medium text-zinc-600">
                             {updates}
                           </span>
                         )}
                       </div>
                       <span className="truncate text-xs text-zinc-800">
                         {pluginCount != null ? `${pluginCount} active plugins` : "Plugins"}
-                        {!isClientPortal && updates > 0 ? ` · ${updates} update${updates === 1 ? "" : "s"}` : ""}
+                        {!isClientPortal && updates > 0
+                          ? ` · ${updates} update${updates === 1 ? "" : "s"}`
+                          : ""}
                       </span>
                     </button>
 
                     {!isClientPortal && (
-                    <button
-                      type="button"
-                      onClick={() => setTab("plugins")}
-                      className="text-xs font-medium text-accent hover:underline"
-                    >
-                      Manage themes & plugins
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setTab("plugins")}
+                        className="text-xs font-medium text-accent hover:underline"
+                      >
+                        Manage themes & plugins
+                      </button>
                     )}
                   </div>
                 </div>
-
-                <div className="flex items-center">
-                  {online ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-xs text-zinc-900">
-                      <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
-                      Site is Online
-                    </span>
-                  ) : down ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-xs text-red-700">
-                      <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
-                      Site is Down
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
-                      Status unknown
-                    </span>
-                  )}
-                </div>
               </div>
 
-              <div className="flex flex-col gap-4 overflow-hidden border-t border-zinc-100 bg-zinc-50 p-6">
-                <div className="space-y-6">
-                  {alerts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No alerts for this site.</p>
-                  ) : (
-                    alerts.map((alert) => (
-                      <button
-                        key={alert.title}
-                        type="button"
-                        onClick={alert.onClick}
-                        className="group flex w-full items-start gap-3 text-left transition-all hover:underline"
-                      >
-                        <div className="flex aspect-square items-center justify-center rounded-sm bg-amber-50 p-1">
-                          <Download size={16} strokeWidth={1.5} className="text-amber-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-zinc-900 group-hover:underline">
-                            {alert.title}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">{alert.description}</p>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-                {alerts.length > 0 && (
-                  <div className="flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setTab("issues")}
-                      className="inline-flex h-8 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-accent shadow-xs hover:bg-zinc-50"
-                    >
-                      <List size={16} strokeWidth={1} />
-                      View All ({alerts.length})
-                    </button>
-                  </div>
+              <div className="flex flex-col gap-2.5 border-t border-zinc-100 bg-zinc-50/80 px-4 py-3 sm:px-5">
+                {alerts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No alerts for this site.</p>
+                ) : (
+                  <>
+                    <div className="space-y-2.5">
+                      {alerts.slice(0, 3).map((alert) => (
+                        <button
+                          key={alert.title}
+                          type="button"
+                          onClick={alert.onClick}
+                          className="group flex w-full items-start gap-2.5 text-left"
+                        >
+                          <div className="flex aspect-square items-center justify-center rounded-sm bg-amber-50 p-1">
+                            <Download size={14} strokeWidth={1.5} className="text-amber-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-zinc-900 group-hover:underline">
+                              {alert.title}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">{alert.description}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {alerts.length > 0 && (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setTab("issues")}
+                          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-accent shadow-xs hover:bg-zinc-50"
+                        >
+                          <List size={14} strokeWidth={1.5} />
+                          View All ({alerts.length})
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -793,42 +788,46 @@ export function MalCareSiteOverview({
                   </button>
                 }
               />
-              <div className="flex min-h-0 flex-1 flex-col gap-6">
-                <div className="grid grid-cols-5 items-stretch gap-6">
-                  <div className="col-span-2 flex flex-col items-center justify-center gap-2">
+              <div className="flex min-h-0 flex-1 flex-col gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="shrink-0">
                     {perfScore != null ? (
-                      <SiteScoreWheel score={perfScore} caption="Site Score" size={144} />
+                      <SiteScoreWheel score={perfScore} caption="Score" size={96} />
                     ) : (
-                      <div className="flex h-[144px] w-[144px] items-center justify-center rounded-full border-2 border-dashed border-zinc-200 text-sm text-zinc-400">
+                      <div className="flex h-[96px] w-[96px] items-center justify-center rounded-full border border-dashed border-zinc-200 text-xs text-zinc-400">
                         No score
                       </div>
                     )}
-                    {site.avg_response_ms != null && (
-                      <p className="text-xs text-zinc-900">
-                        Load Time: <span className="text-accent">{(site.avg_response_ms / 1000).toFixed(1)} s</span>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="text-sm font-medium text-zinc-900">
+                      {perfScore == null
+                        ? "No performance data yet"
+                        : perfScore >= 80
+                          ? "Performance looks good"
+                          : "Needs improvement"}
+                    </p>
+                    {site.avg_response_ms != null ? (
+                      <p className="text-xs text-muted-foreground">
+                        Load time{" "}
+                        <span className="font-medium text-accent">
+                          {(site.avg_response_ms / 1000).toFixed(1)}s
+                        </span>
                       </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Run an audit to unlock metrics</p>
                     )}
                   </div>
-                  <div className="col-span-3 flex flex-col items-center justify-center gap-2 text-center">
-                    <p className="text-sm font-medium text-zinc-900">Performance Trend</p>
-                    <p className="text-xs text-muted-foreground">Trend data will appear after 24 hours</p>
-                  </div>
                 </div>
-                <div className="mt-auto flex items-center justify-between gap-4">
-                <p className="text-xs text-zinc-900">
-                  Status:{" "}
-                  <span className="font-semibold">
-                    {perfScore == null ? "No data" : perfScore >= 80 ? "Good" : "Needs improvement"}
-                  </span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setTab("performance")}
-                  className="inline-flex h-8 shrink-0 items-center gap-2 rounded-md bg-zinc-100 px-4 text-sm font-medium text-accent hover:bg-zinc-200"
-                >
-                  <FileChartColumnIncreasing size={16} strokeWidth={1} />
-                  View Report
-                </button>
+                <div className="mt-auto flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setTab("performance")}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-accent shadow-xs hover:bg-zinc-50"
+                  >
+                    View report
+                    <ArrowUpRight size={14} strokeWidth={1.5} />
+                  </button>
                 </div>
               </div>
             </McWidgetCard>
@@ -872,7 +871,7 @@ export function MalCareSiteOverview({
                   ).map(([label, value]) => (
                     <div key={label}>
                       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-                      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{value}</p>
+                      <p className="mt-0.5 text-base font-semibold tabular-nums text-zinc-900">{value}</p>
                     </div>
                   ))}
                 </div>
