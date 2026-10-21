@@ -48,7 +48,7 @@ function McWidgetCard({
   return (
     <div
       className={cn(
-        "flex w-full flex-col justify-stretch overflow-visible rounded-3xl border border-zinc-200 bg-[#FDFDFD] p-6 shadow-xs",
+        "mc-shell flex w-full flex-col justify-stretch overflow-visible bg-[#FDFDFD] p-4 sm:p-5",
         className
       )}
     >
@@ -69,10 +69,10 @@ function McStatCard({
   children: ReactNode;
 }) {
   const inner = (
-    <div className="flex h-[123px] w-full cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-none transition-transform duration-150 hover:scale-[1.02]">
+    <div className="mc-panel flex h-[108px] w-full cursor-pointer flex-col justify-between overflow-hidden p-3 transition-colors duration-150 hover:bg-zinc-50/80">
       <div className="flex w-full items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <div className="flex items-center justify-center rounded bg-zinc-50 p-0.5 text-muted-foreground">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <div className="flex items-center justify-center rounded text-muted-foreground [&_svg]:size-4">
           {icon}
         </div>
       </div>
@@ -152,10 +152,10 @@ function WidgetHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 items-center justify-between gap-4">
-      <header className="flex min-w-0 shrink items-end gap-2">
-        {icon}
-        <span className="text-lg font-medium leading-tight text-zinc-900">{title}</span>
+    <div className="flex shrink-0 items-center justify-between gap-3">
+      <header className="flex min-w-0 shrink items-center gap-2">
+        <span className="[&_svg]:size-[18px]">{icon}</span>
+        <span className="text-[15px] font-semibold leading-tight tracking-tight text-zinc-900">{title}</span>
         {badge}
       </header>
       {action}
@@ -624,11 +624,11 @@ export function MalCareDashboard({
             <McStatCard label="Sites" href="/sites" icon={<Globe size={24} strokeWidth={1.5} />}>
               <div className="flex gap-14">
                 <div className="flex grow flex-col gap-1">
-                  <p className="text-2xl font-medium text-emerald-700">{sitesUp}</p>
+                  <p className="text-xl font-semibold tabular-nums text-emerald-700">{sitesUp}</p>
                   <p className="text-xs text-muted-foreground">Sites Up</p>
                 </div>
                 <div className="flex grow flex-col gap-1">
-                  <p className="text-2xl font-medium text-destructive">{sitesDown}</p>
+                  <p className="text-xl font-semibold tabular-nums text-destructive">{sitesDown}</p>
                   <p className="text-xs text-muted-foreground">Sites Down</p>
                 </div>
               </div>
@@ -638,7 +638,7 @@ export function MalCareDashboard({
               <div className="flex flex-col gap-1 rounded-lg">
                 <div className="flex w-full items-end justify-between">
                   <div className="flex items-end gap-0">
-                    <p className="text-2xl font-normal text-zinc-700">{sitesUsed}</p>
+                    <p className="text-xl font-semibold tabular-nums text-zinc-700">{sitesUsed}</p>
                     <p className="py-1 text-xs text-zinc-400">/ {planLimit >= 9999 ? "∞" : planLimit}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -663,11 +663,11 @@ export function MalCareDashboard({
             >
               <div className="flex gap-14">
                 <div className="flex grow flex-col gap-1">
-                  <p className="text-2xl font-normal text-zinc-700">{isIndividual ? 1 : teamCount}</p>
+                  <p className="text-xl font-semibold tabular-nums text-zinc-700">{isIndividual ? 1 : teamCount}</p>
                   <p className="text-xs text-muted-foreground">Team Members</p>
                 </div>
                 <div className="flex grow flex-col gap-1">
-                  <p className="text-2xl font-normal text-zinc-700">{isIndividual ? 0 : clientCount}</p>
+                  <p className="text-xl font-semibold tabular-nums text-zinc-700">{isIndividual ? 0 : clientCount}</p>
                   <p className="text-xs text-muted-foreground">Clients</p>
                 </div>
               </div>
@@ -676,7 +676,7 @@ export function MalCareDashboard({
             {/* Compact updates stat — detailed list is “Manage Updates” below (one story) */}
             <McStatCard label="Updates" href="/sites?quick=updates" icon={<Plug size={24} strokeWidth={1.5} />}>
               <div className="flex min-w-0 items-end gap-2">
-                <p className="text-2xl font-normal leading-none text-zinc-700">{totalUpdates}</p>
+                <p className="text-xl font-semibold tabular-nums leading-none text-zinc-700">{totalUpdates}</p>
                 <p className="pb-0.5 text-xs leading-tight text-muted-foreground">
                   plugin update{totalUpdates === 1 ? "" : "s"}
                   {sitesWithUpdates.length > 0
@@ -693,7 +693,7 @@ export function MalCareDashboard({
           <div className="flex max-w-full grow flex-wrap items-stretch gap-4">
             {/* Alerts */}
             <div className="flex w-full grow self-stretch lg:w-[544px] lg:max-w-full">
-              <McWidgetCard className="flex h-full max-h-none min-h-0 flex-col gap-6 overflow-visible">
+              <McWidgetCard className="flex h-full max-h-none min-h-0 flex-col gap-4 overflow-visible">
                 <WidgetHeader
                   icon={<AlertCircle size={20} strokeWidth={1} className="text-zinc-900" />}
                   title="Alerts"
@@ -842,7 +842,7 @@ export function MalCareDashboard({
 
             {/* Backups */}
             <div className="flex w-full grow self-stretch lg:w-[542px] lg:max-w-full">
-              <McWidgetCard className="flex h-full flex-col gap-6">
+              <McWidgetCard className="flex h-full flex-col gap-4">
                 <div className="flex shrink-0 items-center justify-between">
                   <WidgetHeader
                     icon={<CloudUpload size={20} strokeWidth={1} className="text-zinc-900" />}
@@ -964,7 +964,7 @@ export function MalCareDashboard({
             {/* Manage Updates — agency only */}
             {!agency?.is_client_portal && (
             <div className="w-full grow lg:w-[1104px] lg:max-w-full">
-              <McWidgetCard className="flex flex-col gap-6">
+              <McWidgetCard className="flex flex-col gap-4">
                 <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
                   <WidgetHeader
                     icon={<SlidersHorizontal size={20} strokeWidth={1} className="text-zinc-900" />}
@@ -1015,13 +1015,13 @@ export function MalCareDashboard({
 
             {/* Performance */}
             <div className="flex w-full grow self-stretch lg:w-[544px] lg:max-w-full">
-              <McWidgetCard className="flex h-full flex-col gap-6">
+              <McWidgetCard className="flex h-full flex-col gap-4">
                 <WidgetHeader
                   icon={<FileChartColumnIncreasing size={20} strokeWidth={1} className="text-zinc-900" />}
                   title="Performance"
                 />
-                <div className="flex min-h-0 w-full flex-1 flex-col justify-center gap-6">
-                  <div className="flex items-center justify-between gap-6">
+                <div className="flex min-h-0 w-full flex-1 flex-col justify-center gap-4">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="relative flex h-[180px] w-[180px] shrink-0 items-center justify-center overflow-visible">
                       {perfPie.length > 0 ? (
                         <ResponsiveContainer width={180} height={180}>
@@ -1084,7 +1084,7 @@ export function MalCareDashboard({
 
             {/* Advanced Monitoring */}
             <div className="flex w-full grow self-stretch lg:w-[542px] lg:max-w-full">
-              <McWidgetCard className="flex h-full flex-col gap-6">
+              <McWidgetCard className="flex h-full flex-col gap-4">
                 <div className="flex shrink-0 items-center justify-between gap-4">
                   <WidgetHeader
                     icon={<Activity size={20} strokeWidth={1} className="text-zinc-900" />}
@@ -1187,7 +1187,7 @@ export function MalCareDashboard({
 
             {/* Reports */}
             <div className="w-full grow lg:w-[544px] lg:max-w-full">
-              <McWidgetCard className="flex flex-col gap-6">
+              <McWidgetCard className="flex flex-col gap-4">
                 <div className="flex shrink-0 items-center justify-between gap-4">
                   <WidgetHeader
                     icon={<FileText size={20} strokeWidth={1} className="text-zinc-900" />}
@@ -1289,7 +1289,7 @@ export function MalCareDashboard({
 
             {/* Site health overview */}
             <div className="w-full grow lg:w-[1104px] lg:max-w-full">
-              <McWidgetCard className="flex flex-col gap-6">
+              <McWidgetCard className="flex flex-col gap-4">
                 <WidgetHeader
                   icon={<ShieldX size={20} strokeWidth={1} className="text-zinc-900" />}
                   title="Site Health Overview"

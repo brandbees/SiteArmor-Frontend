@@ -28,11 +28,14 @@
   --destructive-light: #fef2f2;
   --ring: #1a56db;
   --radius: 0.375rem;
-  --radius-card: 1.5rem;
+  /* Refine v2 — shell vs inner (stop stacking rounded-3xl everywhere) */
+  --radius-shell: 1rem;   /* page panels / dashboard widgets */
+  --radius-card: 0.75rem; /* inner cards */
+  --radius-inner: 0.5rem;
 
   /* Shadows — prefer hairline border; keep elevation subtle */
-  --shadow-xs: 0 0 0 1px rgb(15 23 42 / 0.06);
-  --shadow-sm: 0 0 0 1px rgb(15 23 42 / 0.07), 0 1px 3px 0 rgb(15 23 42 / 0.04);
+  --shadow-xs: 0 0 0 1px rgb(15 23 42 / 0.05);
+  --shadow-sm: 0 0 0 1px rgb(15 23 42 / 0.06), 0 1px 2px 0 rgb(15 23 42 / 0.04);
   --shadow-md: 0 0 0 1px rgb(15 23 42 / 0.08), 0 4px 16px -4px rgb(15 23 42 / 0.1);
   --shadow-lg: 0 0 0 1px rgb(15 23 42 / 0.08), 0 12px 32px -8px rgb(15 23 42 / 0.14);
   --shadow-inset: inset 0 1px 2px 0 rgb(0 0 0 / 0.04);
@@ -193,6 +196,32 @@ button, a, input, select, textarea {
 /* Portal display headings — Space Grotesk via --font-portal-display */
 .font-portal-display {
   font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
+}
+
+/* Refine v2 — shared panel recipe (Crafted MalCare, tight density) */
+.mc-shell {
+  border-radius: var(--radius-shell);
+  border: 1px solid rgb(228 228 231 / 0.9);
+  background: #fff;
+  box-shadow: var(--shadow-xs);
+}
+.mc-panel {
+  border-radius: var(--radius-card);
+  border: 1px solid rgb(228 228 231 / 0.9);
+  background: #fff;
+  box-shadow: var(--shadow-xs);
+}
+.mc-page-title {
+  font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #09090b;
+}
+.mc-page-sub {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #71717a;
 }
 
 .font-setup-accent {

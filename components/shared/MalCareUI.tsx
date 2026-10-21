@@ -95,7 +95,11 @@ export function McIconBox({
   );
 }
 
-/** MalCare-style bordered panel — white on soft gray canvas */
+/**
+ * Refine v2 panel recipe:
+ * - One border + shadow-xs (no nested white cards)
+ * - Shell radius via .mc-panel (0.75rem); denser header
+ */
 export function McCard({
   title,
   icon,
@@ -116,22 +120,22 @@ export function McCard({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
+        "mc-panel flex min-w-0 flex-col overflow-hidden",
         className
       )}
     >
       {(title || action) && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-          <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
             {icon ? <McIconBox icon={icon} tone="neutral" size="sm" /> : null}
             {title ? (
-              <h3 className="truncate text-[13px] font-bold text-foreground">{title}</h3>
+              <h3 className="truncate text-[13px] font-semibold text-foreground">{title}</h3>
             ) : null}
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}
         </div>
       )}
-      <div className={cn(!flush && "px-4 pb-4", bodyClassName)}>{children}</div>
+      <div className={cn(!flush && "px-4 pb-3.5", bodyClassName)}>{children}</div>
     </div>
   );
 }

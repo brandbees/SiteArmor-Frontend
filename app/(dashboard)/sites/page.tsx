@@ -13,8 +13,6 @@ import {
   Plug,
   Package,
   Monitor,
-  Star,
-  ListFilter,
   RotateCcw,
   Loader2,
   MoreVertical,
@@ -343,18 +341,18 @@ function SiteRow({
       onClick={onOpen}
     >
       {showSelect && (
-        <td className={cn(CHECKBOX_COL, "h-16")} onClick={(e) => e.stopPropagation()}>
+        <td className={cn(CHECKBOX_COL, "h-14")} onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-center">
             <McCheckbox checked={selected} onChange={onToggle} ariaLabel={`Select ${site.name}`} />
           </div>
         </td>
       )}
-      <td className="h-16 p-4 pl-0 align-middle">
-        <div className="flex min-w-0 items-center gap-2">
+      <td className="h-14 px-3 py-2 pl-0 align-middle">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             href={`/sites/${site.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="relative h-16 w-[105px] shrink-0 cursor-pointer overflow-hidden rounded-sm border border-zinc-200 bg-zinc-100 shadow-sm"
+            className="relative h-12 w-[84px] shrink-0 cursor-pointer overflow-hidden rounded-md border border-zinc-200 bg-zinc-100"
           >
             <SiteScreenshot
               url={site.url}
@@ -384,7 +382,7 @@ function SiteRow({
           </div>
         </div>
       </td>
-      <td className="h-16 w-[200px] p-4 align-middle">
+      <td className="h-14 w-[180px] px-3 py-2 align-middle">
         <div className="flex flex-wrap items-center gap-1">
           {visible.length > 0 ? (
             visible.map((a) => <AlertBadge key={a.label} label={a.label} tone={a.tone} />)
@@ -398,8 +396,8 @@ function SiteRow({
           )}
         </div>
       </td>
-      <td className="h-16 w-[120px] p-4 align-middle">
-        <div className="flex items-center gap-3 text-zinc-600">
+      <td className="h-14 w-[110px] px-3 py-2 align-middle">
+        <div className="flex items-center gap-2.5 text-zinc-600">
           <UpdateChip icon={Plug} count={updates} title="Plugin updates" />
           <UpdateChip
             icon={Monitor}
@@ -414,7 +412,7 @@ function SiteRow({
           <UpdateChip icon={Package} count={coreUpdates} title="Core updates" dimmed={coreUpdates === 0} />
         </div>
       </td>
-      <td className="h-16 w-[100px] p-4 align-middle" onClick={(e) => e.stopPropagation()}>
+      <td className="h-14 w-[96px] px-3 py-2 align-middle" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
           <ActionBtn
             href={siteUrl}
@@ -561,38 +559,105 @@ export default function SitesPage() {
         </div>
       )}
 
-      {/* Page header — separate bar, no border-radius (MalCare page-header) */}
-      <header className="sticky top-0 z-10 flex shrink-0 flex-col gap-8 border-b border-zinc-200 bg-white p-4 pr-6 sm:flex-row sm:items-center">
-        <div className="flex min-w-[222px] max-w-[50%] items-start gap-4 overflow-hidden">
-          <AppWindow
-            size={24}
-            strokeWidth={1}
-            className="m-1 shrink-0 rounded-full bg-zinc-300 text-zinc-950 shadow-[0_0_0_4px_rgb(244,244,245)]"
-          />
-          <div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-            <h1 className="overflow-hidden text-xl font-semibold leading-normal text-black">Manage Sites</h1>
-            <p className="overflow-hidden text-xs font-normal leading-normal text-accent">Configure your sites</p>
+      {/* Page header + filter toolbar (refine: chips in toolbar, not a side column) */}
+      <header className="sticky top-0 z-10 shrink-0 border-b border-zinc-200 bg-white">
+        <div className="flex flex-col gap-3 p-4 pr-6 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex min-w-0 items-center gap-3 sm:min-w-[200px]">
+            <AppWindow
+              size={20}
+              strokeWidth={1.5}
+              className="shrink-0 rounded-md bg-zinc-100 p-1 text-zinc-800"
+            />
+            <div className="min-w-0">
+              <h1 className="mc-page-title truncate">Manage Sites</h1>
+              <p className="mc-page-sub truncate">Configure your sites</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex h-10 flex-1 flex-row items-center justify-end gap-6">
-          <div className="min-w-0 flex-1">
-            <div className="relative flex h-10 w-full items-center gap-2.5 rounded-lg bg-zinc-100 px-3">
-              <Search size={16} strokeWidth={1} className="pointer-events-none shrink-0 text-zinc-950" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <div className="relative flex h-9 min-w-[12rem] flex-1 items-center gap-2 rounded-md bg-zinc-100 px-2.5 sm:max-w-md">
+              <Search size={15} strokeWidth={1.5} className="pointer-events-none shrink-0 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Search for sites"
+                placeholder="Search sites"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-0"
               />
             </div>
+            {canAddSite && !agency?.is_client_portal && (
+              <Button onClick={() => router.push("/sites/add")} disabled={atLimit} className="h-9 shrink-0 px-3">
+                <Plus size={15} strokeWidth={1.5} />
+                Add Site
+              </Button>
+            )}
           </div>
-          {canAddSite && !agency?.is_client_portal && (
-            <Button onClick={() => router.push("/sites/add")} disabled={atLimit} className="h-10 shrink-0 px-4">
-              <Plus size={16} strokeWidth={1.5} />
-              Add Site
-            </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-4 py-2.5 pr-6">
+          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+            Filter
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setQuick("all");
+              setFiltersDirty(true);
+            }}
+            className={cn(
+              "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+              quick === "all"
+                ? "border-accent bg-accent text-white"
+                : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+            )}
+          >
+            All
+          </button>
+          {QUICK.map((q) => (
+            <button
+              key={q.value}
+              type="button"
+              onClick={() => {
+                setQuick(quick === q.value ? "all" : q.value);
+                setFiltersDirty(true);
+              }}
+              className={cn(
+                "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                quick === q.value
+                  ? "border-accent bg-accent text-white"
+                  : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+              )}
+            >
+              {q.label}
+            </button>
+          ))}
+          {showClientFilter && (
+            <select
+              value={activeClientId ?? ""}
+              onChange={(e) => {
+                setActiveClientId(e.target.value || null);
+                setFiltersDirty(true);
+              }}
+              className="ml-auto h-8 rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="">All clients</option>
+              <option value="__unassigned__">Unassigned</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {(filtersDirty || quick !== "all" || activeClientId) && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-zinc-500 hover:text-zinc-900"
+            >
+              <RotateCcw size={12} />
+              Reset
+            </button>
           )}
         </div>
       </header>
@@ -611,8 +676,9 @@ export default function SitesPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         {!loading && !error && sites.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-zinc-200 bg-white py-20">
+          <div className="mc-shell flex flex-col items-center justify-center py-16">
             <EmptyState
+              className="min-h-[280px]"
               icon={<Globe size={24} className="text-zinc-300" />}
               title="No sites found"
               description="Get started by adding your first WordPress site."
@@ -629,178 +695,99 @@ export default function SitesPage() {
         )}
 
         {!loading && sites.length > 0 && (
-          <div className="flex min-h-full flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white md:flex-row">
-            {/* Filter panel — MalCare 246px */}
-            <aside className="sticky top-0 flex w-full shrink-0 flex-col border-b border-zinc-200 md:w-[220px] md:rounded-l-3xl md:border-b-0 md:border-r">
-              <div className="border-b border-zinc-200 px-3 py-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Star size={16} strokeWidth={1.5} className="shrink-0 text-accent" />
-                  <p className="text-sm font-semibold text-zinc-950">Quick Suggestions</p>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {QUICK.map((q) => (
-                    <button
-                      key={q.value}
-                      type="button"
-                      onClick={() => {
-                        setQuick(quick === q.value ? "all" : q.value);
-                        setFiltersDirty(true);
-                      }}
-                      className={cn(
-                        "w-full rounded-md border px-3 py-2 text-left text-sm font-medium transition-colors",
-                        quick === q.value
-                          ? "border-accent bg-accent text-white"
-                          : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
-                      )}
-                    >
-                      {q.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col px-3 py-4">
-                <div className="flex items-center gap-2 rounded bg-zinc-100 p-2">
-                  <ListFilter size={16} strokeWidth={1.5} className="shrink-0 text-accent" />
-                  <p className="text-sm font-semibold text-zinc-950">Filters</p>
-                </div>
-
-                {showClientFilter ? (
-                  <div className="mt-3">
-                    <label className="mb-1 block text-sm font-medium text-zinc-600">Client</label>
-                    <select
-                      value={activeClientId ?? ""}
-                      onChange={(e) => {
-                        setActiveClientId(e.target.value || null);
-                        setFiltersDirty(true);
-                      }}
-                      className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                    >
-                      <option value="">All clients</option>
-                      <option value="__unassigned__">Unassigned</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-zinc-500">
-                    Use Quick Suggestions above to focus on sites that need attention.
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-auto flex items-center gap-2 border-t border-zinc-200 px-4 py-3">
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  disabled={!filtersDirty && quick === "all" && !activeClientId}
-                  className="inline-flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-950 disabled:opacity-40"
-                >
-                  <RotateCcw size={14} strokeWidth={1.5} />
-                  Reset
-                </button>
+          <div className="mc-shell flex min-h-full flex-col overflow-hidden">
+            {showSelect && selected.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2">
+                <span className="text-xs font-medium text-zinc-700">{selected.size} selected</span>
                 <Button
                   size="sm"
-                  disabled={!filtersDirty && quick === "all" && !activeClientId}
-                  className="flex-1"
-                  onClick={() => setFiltersDirty(false)}
+                  variant="secondary"
+                  disabled={bulkLoading}
+                  onClick={() => executeBulk("run_audit")}
                 >
-                  Apply
+                  {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                  Run Audit
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+                  Clear
                 </Button>
               </div>
-            </aside>
+            )}
 
-            {/* Table area */}
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden md:rounded-r-3xl">
-              {showSelect && selected.size > 0 && (
-                <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
-                  <span className="text-xs font-medium text-zinc-700">{selected.size} selected</span>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={bulkLoading}
-                    onClick={() => executeBulk("run_audit")}
-                  >
-                    {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : null}
-                    Run Audit
+            {filteredSites.length === 0 ? (
+              <EmptyState
+                className="min-h-[320px]"
+                icon={<Search size={20} className="text-zinc-300" />}
+                title="No sites match"
+                description="Try resetting filters or clearing your search."
+                action={
+                  <Button variant="secondary" onClick={resetFilters}>
+                    Reset filters
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
-                    Clear
-                  </Button>
-                </div>
-              )}
-
-              {filteredSites.length === 0 ? (
-                <EmptyState
-                  icon={<Search size={20} className="text-zinc-300" />}
-                  title="No sites match"
-                  description="Try resetting filters or clearing your search."
-                  action={
-                    <Button variant="secondary" onClick={resetFilters}>
-                      Reset filters
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-                  <table className="w-full min-w-[720px] border-collapse text-left">
-                    <thead className="sticky top-0 z-10 bg-white text-sm font-medium">
-                      <tr className={cn("transition-colors hover:bg-[#f4f4f5]", HEADER_RULE)}>
-                        {showSelect && (
-                          <th className={TH_CHECKBOX}>
-                            <div className="flex items-center justify-center">
-                              <McCheckbox
-                                checked={allSelected}
-                                onChange={toggleAll}
-                                ariaLabel="Select all sites"
-                              />
-                            </div>
-                          </th>
-                        )}
-                        <th
-                          className={cn(TH, "pl-0")}
-                          onClick={() => setSortAsc((v) => !v)}
-                        >
-                          <div className="flex items-center gap-2">
-                            Site Name
-                            <ArrowUpDown
-                              size={16}
-                              strokeWidth={1}
-                              className="shrink-0 text-zinc-950 opacity-60"
+                }
+              />
+            ) : (
+              <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+                <table className="w-full min-w-[720px] border-collapse text-left">
+                  <thead className="sticky top-0 z-10 bg-white text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    <tr className={HEADER_RULE}>
+                      {showSelect && (
+                        <th className={TH_CHECKBOX}>
+                          <div className="flex items-center justify-center">
+                            <McCheckbox
+                              checked={allSelected}
+                              onChange={toggleAll}
+                              ariaLabel="Select all sites"
                             />
                           </div>
                         </th>
-                        <th className={cn(TH, "w-[200px]")}>Alerts</th>
-                        <th className={cn(TH, "w-[120px]")}>Updates</th>
-                        <th className={cn(TH, "w-[100px]")}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedSites.map((site) => (
-                        <SiteRow
-                          key={site.id}
-                          site={site}
-                          selected={selected.has(site.id)}
-                          showSelect={showSelect}
-                          canDeleteSite={canDeleteSite}
-                          onToggle={() => toggleSite(site.id)}
-                          onOpen={() => router.push(`/sites/${site.id}`)}
-                          onQuickView={() => setQuickViewSiteId(site.id)}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              <div className="shrink-0 px-4 py-3">
-                <p className="text-sm font-medium text-zinc-500">
-                  {filteredSites.length} of {sites.length} total sites.
-                </p>
+                      )}
+                      <th
+                        className={cn(TH, "pl-0")}
+                        onClick={() => setSortAsc((v) => !v)}
+                      >
+                        <div className="flex items-center gap-2 normal-case tracking-normal text-sm font-medium text-zinc-700">
+                          Site Name
+                          <ArrowUpDown
+                            size={14}
+                            strokeWidth={1.5}
+                            className="shrink-0 text-zinc-400"
+                          />
+                        </div>
+                      </th>
+                      <th className={cn(TH, "w-[180px] normal-case tracking-normal text-sm font-medium text-zinc-700")}>
+                        Alerts
+                      </th>
+                      <th className={cn(TH, "w-[110px] normal-case tracking-normal text-sm font-medium text-zinc-700")}>
+                        Updates
+                      </th>
+                      <th className={cn(TH, "w-[96px] normal-case tracking-normal text-sm font-medium text-zinc-700")}>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedSites.map((site) => (
+                      <SiteRow
+                        key={site.id}
+                        site={site}
+                        selected={selected.has(site.id)}
+                        showSelect={showSelect}
+                        canDeleteSite={canDeleteSite}
+                        onToggle={() => toggleSite(site.id)}
+                        onOpen={() => router.push(`/sites/${site.id}`)}
+                        onQuickView={() => setQuickViewSiteId(site.id)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            )}
+
+            <div className="shrink-0 border-t border-zinc-100 px-4 py-2.5">
+              <p className="text-xs font-medium text-zinc-500">
+                {filteredSites.length} of {sites.length} total sites
+              </p>
             </div>
           </div>
         )}
