@@ -657,7 +657,7 @@ export function SiteOverviewGrid({
                   ["Security", site.malware_status === "threat" ? "Issue" : "Healthy", site.last_audit_at],
                 ] as const
               ).map(([feature, status, checked]) => (
-                <tr key={feature} className="hover:bg-[#f4f4f5]">
+                <tr key={feature} className="hover:bg-muted/70">
                   <td className="px-4 py-3 font-medium text-zinc-950">{feature}</td>
                   <td className="px-4 py-3">
                     <McPill

@@ -21,7 +21,7 @@ import { getAgency } from "@/lib/auth";
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-200 px-1.5 text-[10px] font-bold tabular-nums text-zinc-700">
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-white/10 px-1.5 text-[10px] font-bold tabular-nums text-slate-300">
       {count > 9 ? "9+" : count}
     </span>
   );
@@ -30,7 +30,7 @@ function NavBadge({ count }: { count: number }) {
 function ActiveBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-[10px] font-bold tabular-nums text-white">
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-accent/30 px-1.5 text-[10px] font-bold tabular-nums text-white">
       {count > 9 ? "9+" : count}
     </span>
   );
@@ -54,43 +54,26 @@ function SiteNavLeafLink({
   const Icon = item.icon;
   const href = resolveSiteNavHref(siteId, item);
 
-  if (active) {
-    return (
-      <Link
-        href={href}
-        title={collapsed ? item.label : undefined}
-        className={cn(
-          "group flex items-center rounded-lg bg-accent text-white transition-colors",
-          collapsed ? "mx-auto w-fit p-2" : "h-8 gap-2 px-3",
-          indent && !collapsed && "ml-3"
-        )}
-      >
-        <Icon size={16} strokeWidth={2} className="shrink-0" />
-        {!collapsed && (
-          <>
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">{item.label}</span>
-            <ActiveBadge count={badge ?? 0} />
-          </>
-        )}
-      </Link>
-    );
-  }
-
   return (
     <Link
       href={href}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center rounded-lg text-sm font-normal text-zinc-700 transition-colors hover:bg-zinc-100",
-        collapsed ? "mx-auto w-fit p-2" : "h-8 gap-2 px-3",
+        "sa-nav-item group text-sm",
+        active && "sa-nav-item-active",
+        collapsed ? "mx-auto w-fit p-2.5" : "h-9 gap-2.5 px-3",
         indent && !collapsed && "ml-3"
       )}
     >
-      <Icon size={16} strokeWidth={1.5} className="shrink-0 text-zinc-950" />
+      <Icon
+        size={18}
+        strokeWidth={1.5}
+        className={cn("shrink-0", active ? "text-white" : "text-slate-400 group-hover:text-slate-200")}
+      />
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
-          <NavBadge count={badge ?? 0} />
+          {active ? <ActiveBadge count={badge ?? 0} /> : <NavBadge count={badge ?? 0} />}
         </>
       )}
     </Link>
@@ -200,17 +183,17 @@ function CollapsedGroupFlyout({
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : show())}
         className={cn(
-          "relative mx-auto flex w-fit items-center justify-center rounded-lg p-2 transition-colors",
-          hasActiveChild ? "bg-accent text-white" : "text-zinc-950 hover:bg-zinc-100"
+          "sa-nav-item relative mx-auto w-fit justify-center p-2.5",
+          hasActiveChild && "sa-nav-item-active"
         )}
       >
-        <GroupIcon size={16} strokeWidth={hasActiveChild ? 2 : 1.5} />
+        <GroupIcon size={18} strokeWidth={1.5} />
         <ChevronRight
           size={10}
           strokeWidth={2.5}
           className={cn(
             "absolute -right-0.5 top-1/2 -translate-y-1/2",
-            hasActiveChild ? "text-white/90" : "text-zinc-400"
+            hasActiveChild ? "text-white/90" : "text-slate-500"
           )}
         />
       </button>
@@ -279,20 +262,20 @@ function NavGroup({
         type="button"
         onClick={onToggle}
         className={cn(
-          "flex h-9 w-full items-center gap-2 rounded-lg px-2 text-sm font-medium transition-colors",
-          hasActiveChild ? "text-accent" : "text-zinc-800 hover:bg-zinc-100"
+          "sa-nav-item h-9 w-full gap-2.5 px-2 text-sm font-medium",
+          hasActiveChild && "text-white"
         )}
       >
-        <GroupIcon size={16} strokeWidth={1.5} className="shrink-0" />
+        <GroupIcon size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />
         <span className="min-w-0 flex-1 truncate text-left">{group.label}</span>
         {open ? (
-          <ChevronDown size={14} className="shrink-0 text-zinc-500" />
+          <ChevronDown size={14} className="shrink-0 text-slate-500" />
         ) : (
-          <ChevronRight size={14} className="shrink-0 text-zinc-500" />
+          <ChevronRight size={14} className="shrink-0 text-slate-500" />
         )}
       </button>
       {open && (
-        <div className="mt-0.5 space-y-0.5 border-l border-zinc-200/80 pl-1">
+        <div className="mt-0.5 space-y-0.5 border-l border-white/10 pl-1">
           {group.items.map((item) => (
             <SiteNavLeafLink
               key={item.id}
@@ -370,19 +353,18 @@ export function SiteSidebarNav({
   return (
     <div className="mb-2">
       {!collapsed && (
-        <p className="mb-1 flex h-8 shrink-0 items-center px-3 text-xs font-medium text-zinc-500/80">
+        <p className="sa-nav-section mb-1.5 flex h-7 shrink-0 items-center px-3">
           Site Navigation
         </p>
       )}
-      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-zinc-200" />}
+      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-white/10" />}
 
-      {/* Site identity — MalCare gray card + status square */}
       {!collapsed && site && (
         <Link
           href={`/sites/${siteId}`}
           className={cn(
-            "mb-3 flex items-start gap-2.5 rounded-lg bg-zinc-100 px-2.5 py-2.5 transition-colors hover:bg-zinc-200/70",
-            activeTab === "overview" && "ring-1 ring-accent/25"
+            "mb-3 flex items-start gap-2.5 rounded-lg border border-white/8 bg-white/5 px-2.5 py-2.5 transition-colors hover:bg-white/8",
+            activeTab === "overview" && "bg-white/8 ring-1 ring-accent/40"
           )}
         >
           <span
@@ -393,8 +375,8 @@ export function SiteSidebarNav({
             aria-hidden
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-zinc-950">{site.name}</p>
-            <p className="truncate text-xs font-medium text-accent">{truncateUrl(site.url, 36)}</p>
+            <p className="truncate text-sm font-semibold text-slate-100">{site.name}</p>
+            <p className="truncate text-xs font-medium text-slate-400">{truncateUrl(site.url, 36)}</p>
           </div>
         </Link>
       )}
@@ -403,14 +385,14 @@ export function SiteSidebarNav({
         <Link
           href={`/sites/${siteId}`}
           title={site.name}
-          className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-xs font-bold text-accent"
+          className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/8 text-xs font-bold text-slate-200"
         >
           {site.name[0]?.toUpperCase()}
         </Link>
       )}
 
       {!collapsed && !site && (
-        <div className="mb-3 h-[52px] animate-pulse rounded-lg bg-zinc-100" />
+        <div className="mb-3 h-[52px] animate-pulse rounded-lg bg-white/5" />
       )}
 
       <div className="space-y-0.5">
@@ -439,12 +421,12 @@ export function SiteSidebarNavFallback({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="mb-2 space-y-1">
       {!collapsed && (
-        <div className="mb-3 h-14 animate-pulse rounded-lg bg-zinc-100" />
+        <div className="mb-3 h-14 animate-pulse rounded-lg bg-white/5" />
       )}
       {SITE_NAV_GROUPS.slice(0, 4).map((g) => (
         <div
           key={g.id}
-          className={cn("h-9 animate-pulse rounded-lg bg-zinc-100", collapsed ? "mx-auto w-9" : "w-full")}
+          className={cn("h-9 animate-pulse rounded-lg bg-white/5", collapsed ? "mx-auto w-9" : "w-full")}
         />
       ))}
     </div>

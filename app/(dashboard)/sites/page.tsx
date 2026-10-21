@@ -337,7 +337,7 @@ function SiteRow({
 
   return (
     <tr
-      className={cn("group cursor-pointer transition-colors hover:bg-[#f4f4f5]", ROW_RULE)}
+      className={cn("group cursor-pointer transition-colors hover:bg-muted/70", ROW_RULE)}
       onClick={onOpen}
     >
       {showSelect && (
@@ -545,7 +545,7 @@ export default function SitesPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f4f4f5]">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {bulkMsg && (
         <div
           className={cn(

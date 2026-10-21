@@ -20,32 +20,32 @@ const TONE_STYLES: Record<
   { box: string; pill: string; dot: string; stripe: string }
 > = {
   neutral: {
-    box: "bg-[#eef1f6] text-muted-foreground ring-1 ring-inset ring-black/[0.04]",
-    pill: "border-border bg-white text-muted-foreground shadow-[0_1px_2px_rgb(15_23_42/0.04)]",
+    box: "bg-[#e8eef4] text-muted-foreground",
+    pill: "border-transparent bg-zinc-100 text-zinc-600",
     dot: "bg-muted-foreground",
     stripe: "bg-muted-foreground",
   },
   good: {
-    box: "bg-[var(--score-good-bg)] text-[var(--score-good)] ring-1 ring-inset ring-[var(--score-good-border)]",
-    pill: "border-[var(--score-good-border)] bg-white text-[var(--score-good)] shadow-[0_1px_2px_rgb(22_163_74/0.08)]",
+    box: "bg-[var(--score-good-bg)] text-[var(--score-good)]",
+    pill: "border-transparent bg-[var(--score-good-bg)] text-[var(--score-good)]",
     dot: "bg-[var(--score-good)]",
     stripe: "bg-[var(--score-good)]",
   },
   warn: {
-    box: "bg-[var(--score-warn-bg)] text-[var(--score-warn)] ring-1 ring-inset ring-[var(--score-warn-border)]",
-    pill: "border-[var(--score-warn-border)] bg-white text-[var(--score-warn)] shadow-[0_1px_2px_rgb(217_119_6/0.08)]",
+    box: "bg-[var(--score-warn-bg)] text-[var(--score-warn)]",
+    pill: "border-transparent bg-[var(--score-warn-bg)] text-[var(--score-warn)]",
     dot: "bg-[var(--score-warn)]",
     stripe: "bg-[var(--score-warn)]",
   },
   bad: {
-    box: "bg-[var(--score-bad-bg)] text-[var(--score-bad)] ring-1 ring-inset ring-[var(--score-bad-border)]",
-    pill: "border-[var(--score-bad-border)] bg-white text-[var(--score-bad)] shadow-[0_1px_2px_rgb(220_38_38/0.08)]",
+    box: "bg-[var(--score-bad-bg)] text-[var(--score-bad)]",
+    pill: "border-transparent bg-[var(--score-bad-bg)] text-[var(--score-bad)]",
     dot: "bg-[var(--score-bad)]",
     stripe: "bg-[var(--score-bad)]",
   },
   accent: {
-    box: "bg-accent-light text-accent ring-1 ring-inset ring-accent/15",
-    pill: "border-accent/25 bg-white text-accent shadow-[0_1px_2px_rgb(var(--accent-rgb)/0.08)]",
+    box: "bg-accent-light text-accent",
+    pill: "border-transparent bg-accent-light text-accent",
     dot: "bg-accent",
     stripe: "bg-accent",
   },
@@ -95,11 +95,7 @@ export function McIconBox({
   );
 }
 
-/**
- * Refine v2 panel recipe:
- * - One border + shadow-xs (no nested white cards)
- * - Shell radius via .mc-panel (0.75rem); denser header
- */
+/** Panel recipe — one border, denser header, display title */
 export function McCard({
   title,
   icon,
@@ -130,9 +126,13 @@ export function McCard({
             {icon ? <McIconBox icon={icon} tone="neutral" size="sm" /> : null}
             {title ? (
               typeof title === "string" ? (
-                <h3 className="truncate text-[13px] font-semibold text-foreground">{title}</h3>
+                <h3 className="font-portal-display truncate text-[13px] font-semibold tracking-tight text-foreground">
+                  {title}
+                </h3>
               ) : (
-                <div className="min-w-0 text-[13px] font-semibold text-foreground">{title}</div>
+                <div className="font-portal-display min-w-0 text-[13px] font-semibold tracking-tight text-foreground">
+                  {title}
+                </div>
               )
             ) : null}
           </div>
@@ -144,7 +144,7 @@ export function McCard({
   );
 }
 
-/** Status pill — white surface, colored border, optional icon/dot */
+/** Soft filled status pill */
 export function McPill({
   children,
   tone = "neutral",
@@ -161,7 +161,7 @@ export function McPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-bold tracking-wide",
+        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-semibold tracking-wide",
         TONE_STYLES[tone].pill,
         className
       )}

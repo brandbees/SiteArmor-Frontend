@@ -37,7 +37,7 @@ export function SiteLoadingOverlay({
   message?: string;
 }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#f4f4f5]/95 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-background/95 backdrop-blur-[2px]">
       <div className="flex flex-col items-center gap-5 px-6 py-4">
         <CubeVisual size={56} />
         <div className="max-w-xs text-center">

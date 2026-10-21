@@ -61,7 +61,9 @@ function QuickAddButton({ active }: { active?: boolean }) {
     <span
       className={cn(
         "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors",
-        active ? "text-white/90 hover:bg-white/15" : "text-zinc-500 hover:bg-zinc-200"
+        active
+          ? "text-white/80 hover:bg-white/10"
+          : "text-slate-500 hover:bg-white/10 hover:text-slate-200"
       )}
       onClick={(e) => {
         e.preventDefault();
@@ -93,41 +95,25 @@ function NavLink({
 }) {
   const Icon = item.icon;
 
-  if (active) {
-    return (
-      <Link
-        href={item.href}
-        title={collapsed ? item.label : undefined}
-        className={cn(
-          "group flex items-center rounded-lg bg-accent text-white transition-colors",
-          collapsed ? "mx-auto w-fit gap-0 p-2" : "h-8 w-full gap-2 px-3"
-        )}
-      >
-        <Icon size={16} strokeWidth={2} className="shrink-0" />
-        {!collapsed && (
-          <>
-            <span className="flex-1 truncate text-sm font-medium">{item.label}</span>
-            {item.quickAdd && <QuickAddButton active />}
-          </>
-        )}
-      </Link>
-    );
-  }
-
   return (
     <Link
       href={item.href}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center rounded-lg text-sm font-normal text-zinc-700 transition-colors hover:bg-zinc-100",
-        collapsed ? "mx-auto w-fit p-2" : "h-8 gap-2 px-3"
+        "sa-nav-item group",
+        active && "sa-nav-item-active",
+        collapsed ? "mx-auto w-fit gap-0 p-2.5" : "h-9 w-full gap-2.5 px-3"
       )}
     >
-      <Icon size={16} strokeWidth={1.5} className="shrink-0 text-zinc-950" />
+      <Icon
+        size={18}
+        strokeWidth={1.5}
+        className={cn("shrink-0", active ? "text-white" : "text-slate-400 group-hover:text-slate-200")}
+      />
       {!collapsed && (
         <>
-          <span className="flex-1 truncate">{item.label}</span>
-          {item.quickAdd && <QuickAddButton />}
+          <span className="flex-1 truncate text-sm">{item.label}</span>
+          {item.quickAdd && <QuickAddButton active={active} />}
         </>
       )}
     </Link>
@@ -149,11 +135,11 @@ function NavSection({
   return (
     <div className="mb-2">
       {!collapsed && (
-        <p className="mb-1 flex h-8 shrink-0 items-center px-3 text-xs font-medium text-zinc-500/80">
+        <p className="sa-nav-section mb-1.5 flex h-7 shrink-0 items-center px-3">
           {label}
         </p>
       )}
-      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-zinc-200" />}
+      {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-white/10" />}
       <div className="space-y-0.5">
         {items.map((item) => (
           <NavLink
@@ -248,15 +234,14 @@ export function Sidebar({
         <aside
           onMouseEnter={handleRailEnter}
           onMouseLeave={handleRailLeave}
-          className="flex h-full w-full flex-col border-r border-zinc-200 bg-white"
+          className="sa-rail flex h-full w-full flex-col"
         >
-        {/* Search trigger — MalCare pill */}
         <div className={cn("shrink-0", railCollapsed ? "px-2 py-2" : "p-2 px-3")}>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("bb:open-command-palette"))}
             className={cn(
-              "flex w-full items-center rounded-lg bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200/80",
+              "flex w-full items-center rounded-lg bg-white/5 text-slate-400 transition-colors hover:bg-white/8 hover:text-slate-200",
               railCollapsed ? "h-9 justify-center" : "h-9 gap-2 px-3"
             )}
             title="Search (Ctrl+K)"
@@ -271,19 +256,20 @@ export function Sidebar({
                     <Wifi size={11} className="text-white" />
                   </div>
                 )}
-                <span className="flex-1 truncate text-left text-xs font-extralight text-zinc-600">
+                <span className="flex-1 truncate text-left text-xs font-light text-slate-400">
                   Search or press Ctrl+K / ⌘K
                 </span>
               </>
             )}
-            <Search size={16} strokeWidth={1.5} className="shrink-0 text-zinc-950" />
+            <Search size={18} strokeWidth={1.5} className="shrink-0" />
           </button>
           {!railCollapsed && !logoUrl && (
-            <p className="mt-2 truncate px-1 text-[11px] font-semibold text-zinc-400">{brand}</p>
+            <p className="font-portal-display mt-2 truncate px-1 text-[11px] font-semibold tracking-wide text-slate-500">
+              {brand}
+            </p>
           )}
         </div>
 
-        {/* Nav */}
         <nav className={cn("mx-2 flex-1 overflow-y-auto overflow-x-hidden py-2", railCollapsed ? "px-1.5" : "px-2")}>
           <NavSection
             label={isSiteDetail ? "Global" : "Manage"}
@@ -304,9 +290,9 @@ export function Sidebar({
             <button
               type="button"
               onClick={() => setChangelogOpen(true)}
-              className="mt-1 flex h-8 w-full items-center gap-2 rounded-lg px-3 text-sm font-normal text-zinc-700 hover:bg-zinc-100"
+              className="sa-nav-item mt-1 h-9 w-full gap-2.5 px-3 text-sm"
             >
-              <Sparkles size={16} strokeWidth={1.5} />
+              <Sparkles size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />
               What&apos;s new
               {unreadCount > 0 && (
                 <span className="ml-auto rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -321,25 +307,24 @@ export function Sidebar({
           <SiteSidebarFooter site={siteCtx?.site} collapsed={railCollapsed} />
         )}
 
-        {/* Support footer — hidden on site detail (WP/PHP sticky footer instead) */}
         {!isSiteDetail && (
-        <div className={cn("shrink-0 border-t border-zinc-200", railCollapsed ? "p-2" : "p-2 px-3")}>
+        <div className={cn("shrink-0 border-t border-white/6", railCollapsed ? "p-2" : "p-2 px-3")}>
           {!railCollapsed ? (
             <a
               href="mailto:support@sitearmor.com"
-              className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 transition-colors hover:bg-zinc-100"
+              className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/4 px-3 py-2.5 transition-colors hover:bg-white/8"
             >
-              <LifeBuoy size={16} strokeWidth={1.5} className="shrink-0 text-zinc-600" />
+              <LifeBuoy size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-zinc-900">Support</p>
-                <p className="truncate text-[11px] text-zinc-500">support@sitearmor.com</p>
+                <p className="text-xs font-semibold text-slate-200">Support</p>
+                <p className="truncate text-[11px] text-slate-500">support@sitearmor.com</p>
               </div>
             </a>
           ) : (
             <a
               href="mailto:support@sitearmor.com"
               title="Support"
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-white/8 hover:text-slate-200"
             >
               <LifeBuoy size={18} strokeWidth={1.5} />
             </a>

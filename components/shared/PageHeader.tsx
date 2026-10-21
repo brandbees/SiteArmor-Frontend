@@ -8,7 +8,7 @@ interface PageHeaderProps {
   icon?: React.ReactNode;
 }
 
-/** MalCare page title row — text-xl title, accent subtitle */
+/** Portal page title — Space Grotesk display, muted subtitle */
 export function PageHeader({
   title,
   description,
@@ -20,14 +20,14 @@ export function PageHeader({
     <div className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
       <div className="flex min-w-0 items-center gap-3">
         {icon ? (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-950">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-800 [&_svg]:size-[18px] [&_svg]:stroke-[1.5]">
             {icon}
           </span>
         ) : null}
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold leading-normal text-black">{title}</h1>
+          <h1 className="mc-page-title leading-tight">{title}</h1>
           {description ? (
-            <p className="text-xs font-normal leading-normal text-accent">{description}</p>
+            <p className="mc-page-sub mt-0.5">{description}</p>
           ) : null}
         </div>
       </div>

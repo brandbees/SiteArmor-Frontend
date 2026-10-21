@@ -134,7 +134,7 @@ export default function ReportDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-[#f4f4f5] py-24">
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-background py-24">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -158,7 +158,7 @@ export default function ReportDetailPage() {
   const isFailed = report.status === "failed";
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#f4f4f5]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white p-4 sm:px-6">
         <button
           type="button"

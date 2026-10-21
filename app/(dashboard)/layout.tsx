@@ -169,7 +169,7 @@ export default function DashboardLayout({
   if (!ready) return null;
 
   const dashboardShell = (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#f4f4f5]">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
       <CommandPalette />
       <AnnouncementBanner />
       <TrialBanner />
@@ -182,7 +182,7 @@ export default function DashboardLayout({
           <main
             className={cn(
               "min-w-0 flex-1 overflow-x-auto",
-              isDashboard ? "flex flex-col bg-[#f4f4f5]" : "bg-[#f4f4f5]",
+              isDashboard ? "flex flex-col bg-background" : "bg-background",
               isFullBleed ? "p-0" : "p-4 md:p-5",
               isAgent || isSiteDetail || isSetup || pathname === "/billing" || pathname?.startsWith("/reports")
                 ? "flex flex-col overflow-hidden"

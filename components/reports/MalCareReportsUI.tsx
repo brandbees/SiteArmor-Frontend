@@ -88,7 +88,7 @@ export function ReportsPageShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#f4f4f5]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       <header className="sticky top-0 z-20 flex flex-col gap-4 border-b border-zinc-200 bg-white p-4 sm:flex-row sm:items-start sm:gap-8 sm:pr-6">
         <div className="flex min-w-0 max-w-[50%] items-start gap-4 overflow-hidden">
           <FileBadge2

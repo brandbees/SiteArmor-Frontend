@@ -57,7 +57,7 @@ export function SiteQuickViewDrawer({ site, onClose }: Props) {
         onClick={onClose}
       />
 
-      <div className="fixed top-0 right-0 z-50 flex h-full w-[420px] max-w-[100vw] flex-col overflow-hidden border-l border-zinc-200 bg-[#f4f4f5] shadow-lg animate-slide-in-right">
+      <div className="fixed top-0 right-0 z-50 flex h-full w-[420px] max-w-[100vw] flex-col overflow-hidden border-l border-zinc-200 bg-background shadow-lg animate-slide-in-right">
         <div className="relative h-44 shrink-0 overflow-hidden bg-zinc-200">
           <SiteScreenshot
             url={site.url}

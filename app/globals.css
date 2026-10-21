@@ -1,18 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  /* MalCare shell — zinc neutrals, white surfaces, blue primary (BrandBees) */
-  --background: #f4f4f5;
+  /* Identity v3 — Agency ops: cool wash canvas + dark rail (keep brand blue) */
+  --background: #f0f3f7;
   --surface: #ffffff;
   --foreground: #09090b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --border: #e4e4e7;
-  --border-strong: #d4d4d8;
+  --muted: #e8eef4;
+  --muted-foreground: #64748b;
+  --border: #dce3ec;
+  --border-strong: #c5ced9;
   --card: #ffffff;
   --card-foreground: #09090b;
 
-  /* Brand — keep Site Armor blue for CTAs / active states */
+  /* Dark sidebar rail */
+  --sidebar-bg: #0b1220;
+  --sidebar-fg: #e2e8f0;
+  --sidebar-muted: #94a3b8;
+  --sidebar-hover: rgb(255 255 255 / 0.05);
+  --sidebar-active: rgb(255 255 255 / 0.08);
+  --sidebar-border: rgb(255 255 255 / 0.06);
+  --topbar-height: 3rem;
+
+  /* Brand — accent for primary CTA + active indicator only */
   --primary: #0a0f1a;
   --primary-foreground: #ffffff;
   --accent: #1a56db;
@@ -28,9 +37,9 @@
   --destructive-light: #fef2f2;
   --ring: #1a56db;
   --radius: 0.375rem;
-  /* Refine v2 — shell vs inner (stop stacking rounded-3xl everywhere) */
-  --radius-shell: 1rem;   /* page panels / dashboard widgets */
-  --radius-card: 0.75rem; /* inner cards */
+  /* Shell vs inner */
+  --radius-shell: 0.875rem;
+  --radius-card: 0.625rem;
   --radius-inner: 0.5rem;
 
   /* Shadows — prefer hairline border; keep elevation subtle */
@@ -106,6 +115,12 @@ html.dark {
   --color-accent-light: var(--accent-light);
   --color-accent-deep: var(--accent-deep);
   --color-accent-foreground: var(--accent-foreground);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
   --color-destructive: var(--destructive);
   --color-ring: var(--ring);
   --color-score-good: var(--score-good);
@@ -198,16 +213,58 @@ button, a, input, select, textarea {
   font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
 }
 
-/* Refine v2 — shared panel recipe (Crafted MalCare, tight density) */
+/* Identity v3 — dark sidebar rail helpers */
+.sa-rail {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  color: var(--sidebar-fg);
+}
+.sa-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 0.5rem;
+  color: var(--sidebar-muted);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.sa-nav-item:hover {
+  background: var(--sidebar-hover);
+  color: #e2e8f0;
+}
+.sa-nav-item-active {
+  background: var(--sidebar-active);
+  color: #fff;
+  font-weight: 500;
+}
+.sa-nav-item-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+.sa-nav-section {
+  font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(148 163 184 / 0.75);
+}
+
+/* Shared panel recipe */
 .mc-shell {
   border-radius: var(--radius-shell);
-  border: 1px solid rgb(228 228 231 / 0.9);
+  border: 1px solid rgb(220 227 236 / 0.95);
   background: #fff;
   box-shadow: var(--shadow-xs);
 }
 .mc-panel {
   border-radius: var(--radius-card);
-  border: 1px solid rgb(228 228 231 / 0.9);
+  border: 1px solid rgb(220 227 236 / 0.95);
   background: #fff;
   box-shadow: var(--shadow-xs);
 }
@@ -215,13 +272,22 @@ button, a, input, select, textarea {
   font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
   font-size: 1.125rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  color: #09090b;
+  letter-spacing: -0.025em;
+  color: #0b1220;
 }
 .mc-page-sub {
   font-size: 0.75rem;
   font-weight: 400;
-  color: #71717a;
+  color: var(--muted-foreground);
+}
+.mc-table-th {
+  font-family: var(--font-portal-display), "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: rgb(248 250 252 / 0.85);
 }
 
 .font-setup-accent {

@@ -2926,7 +2926,7 @@ function SiteDetailContent() {
           "min-h-0 w-full flex-1",
           activeTab === "overview" || activeTab === "agent"
             ? "flex flex-col overflow-hidden p-0"
-            : "overflow-y-auto bg-[#f4f4f5] p-4 sm:p-5"
+            : "overflow-y-auto bg-background p-4 sm:p-5"
         )}
       >
         {activeTab === "overview" && (

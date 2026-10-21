@@ -10,22 +10,22 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-/** MalCare-style buttons — rounded-md, medium weight, blue primary */
+/** Site Armor identity — solid accent primary; zinc secondary/ghost */
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap transition-colors duration-150";
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap transition-colors duration-150";
 
 const variants: Record<Variant, string> = {
   primary: "bg-accent text-white hover:bg-accent-hover shadow-sm",
-  secondary: "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50",
-  outline: "border border-zinc-200 bg-transparent text-zinc-900 hover:bg-zinc-50",
+  secondary: "border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
+  outline: "border border-zinc-200 bg-transparent text-zinc-800 hover:bg-zinc-50",
   ghost: "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
   danger: "bg-destructive text-white hover:bg-red-700",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3 text-xs",
-  md: "h-10 px-4 text-sm",
-  lg: "h-11 px-5 text-sm",
+  sm: "h-8 px-3 text-xs",
+  md: "h-9 px-4 text-sm",
+  lg: "h-10 px-5 text-sm",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
