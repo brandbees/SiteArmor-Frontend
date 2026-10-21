@@ -167,6 +167,7 @@ export const FEATURE_SNAPSHOT: Record<string, SnapshotId> = {
   "performance-monitoring": "perf",
   "seo-monitoring": "seo",
   "security-scanning": "security",
+  "dns-cloudflare": "security",
   "malware-detection": "security",
   "uptime-monitoring": "dash",
   "ai-agent": "agent",

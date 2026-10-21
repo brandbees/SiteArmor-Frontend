@@ -100,7 +100,7 @@ export function PlatformPillarsSection({
             href="/features"
             className="inline-flex items-center gap-2 text-base font-semibold text-accent transition-colors hover:text-accent-hover"
           >
-            Explore all 14 capabilities
+            Explore all 15 capabilities
             <ArrowRight size={16} />
           </Link>
         </Reveal>

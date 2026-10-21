@@ -23,7 +23,7 @@ export function HeroSection({ cms = {} }: { cms?: Record<string, string> }) {
       />
       <Container>
         <div className="mx-auto max-w-4xl text-center">
-          <Reveal>
+          <Reveal immediate>
             <h1 className="font-[family-name:var(--font-marketing-display)] text-[2.75rem] font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl xl:text-[4.25rem]">
               <span className="text-[var(--mkt-muted)]">
                 {c("heading_muted", "Your client sites,")}
@@ -34,7 +34,7 @@ export function HeroSection({ cms = {} }: { cms?: Record<string, string> }) {
             </h1>
           </Reveal>
 
-          <Reveal delay={0.08}>
+          <Reveal immediate delay={0.08}>
             <p className="mx-auto mt-7 max-w-2xl text-xl leading-relaxed text-[var(--mkt-muted)]">
               {c(
                 "subtitle",
@@ -43,7 +43,7 @@ export function HeroSection({ cms = {} }: { cms?: Record<string, string> }) {
             </p>
           </Reveal>
 
-          <Reveal delay={0.14}>
+          <Reveal immediate delay={0.14}>
             <div className="mt-10 flex justify-center">
               <ButtonLink
                 href={c("cta_url", "/register")}
@@ -55,7 +55,7 @@ export function HeroSection({ cms = {} }: { cms?: Record<string, string> }) {
             </div>
           </Reveal>
 
-          <Reveal delay={0.18}>
+          <Reveal immediate delay={0.18}>
             <p className="mt-5 text-sm text-[var(--mkt-muted)]">
               {c(
                 "trust_line",
@@ -65,7 +65,7 @@ export function HeroSection({ cms = {} }: { cms?: Record<string, string> }) {
           </Reveal>
         </div>
 
-        <RevealScale delay={0.15} className="mx-auto mt-14 max-w-5xl lg:mt-16">
+        <RevealScale immediate delay={0.15} className="mx-auto mt-14 max-w-5xl lg:mt-16">
           <SnapshotGif
             ids={HERO_FEATURES}
             intervalMs={3800}

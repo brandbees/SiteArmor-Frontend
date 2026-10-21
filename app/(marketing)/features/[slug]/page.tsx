@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, ArrowUpRight, Check, Zap, AlertTriangle, Wrench, Brain } from "lucide-react";
+import {
+  ArrowRight, ArrowUpRight, Check, Zap, AlertTriangle, Wrench, Brain,
+  Cloud, KeyRound, Shield, Server,
+} from "lucide-react";
 import { getPageContent, field } from "@/lib/cms";
 import { sf, cmsField } from "@/lib/marketing/cms";
 import { FEATURE_PAGES, PILLARS, CONNECTION_TIERS } from "@/lib/marketing/features";
@@ -71,6 +74,33 @@ const FEATURE_DETAIL: Record<string, {
       { q: "Does AI Optimize install a new plugin?", a: "No. It detects the existing cache/optimization plugin on your site and configures that — no conflicting double-optimizers." },
       { q: "What if a fix breaks the site?", a: "The agent re-measures after every change. If the site breaks or the score regresses, everything is rolled back automatically." },
       { q: "Can I compare mobile vs desktop?", a: "Yes. Each audit produces separate mobile and desktop scores, displayed side by side in the dashboard." },
+    ],
+  },
+  "dns-cloudflare": {
+    problem: "DNS and WAF live outside the care plan.",
+    problemDetail:
+      "Agencies juggle registrar panels, client Cloudflare logins, and ad-hoc WAF rules with no audit trail. When a record breaks or nameservers drift, the retainer takes the blame — even though the tooling never lived in your portal.",
+    mechanisms: [
+      { icon: KeyRound, title: "BYO Cloudflare token", desc: "Connect a scoped API token for the client’s existing Cloudflare account. They keep ownership; you manage DNS and WAF from Site Armor." },
+      { icon: Cloud, title: "Hosted Free zones", desc: "“Protect with Site Armor DNS” creates a Free Cloudflare zone on our account. Point nameservers at the registrar to activate." },
+      { icon: Server, title: "DNS records in-portal", desc: "Create and edit A, AAAA, CNAME, TXT, and more — with proxied/orange-cloud controls where Cloudflare supports them." },
+      { icon: Shield, title: "Custom WAF rules", desc: "Up to five custom security rules on Free (plus Site Armor IP allowlisting) — managed from the same site tab as DNS." },
+    ],
+    technical: [
+      "BYO token vaulted per site (never shown in client portal)",
+      "Hosted Free zone creation + nameserver handoff",
+      "DNS record CRUD with zone status (active / pending NS)",
+      "Custom WAF rules (≤5 on Cloudflare Free)",
+      "Disconnect removes the Site Armor link; Hosted zones are not auto-deleted",
+      "Owner/Admin only — hidden from client portal users",
+      "Available on all agency plans",
+    ],
+    availableFrom: "All plans",
+    faqs: [
+      { q: "BYO vs Hosted Free — which should I use?", a: "Use BYO when the client already runs Cloudflare and wants to keep their account. Use Hosted Free when you want Site Armor to provision a Free zone and you (or the client) will update nameservers at the registrar." },
+      { q: "Can clients manage DNS in the portal?", a: "No. DNS / Cloudflare is Owner and Admin only so agency operators stay in control of zone changes." },
+      { q: "What happens when I disconnect?", a: "Site Armor drops the connection and forgets the vaulted token (BYO). Hosted Free zones stay on Cloudflare until you remove them there — we don’t delete the zone on disconnect." },
+      { q: "Does this replace malware scanning?", a: "No. DNS / Cloudflare covers DNS records and custom WAF. Malware detection and hardening remain separate security pillars." },
     ],
   },
 };
@@ -143,7 +173,7 @@ export default async function FeatureDetailPage({ params }: Props) {
           }}
         />
         <Container>
-          <Reveal>
+          <Reveal immediate>
             <p className="mb-4 text-sm font-medium text-[var(--mkt-muted)]">
               <Link href="/features" className="hover:text-accent transition-colors">Features</Link>
               <span className="mx-2 opacity-40">/</span>
@@ -152,22 +182,22 @@ export default async function FeatureDetailPage({ params }: Props) {
           </Reveal>
           <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-12">
             <div>
-              <Reveal delay={0.04}>
+              <Reveal immediate delay={0.04}>
                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-accent text-white shadow-elevated-sm">
                   <Icon size={24} />
                 </div>
               </Reveal>
-              <Reveal delay={0.08}>
+              <Reveal immediate delay={0.08}>
                 <h1 className="max-w-lg font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.25rem]">
                   {c("title", meta.title)}
                 </h1>
               </Reveal>
-              <Reveal delay={0.12}>
+              <Reveal immediate delay={0.12}>
                 <p className="mt-4 max-w-md text-lg leading-relaxed text-[var(--mkt-muted)]">
                   {c("subtitle", meta.description)}
                 </p>
               </Reveal>
-              <Reveal delay={0.16}>
+              <Reveal immediate delay={0.16}>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <ButtonLink href="/register" size="lg">
                     Start Free — No Card Needed

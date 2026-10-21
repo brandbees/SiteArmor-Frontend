@@ -40,6 +40,7 @@ const FEATURE_DROPDOWN = [
   { href: "/features/performance-monitoring", label: "Performance", desc: "Core Web Vitals & AI Optimize" },
   { href: "/features/ai-agent", label: "AI Agent", desc: "Ask it — then it does the work" },
   { href: "/features/security-scanning", label: "Security Scanning", desc: "Hardening & SSL monitoring" },
+  { href: "/features/dns-cloudflare", label: "DNS / Cloudflare", desc: "BYO token or Hosted Free + WAF" },
   { href: "/features/client-reports", label: "Client Reports", desc: "White-label PDF & portal" },
   { href: "/features/backups", label: "Backups", desc: "Schedule & one-click restore" },
   { href: "/features/seo-monitoring", label: "SEO Monitoring", desc: "Meta, heading & indexability" },

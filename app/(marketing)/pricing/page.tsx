@@ -30,6 +30,7 @@ const COMPARISON_ROWS: { label: string; values: (boolean | string)[] }[] = [
   { label: "AI tokens / month", values: ["1,000", "5,000", "20,000", "100,000"] },
   { label: "Storage", values: ["100 MB", "500 MB", "1 GB", "5 GB"] },
   { label: "All 5 health pillars", values: [true, true, true, true] },
+  { label: "Cloudflare DNS & WAF", values: [true, true, true, true] },
   { label: "Scheduled audits", values: [false, true, true, true] },
   { label: "AI-written reports", values: [false, true, true, true] },
   { label: "Client portal", values: [false, false, true, true] },

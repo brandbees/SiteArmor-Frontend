@@ -33,7 +33,7 @@ export function FeatureGridSection({
             }
             description={c(
               "description",
-              "Fourteen capabilities that map to how you actually run WordPress maintenance — each with its own deep dive."
+              "Fifteen capabilities that map to how you actually run WordPress maintenance — each with its own deep dive."
             )}
           />
         </Reveal>

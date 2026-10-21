@@ -12,7 +12,7 @@ import { FinalCTASection } from "@/components/marketing/sections/FinalCTASection
 
 const DEFAULT_TITLE = "Features — Site Armor WordPress operations platform";
 const DEFAULT_DESC =
-  "Explore Site Armor capabilities: performance & AI Optimize, SEO, security, malware, uptime, white-label reports, backups, and more.";
+  "Explore Site Armor capabilities: performance & AI Optimize, SEO, security, DNS/Cloudflare, malware, uptime, white-label reports, backups, and more.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getPageContent("features");
@@ -68,22 +68,22 @@ export default async function FeaturesHubPage() {
         />
         <Container>
           <div className="mx-auto max-w-3xl text-center">
-            <Reveal>
+            <Reveal immediate>
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 {c("eyebrow", "Platform capabilities")}
               </p>
             </Reveal>
-            <Reveal delay={0.05}>
+            <Reveal immediate delay={0.05}>
               <h1 className="font-[family-name:var(--font-marketing-display)] text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[var(--mkt-fg)] sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
                 {c("title", "Every capability that keeps client WordPress sites healthy.")}
               </h1>
             </Reveal>
-            <Reveal delay={0.1}>
+            <Reveal immediate delay={0.1}>
               <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-[var(--mkt-muted)]">
                 {c("description", "Grouped the way agencies buy — health pillars, AI remediation, client reporting, and day-to-day operations.")}
               </p>
             </Reveal>
-            <Reveal delay={0.15}>
+            <Reveal immediate delay={0.15}>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <ButtonLink href="/register" size="lg">
                   Start Free — No Card Needed

@@ -8,7 +8,7 @@ import { CountUp } from "@/components/marketing/ui/Reveal";
 
 const FACTS = [
   { value: 5, suffix: "", label: "Health pillars", detail: "Performance · SEO · Security · Malware · Uptime" },
-  { value: 14, suffix: "+", label: "Capabilities", detail: "From monitoring to white-label reports" },
+  { value: 15, suffix: "+", label: "Capabilities", detail: "From monitoring to white-label reports" },
   { value: 30, suffix: "s", label: "Setup time", detail: "Paste a URL — first audit starts instantly" },
   { value: 3, suffix: "", label: "Access tiers", detail: "URL · Plugin · SSH" },
   { value: 100, suffix: "%", label: "White-label", detail: "Logo, colours, domain — your brand everywhere" },

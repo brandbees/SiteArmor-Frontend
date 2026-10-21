@@ -18,6 +18,8 @@ type RevealProps = HTMLMotionProps<"div"> & {
   delay?: number;
   y?: number;
   once?: boolean;
+  /** When true, animate on mount — never wait for scroll (above-fold CTAs). */
+  immediate?: boolean;
 };
 
 export function Reveal({
@@ -26,6 +28,7 @@ export function Reveal({
   delay = 0,
   y = 18,
   once = true,
+  immediate = false,
   ...props
 }: RevealProps) {
   const reduce = useReducedMotion();
@@ -35,6 +38,24 @@ export function Reveal({
       <div className={className} {...(props as HTMLAttributes<HTMLDivElement>)}>
         {children}
       </div>
+    );
+  }
+
+  if (immediate) {
+    return (
+      <motion.div
+        className={className}
+        initial={{ opacity: 0, y }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.55,
+          delay,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+        {...props}
+      >
+        {children}
+      </motion.div>
     );
   }
 
@@ -68,6 +89,7 @@ type RevealScaleProps = HTMLMotionProps<"div"> & {
   children?: ReactNode;
   delay?: number;
   once?: boolean;
+  immediate?: boolean;
 };
 
 export function RevealScale({
@@ -75,6 +97,7 @@ export function RevealScale({
   className,
   delay = 0,
   once = true,
+  immediate = false,
   ...props
 }: RevealScaleProps) {
   const reduce = useReducedMotion();
@@ -84,6 +107,24 @@ export function RevealScale({
       <div className={className} {...(props as HTMLAttributes<HTMLDivElement>)}>
         {children}
       </div>
+    );
+  }
+
+  if (immediate) {
+    return (
+      <motion.div
+        className={className}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          duration: 0.6,
+          delay,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+        {...props}
+      >
+        {children}
+      </motion.div>
     );
   }
 

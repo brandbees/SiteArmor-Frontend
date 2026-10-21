@@ -253,7 +253,7 @@ export function buildSimplePage({
             <Reveal>
               <div className="grid gap-3 md:grid-cols-3">
                 {[
-                  { label: "All features", href: "/features", desc: "14 capabilities, one platform." },
+                  { label: "All features", href: "/features", desc: "15 capabilities, one platform." },
                   { label: "How it works", href: "/how-it-works", desc: "Three connection tiers." },
                   { label: "Pricing", href: "/pricing", desc: "Four plans, real limits." },
                 ].map((link) => (

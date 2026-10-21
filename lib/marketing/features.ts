@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   Bot,
+  Cloud,
   FileText,
   Gauge,
   HardDrive,
@@ -64,6 +65,16 @@ export const FEATURE_PAGES: FeaturePageMeta[] = [
       "XML-RPC, login URL exposure, file permissions, SSL, and admin hygiene — checked continuously.",
     pillar: "security",
     icon: Shield,
+  },
+  {
+    slug: "dns-cloudflare",
+    href: "/features/dns-cloudflare",
+    title: "DNS / Cloudflare",
+    shortTitle: "DNS",
+    description:
+      "BYO Cloudflare token or Hosted Free zones — manage DNS records and custom WAF rules from the agency portal.",
+    pillar: "security",
+    icon: Cloud,
   },
   {
     slug: "malware-detection",
