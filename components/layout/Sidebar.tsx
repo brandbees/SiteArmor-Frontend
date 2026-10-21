@@ -187,7 +187,7 @@ export function Sidebar({
   const { roleCanDo } = useRole();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  /** Peek-open while pointer is over the rail (pinned collapse still reserved at 4rem). */
+  /** Peek-open while pointer is over the rail — widens layout slot like pin-toggle. */
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -238,22 +238,17 @@ export function Sidebar({
 
   return (
     <>
-      {/* Collapsed rail keeps 4rem slot; hover expands as overlay (no page jitter) */}
+      {/* Hover expand widens the slot (same as pin-toggle) so header/content shrink instead of overlay */}
       <div
         className={cn(
-          "relative hidden shrink-0 self-stretch md:block",
-          collapsed ? "w-[4rem]" : "w-[280px]"
+          "relative hidden shrink-0 self-stretch transition-[width] duration-200 ease-linear md:block",
+          railCollapsed ? "w-[4rem]" : "w-[280px]"
         )}
       >
         <aside
           onMouseEnter={handleRailEnter}
           onMouseLeave={handleRailLeave}
-          className={cn(
-            "flex h-full flex-col border-r border-zinc-200 bg-white transition-[width,box-shadow] duration-200 ease-linear",
-            collapsed ? "absolute inset-y-0 left-0 z-30" : "w-full",
-            railCollapsed ? "w-[4rem]" : "w-[280px]",
-            collapsed && hoverExpanded && "shadow-[8px_0_24px_-8px_rgb(15_23_42/0.18)]"
-          )}
+          className="flex h-full w-full flex-col border-r border-zinc-200 bg-white"
         >
         {/* Search trigger — MalCare pill */}
         <div className={cn("shrink-0", railCollapsed ? "px-2 py-2" : "p-2 px-3")}>

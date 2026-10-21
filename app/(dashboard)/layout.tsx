@@ -176,13 +176,12 @@ export default function DashboardLayout({
       <div className="flex min-h-0 flex-1">
         <Sidebar collapsed={sidebarCollapsed} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {/* Keep header above sidebar hover overlay (aside z-30) */}
-          <div className="relative z-50 shrink-0">
+          <div className="shrink-0">
             <TopBar collapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
           </div>
           <main
             className={cn(
-              "relative z-0 min-w-0 flex-1 overflow-x-auto",
+              "min-w-0 flex-1 overflow-x-auto",
               isDashboard ? "flex flex-col bg-[#f4f4f5]" : "bg-[#f4f4f5]",
               isFullBleed ? "p-0" : "p-4 md:p-5",
               isAgent || isSiteDetail || isSetup || pathname === "/billing" || pathname?.startsWith("/reports")
