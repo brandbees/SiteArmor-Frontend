@@ -129,7 +129,11 @@ export function McCard({
           <div className="flex min-w-0 items-center gap-2">
             {icon ? <McIconBox icon={icon} tone="neutral" size="sm" /> : null}
             {title ? (
-              <h3 className="truncate text-[13px] font-semibold text-foreground">{title}</h3>
+              typeof title === "string" ? (
+                <h3 className="truncate text-[13px] font-semibold text-foreground">{title}</h3>
+              ) : (
+                <div className="min-w-0 text-[13px] font-semibold text-foreground">{title}</div>
+              )
             ) : null}
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}

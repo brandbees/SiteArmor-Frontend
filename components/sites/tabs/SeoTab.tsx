@@ -47,9 +47,22 @@ function BrokenLinksSection({ siteId, brandColor }: { siteId: string; brandColor
     setRunning(false);
   }
 
+  const lastChecked = checkedAt
+    ? `Last checked ${new Date(checkedAt).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })}`
+    : "Not yet checked";
+
   return (
     <McCard
-      title="Broken Links"
+      title={
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span>Broken Links</span>
+          <span className="text-[11px] font-normal text-muted-foreground">{lastChecked}</span>
+        </span>
+      }
       icon={<ExternalLink size={15} />}
       action={
         <div className="flex items-center gap-2">
@@ -60,27 +73,18 @@ function BrokenLinksSection({ siteId, brandColor }: { siteId: string; brandColor
           </Button>
         </div>
       }
-      bodyClassName={links.length > 0 && !loading ? "p-0" : "p-4"}
+      bodyClassName={links.length > 0 && !loading ? "p-0" : undefined}
     >
-      <p className="-mt-1 mb-3 px-0 text-xs text-muted-foreground">
-        {checkedAt
-          ? `Last checked ${new Date(checkedAt).toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}`
-          : "Not yet checked"}
-      </p>
       {loading ? (
-        <div className="flex items-center justify-center py-10">
+        <div className="flex items-center justify-center py-6">
           <div
             className="h-5 w-5 animate-spin rounded-full border-2"
             style={{ borderColor: `${brandColor}30`, borderTopColor: brandColor }}
           />
         </div>
       ) : links.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-          <CheckCircle2 size={22} className="text-[var(--score-good)]" />
+        <div className="flex flex-col items-center justify-center gap-1.5 py-5 text-center">
+          <CheckCircle2 size={18} className="text-[var(--score-good)]" />
           <p className="text-sm font-semibold text-foreground">
             {checkedAt ? "No broken links found" : "No data yet"}
           </p>
@@ -93,14 +97,15 @@ function BrokenLinksSection({ siteId, brandColor }: { siteId: string; brandColor
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["Broken URL", "Status", "Found On"].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {h}
-                  </th>
-                ))}
+                <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Broken URL
+                </th>
+                <th className="w-[88px] px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Status
+                </th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Found On
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -465,30 +470,31 @@ export function SeoTab({
 
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="mb-0.5 text-sm font-semibold text-foreground">Site-wide SEO audit</h3>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Crawls every page, finds issues with named pages attached, and applies the safe fixes for
-          you.
-        </p>
-        <SeoAuditPanel siteId={site.id} />
-      </div>
-
-      <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
+      {/* Homepage audit first — fold-level signal */}
+      <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Homepage audit</h3>
         <p className="text-[11px] text-muted-foreground">Runs with every scheduled audit</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
         <McCard
           title="SEO"
           icon={<TrendingUp size={15} />}
-          action={<McPill tone={score == null ? "neutral" : score >= 60 ? "good" : score >= 40 ? "warn" : "bad"}>{scoreLabel}</McPill>}
+          action={
+            <McPill
+              tone={score == null ? "neutral" : score >= 60 ? "good" : score >= 40 ? "warn" : "bad"}
+            >
+              {scoreLabel}
+            </McPill>
+          }
+          bodyClassName="pb-3 pt-0"
         >
-          <SiteScoreWheel score={score} caption="SEO Score" size={96} />
+          <div className="flex justify-center">
+            <SiteScoreWheel score={score} caption="SEO Score" size={88} />
+          </div>
         </McCard>
 
-        <McCard title="Issues" icon={<AlertCircle size={15} />}>
+        <McCard title="Issues" icon={<AlertCircle size={15} />} bodyClassName="pb-3 pt-0">
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: "Critical", value: failCount, tone: "bad" as const },
@@ -503,7 +509,7 @@ export function SeoTab({
           </div>
         </McCard>
 
-        <McCard title="Checklist" icon={<CheckCircle2 size={15} />}>
+        <McCard title="Checklist" icon={<CheckCircle2 size={15} />} bodyClassName="pb-3 pt-0">
           <p className="text-xl font-semibold tabular-nums text-foreground">
             {passCount}
             <span className="text-sm font-normal text-muted-foreground"> / {totalChecks} passed</span>
@@ -520,7 +526,9 @@ export function SeoTab({
         </McCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <BrokenLinksSection siteId={site.id} brandColor={brandColor} />
+
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
         {trendPts.length > 0 && (
           <McCard
             title="Recent Scores"
@@ -549,13 +557,13 @@ export function SeoTab({
             ) : null
           }
           bodyClassName={
-            checksArray.filter((c) => c.status !== "pass").length > 0 ? "p-0" : "p-4"
+            checksArray.filter((c) => c.status !== "pass").length > 0 ? "p-0" : undefined
           }
         >
           {checksArray.filter((c) => c.status !== "pass").length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-8">
-              <CheckCircle2 size={22} className="text-[var(--score-good)]" />
-              <p className="text-xs text-muted-foreground text-center">
+            <div className="flex flex-col items-center justify-center gap-1.5 py-5">
+              <CheckCircle2 size={18} className="text-[var(--score-good)]" />
+              <p className="text-center text-xs text-muted-foreground">
                 {checksArray.length === 0 ? "Run an audit to see SEO issues" : "No issues found"}
               </p>
             </div>
@@ -611,7 +619,15 @@ export function SeoTab({
         </McCard>
       </div>
 
-      <BrokenLinksSection siteId={site.id} brandColor={brandColor} />
+      <div className="border-t border-border pt-3">
+        <h3 className="mb-0.5 text-sm font-semibold text-foreground">Site-wide SEO audit</h3>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Crawls every page, finds issues with named pages attached, and applies the safe fixes for
+          you.
+        </p>
+        <SeoAuditPanel siteId={site.id} />
+      </div>
+
       <SearchConsoleSection site={site} brandColor={brandColor} />
     </div>
   );
