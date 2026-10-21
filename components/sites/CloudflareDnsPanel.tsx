@@ -165,7 +165,7 @@ export function CloudflareDnsPanel({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-10">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
@@ -254,7 +254,7 @@ export function CloudflareDnsPanel({
 
       {/* Sidebar + main — full width */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-        <aside className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-[0_1px_2px_rgb(26_29_35/0.04)] lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <aside className="mc-panel p-2 lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
           <p className="px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
             Cloudflare
           </p>
@@ -309,7 +309,7 @@ export function CloudflareDnsPanel({
             <>
               {!connected && modePick === "choose" && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
                     <p className="text-[12px] font-semibold text-foreground">How it works</p>
                     <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12px] leading-relaxed text-muted-foreground">
                       <li>Choose BYO token or Hosted Free</li>
@@ -599,7 +599,7 @@ function ModeCard({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex h-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
+    <div className="mc-panel flex h-full flex-col gap-3 p-4">
       <McIconBox icon={icon} tone={tone} size="md" />
       <div className="min-w-0 flex-1">
         <p className="text-[14px] font-bold text-foreground">{title}</p>

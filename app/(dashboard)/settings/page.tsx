@@ -212,23 +212,23 @@ function GeneralTab() {
   }
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
       {/* Agency info */}
-      <div className="rounded-xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base bg-muted/20 p-5 space-y-4">
+      <div className="mc-panel space-y-4 p-4">
         <h3 className="text-sm font-semibold text-foreground">{isOwner ? "Agency Information" : "Your Profile"}</h3>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1.5">{isOwner ? "Agency Name" : "Your Name"}</label>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{isOwner ? "Agency Name" : "Your Name"}</label>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={isOwner ? "Acme Agency" : "Jane Smith"}
             onKeyDown={(e) => e.key === "Enter" && saveProfile()} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Email Address</label>
-          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground select-all">{agency?.email ?? "—"}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">Email cannot be changed. Contact support if needed.</p>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Email Address</label>
+          <div className="select-all rounded-md bg-zinc-50 px-3 py-2 text-sm text-muted-foreground">{agency?.email ?? "—"}</div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Email cannot be changed. Contact support if needed.</p>
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Current Plan</label>
-          <div className="px-3 py-2.5 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground flex items-center justify-between">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Current Plan</label>
+          <div className="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2 text-sm text-muted-foreground">
             <span>{getPlanLabel(agency?.plan)}</span>
             {agency?.plan !== "agency_plus" && (
               <Link href="/billing" className="text-xs font-medium text-accent hover:underline">Upgrade</Link>
@@ -247,8 +247,8 @@ function GeneralTab() {
       </div>
 
       {/* Change password */}
-      <div className="rounded-xl shadow-elevated-sm hover:shadow-elevated-md transition-shadow duration-base bg-muted/20 p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+      <div className="mc-panel space-y-4 p-4">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Lock size={14} className="text-muted-foreground" /> Change Password
         </h3>
         <div>

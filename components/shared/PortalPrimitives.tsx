@@ -18,21 +18,21 @@ export function MetricTile({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-surface p-4 sm:p-5",
+        "mc-panel p-3 sm:p-3.5",
         className
       )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        {icon ? <span className="shrink-0 text-accent">{icon}</span> : null}
+        {icon ? <span className="shrink-0 text-accent [&_svg]:size-3.5">{icon}</span> : null}
       </div>
-      <p className="font-portal-display text-2xl font-bold tabular-nums leading-none text-foreground">
+      <p className="font-portal-display text-xl font-semibold tabular-nums leading-none text-foreground">
         {value}
       </p>
       {sub ? (
-        <div className="mt-2 text-xs font-medium text-muted-foreground">{sub}</div>
+        <div className="mt-1.5 text-xs font-medium text-muted-foreground">{sub}</div>
       ) : null}
     </div>
   );

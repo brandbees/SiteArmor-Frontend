@@ -32,7 +32,7 @@ export function PortalPageShell({
       <div className={cn("min-h-0 flex-1 overflow-auto p-4 pr-6", contentClassName)}>
         <div
           className={cn(
-            "min-h-full overflow-hidden rounded-3xl border border-zinc-200 bg-white",
+            "mc-shell min-h-full overflow-hidden bg-white",
             cardClassName
           )}
         >

@@ -311,7 +311,7 @@ export default function ClientsPage() {
   }, [clients, search]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         title="Clients"
         description="Manage relationships, assign sites, and send portal invites."
@@ -341,7 +341,7 @@ export default function ClientsPage() {
       />
 
       {loading && (
-        <div className="flex justify-center py-20">
+          <div className="flex justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
       )}
@@ -368,7 +368,7 @@ export default function ClientsPage() {
 
       {!loading && !error && clients.length > 0 && (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
             <MetricTile label="Total Clients" value={clients.length} icon={<Users size={16} />} />
             <MetricTile label="Sites Assigned" value={totalSites} icon={<Globe size={16} />} />
             <MetricTile label="With Company" value={withCompany} icon={<Building2 size={16} />} />

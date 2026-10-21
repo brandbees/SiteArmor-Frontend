@@ -190,19 +190,18 @@ export function UptimeTab({ site, brandColor }: { site: Site; brandColor: string
         )}
       </McCard>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-3">
         <McCard
           className="lg:col-span-2"
           title="Incident Log"
           icon={<AlertCircle size={15} />}
           action={<McPill tone="good">0 incidents</McPill>}
         >
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-            <CheckCircle2 size={22} className="text-[var(--score-good)]" />
+          <div className="flex flex-col items-center justify-center gap-1.5 py-4 text-center">
+            <CheckCircle2 size={18} className="text-[var(--score-good)]" />
             <p className="text-sm font-semibold text-foreground">No incidents recorded</p>
-            <p className="max-w-md text-xs text-muted-foreground">
-              All systems have been operational. Incident history will appear here when monitoring
-              detects downtime.
+            <p className="max-w-sm text-xs text-muted-foreground">
+              Downtime history appears here when monitoring detects an outage.
             </p>
           </div>
         </McCard>
@@ -213,7 +212,7 @@ export function UptimeTab({ site, brandColor }: { site: Site; brandColor: string
           action={
             <a
               href="/settings/alerts"
-              className="inline-flex h-9 items-center gap-1.5 rounded-[4px] bg-surface px-4 text-[11px] font-bold uppercase tracking-[0.08em] text-foreground ring-1 ring-border-strong hover:ring-accent/30"
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-foreground hover:bg-zinc-50"
             >
               <Bell size={11} />
               Edit

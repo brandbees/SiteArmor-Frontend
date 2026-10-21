@@ -1213,7 +1213,7 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 size={20} className="animate-spin text-gray-300" /></div>
         ) : backups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 text-gray-400 gap-2">
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-gray-400">
             <HardDrive size={36} strokeWidth={1} />
             <p className="text-sm">No backups yet — run your first backup above.</p>
           </div>
@@ -1294,10 +1294,10 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
                                 : "—"}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex flex-wrap items-center justify-end gap-1">
+                              <div className="flex flex-wrap items-center justify-end gap-1.5 whitespace-nowrap">
                                 <button
                                   onClick={() => handleDelete(backup)}
-                                  className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+                                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${
                                     confirmDelete === backup.id
                                       ? "bg-red-100 text-red-700 hover:bg-red-200"
                                       : "text-red-500 hover:bg-red-50"

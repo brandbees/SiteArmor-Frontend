@@ -355,7 +355,7 @@ export function PlansBillingPage() {
           }}
         />
 
-        <div className="relative mx-auto w-full max-w-[1400px] px-5 py-8 sm:px-8">
+        <div className="relative mx-auto w-full max-w-[1400px] px-5 py-5 sm:px-8">
           {checkoutError && (
             <div className="mb-6 flex items-start justify-between gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
               <p className="flex items-center gap-2">
@@ -379,7 +379,7 @@ export function PlansBillingPage() {
                         Current plan
                       </p>
                     </div>
-                    <p className="mt-1.5 text-2xl font-medium tracking-tight">
+                    <p className="mt-1 text-xl font-semibold tracking-tight">
                       {currentPlanLabel}
                       {isLegacyAgency ? (
                         <span className="ml-2 text-sm font-normal text-white/50">legacy</span>
@@ -472,7 +472,7 @@ export function PlansBillingPage() {
                     <div
                       key={plan}
                       className={cn(
-                        "relative flex flex-col rounded-2xl border bg-white p-5 shadow-elevated-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated-md",
+                        "mc-panel relative flex flex-col p-4 transition-colors duration-150 hover:bg-zinc-50/60",
                         isCurrent && "border-accent/40 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_42%)] ring-1 ring-accent/20",
                         popular && "border-accent/30"
                       )}

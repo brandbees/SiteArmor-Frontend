@@ -464,30 +464,28 @@ export function SeoTab({
     trendPts.length >= 2 ? trendPts[trendPts.length - 1].score - trendPts[0].score : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
-        <h3 className="mb-1 text-sm font-semibold text-foreground">Site-wide SEO audit</h3>
-        <p className="mb-3 text-xs text-muted-foreground">
+        <h3 className="mb-0.5 text-sm font-semibold text-foreground">Site-wide SEO audit</h3>
+        <p className="mb-2 text-xs text-muted-foreground">
           Crawls every page, finds issues with named pages attached, and applies the safe fixes for
           you.
         </p>
         <SeoAuditPanel siteId={site.id} />
       </div>
 
-      <div className="border-t border-border pt-2">
-        <h3 className="mb-1 mt-3 text-sm font-semibold text-foreground">Homepage audit</h3>
-        <p className="mb-3 text-xs text-muted-foreground">
-          The single-page check that runs with every scheduled audit.
-        </p>
+      <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
+        <h3 className="text-sm font-semibold text-foreground">Homepage audit</h3>
+        <p className="text-[11px] text-muted-foreground">Runs with every scheduled audit</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <McCard
           title="SEO"
           icon={<TrendingUp size={15} />}
           action={<McPill tone={score == null ? "neutral" : score >= 60 ? "good" : score >= 40 ? "warn" : "bad"}>{scoreLabel}</McPill>}
         >
-          <SiteScoreWheel score={score} caption="SEO Score" size={110} />
+          <SiteScoreWheel score={score} caption="SEO Score" size={96} />
         </McCard>
 
         <McCard title="Issues" icon={<AlertCircle size={15} />}>
@@ -497,8 +495,8 @@ export function SeoTab({
               { label: "Warning", value: warnCount, tone: "warn" as const },
               { label: "Info", value: 0, tone: "accent" as const },
             ].map(({ label, value, tone }) => (
-              <div key={label} className="rounded-md border border-border px-2 py-3 text-center">
-                <p className="text-xl font-bold tabular-nums text-foreground">{value}</p>
+              <div key={label} className="rounded-md border border-border px-2 py-2 text-center">
+                <p className="text-lg font-semibold tabular-nums text-foreground">{value}</p>
                 <McPill tone={tone}>{label}</McPill>
               </div>
             ))}
@@ -506,23 +504,23 @@ export function SeoTab({
         </McCard>
 
         <McCard title="Checklist" icon={<CheckCircle2 size={15} />}>
-          <p className="text-2xl font-bold tabular-nums text-foreground">
+          <p className="text-xl font-semibold tabular-nums text-foreground">
             {passCount}
             <span className="text-sm font-normal text-muted-foreground"> / {totalChecks} passed</span>
           </p>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-accent transition-all"
               style={{ width: `${totalChecks > 0 ? (passCount / totalChecks) * 100 : 0}%` }}
             />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             {issueCount > 0 ? `${issueCount} items need attention` : "All checks passed"}
           </p>
         </McCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {trendPts.length > 0 && (
           <McCard
             title="Recent Scores"

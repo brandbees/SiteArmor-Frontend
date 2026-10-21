@@ -138,10 +138,12 @@ export function ReportsPageShell({
 
             <button
               type="button"
-              className="inline-flex aspect-square h-10 w-10 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs transition-colors hover:bg-zinc-200/30 active:bg-neutral-200"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50"
               aria-label="Filters"
+              title="Filters"
             >
-              <ListFilter size={16} strokeWidth={1} className="text-zinc-950" />
+              <ListFilter size={14} strokeWidth={1.5} className="text-zinc-700" />
+              Filters
             </button>
           </div>
 
@@ -150,7 +152,7 @@ export function ReportsPageShell({
       </header>
 
       <div className="min-h-0 flex-1 overflow-auto p-4 pr-4 sm:pr-6">
-        <div className="mx-auto flex min-h-full min-w-0 flex-col rounded-3xl border border-zinc-200 bg-[#FDFDFD] p-4 shadow-xs">
+        <div className="mc-shell mx-auto flex min-h-full min-w-0 flex-col bg-[#FDFDFD] p-3 sm:p-4">
           {children}
           {footer}
         </div>
@@ -184,10 +186,18 @@ export function ReportsTable({
 
   if (reports.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-        <FileChartLine size={48} strokeWidth={1} className="mb-3 text-zinc-300" />
-        <h3 className="mb-2 text-lg font-semibold text-zinc-950">No reports found</h3>
-        <p className="text-sm text-zinc-500">When you create reports, they will appear here</p>
+      <div className="flex min-h-[280px] flex-col items-center justify-center px-4 py-12 text-center">
+        <FileChartLine size={36} strokeWidth={1.25} className="mb-3 text-zinc-300" />
+        <h3 className="mb-1 text-base font-semibold text-zinc-950">No reports yet</h3>
+        <p className="mb-4 max-w-sm text-sm text-zinc-500">
+          Generate a client report from any site after an audit completes.
+        </p>
+        <Link
+          href="/sites"
+          className="inline-flex h-9 items-center rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover"
+        >
+          Open sites
+        </Link>
       </div>
     );
   }
@@ -255,18 +265,22 @@ export function ReportsTable({
                         <Link
                           href={href}
                           title="View report"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-accent"
+                          aria-label="View report"
+                          className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-accent"
                         >
-                          <Eye size={15} strokeWidth={1.5} />
+                          <Eye size={14} strokeWidth={1.5} />
+                          View
                         </Link>
                         {onSend && (
                           <button
                             type="button"
                             title="Send to client"
+                            aria-label="Send to client"
                             onClick={() => onSend(report)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-accent"
+                            className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-accent"
                           >
-                            <Send size={15} strokeWidth={1.5} />
+                            <Send size={14} strokeWidth={1.5} />
+                            Send
                           </button>
                         )}
                       </>

@@ -66,7 +66,7 @@ function AccordionBlock({
       </button>
       {open ? (
         <div className="rounded-b-lg border border-zinc-200 bg-white">
-          <div className="max-h-32 space-y-1 overflow-y-auto p-4">{children}</div>
+          <div className="space-y-1 p-3">{children}</div>
         </div>
       ) : null}
     </div>
@@ -493,19 +493,17 @@ export function PerformanceTab({
     score == null ? "#71717a" : score >= 80 ? "#059669" : score >= 50 ? "#f59e0b" : "#dc2626";
 
   return (
-    <div className="w-full space-y-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
+    <div className="w-full space-y-4">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
           <FileChartColumnIncreasing
-            size={24}
-            strokeWidth={1}
-            className="mt-1 shrink-0 rounded-full bg-zinc-300 p-1 text-zinc-950 shadow-[0_0_0_4px_rgb(244,244,245)]"
+            size={20}
+            strokeWidth={1.5}
+            className="shrink-0 rounded-md bg-zinc-100 p-1 text-zinc-800"
           />
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold leading-normal text-black">Performance Details</h1>
-            <p className="text-xs font-normal leading-normal text-emerald-600">
-              View performance insights and enable optimization features
-            </p>
+            <h1 className="mc-page-title">Performance Details</h1>
+            <p className="mc-page-sub">Audit metrics and optimization</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -514,36 +512,36 @@ export function PerformanceTab({
               Run audit
             </Button>
           ) : null}
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="outline"
             onClick={() => {
               const prompt = `Optimize PSI for ${site.name} using low risk fixes. Show me the improvements step by step.`;
               router.push(`/sites/${site.id}?tab=agent&prompt=${encodeURIComponent(prompt)}`);
             }}
-            className="text-xs font-semibold text-accent hover:underline"
           >
-            Optimize with AI?
-          </button>
+            Optimize with AI
+          </Button>
         </div>
       </header>
 
-      <div className="rounded-2xl border-2 border-gray-200 bg-white p-6">
-        <div className="mb-6">
+      <div className="mc-panel p-4 sm:p-5">
+        <div className="mb-4">
           <div className="flex items-center gap-2">
-            <Gauge size={24} strokeWidth={1.5} className="text-zinc-950" />
-            <p className="text-lg font-semibold text-zinc-900">Audit performance snapshot</p>
+            <Gauge size={18} strokeWidth={1.5} className="text-zinc-950" />
+            <p className="text-[15px] font-semibold text-zinc-900">Audit performance snapshot</p>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             From your last Site Armor audit (lab metrics). Live Google PSI mobile/desktop may differ — ask the AI Agent for a fresh PageSpeed run.
           </p>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="flex items-center justify-center lg:col-span-1">
-            <SiteScoreWheel score={score} caption="Score" size={200} />
+            <SiteScoreWheel score={score} caption="Score" size={140} />
           </div>
           <div className="lg:col-span-2">
-            <p className="mb-3 text-xs font-semibold text-gray-700">Metrics</p>
+            <p className="mb-2 text-xs font-semibold text-gray-700">Metrics</p>
             <div className="space-y-1">
               {metricRows.map((row) => (
                 <div
