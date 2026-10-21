@@ -575,7 +575,7 @@ export default function SitesPage() {
           </div>
 
           <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3">
-            <div className="relative flex h-9 min-w-[12rem] flex-1 items-center gap-2 rounded-md bg-zinc-100 px-2.5 sm:max-w-md">
+            <div className="sa-glass-btn relative flex h-9 min-w-[12rem] flex-1 items-center gap-2 rounded-md px-2.5 sm:max-w-md">
               <Search size={15} strokeWidth={1.5} className="pointer-events-none shrink-0 text-zinc-500" />
               <input
                 type="text"
@@ -594,8 +594,8 @@ export default function SitesPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-4 py-2.5 pr-6">
-          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+        <div className="flex flex-wrap items-center gap-2 border-t border-white/50 px-4 py-2.5 pr-6">
+          <span className="sa-nav-section mr-1">
             Filter
           </span>
           <button
@@ -605,10 +605,8 @@ export default function SitesPage() {
               setFiltersDirty(true);
             }}
             className={cn(
-              "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
-              quick === "all"
-                ? "border-accent bg-accent text-white"
-                : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              quick === "all" ? "sa-glass-chip-active" : "sa-glass-chip text-zinc-600"
             )}
           >
             All
@@ -622,10 +620,8 @@ export default function SitesPage() {
                 setFiltersDirty(true);
               }}
               className={cn(
-                "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
-                quick === q.value
-                  ? "border-accent bg-accent text-white"
-                  : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                quick === q.value ? "sa-glass-chip-active" : "sa-glass-chip text-zinc-600"
               )}
             >
               {q.label}
@@ -638,7 +634,7 @@ export default function SitesPage() {
                 setActiveClientId(e.target.value || null);
                 setFiltersDirty(true);
               }}
-              className="ml-auto h-8 rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              className="sa-glass-btn ml-auto h-8 rounded-md px-2 text-xs text-zinc-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             >
               <option value="">All clients</option>
               <option value="__unassigned__">Unassigned</option>
@@ -729,7 +725,7 @@ export default function SitesPage() {
             ) : (
               <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
                 <table className="w-full min-w-[720px] border-collapse text-left">
-                  <thead className="sticky top-0 z-10 bg-white text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  <thead className="mc-table-th sticky top-0 z-10 backdrop-blur-md">
                     <tr className={HEADER_RULE}>
                       {showSelect && (
                         <th className={TH_CHECKBOX}>

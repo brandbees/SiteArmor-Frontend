@@ -111,13 +111,13 @@ function SiteSummaryCard({
     null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
+    <div className="mc-shell overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-white/50 px-5 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700">
+          <div className="sa-glass-btn flex h-8 w-8 items-center justify-center rounded-lg text-zinc-700">
             <Globe size={16} strokeWidth={1.5} />
           </div>
-          <h2 className="text-sm font-semibold text-zinc-950">Site Summary</h2>
+          <h2 className="font-portal-display text-sm font-semibold tracking-tight text-zinc-950">Site Summary</h2>
         </div>
         {site.plugin_connected ? (
           <McPill tone="good" dot>
@@ -211,7 +211,7 @@ function SiteSummaryCard({
             <button
               type="button"
               onClick={() => setTab("plugins")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"
+              className="sa-glass-btn inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-700 transition-colors"
             >
               <List size={14} strokeWidth={1.5} />
               View All ({updates})

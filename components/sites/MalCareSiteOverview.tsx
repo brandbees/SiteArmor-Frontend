@@ -705,7 +705,7 @@ export function MalCareSiteOverview({
                         <button
                           type="button"
                           onClick={() => setTab("issues")}
-                          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-accent shadow-xs hover:bg-zinc-50"
+                          className="sa-glass-btn inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-accent"
                         >
                           <List size={14} strokeWidth={1.5} />
                           View All ({alerts.length})
@@ -746,7 +746,7 @@ export function MalCareSiteOverview({
                   <button
                     type="button"
                     onClick={() => setTab("backups")}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-accent shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-accent"
                   >
                     Manage
                     <ArrowUpRight size={14} strokeWidth={1.5} />
@@ -781,7 +781,7 @@ export function MalCareSiteOverview({
                   <button
                     type="button"
                     onClick={() => setTab("performance")}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                     aria-label="View performance details"
                   >
                     <ArrowUpRight size={16} strokeWidth={1} />
@@ -823,7 +823,7 @@ export function MalCareSiteOverview({
                   <button
                     type="button"
                     onClick={() => setTab("performance")}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-accent shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-accent"
                   >
                     View report
                     <ArrowUpRight size={14} strokeWidth={1.5} />
@@ -852,7 +852,7 @@ export function MalCareSiteOverview({
                   <button
                     type="button"
                     onClick={() => setTab("health")}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                     aria-label="View site health details"
                   >
                     <ArrowUpRight size={16} strokeWidth={1} />
@@ -997,7 +997,7 @@ export function MalCareSiteOverview({
                 action={
                   <Link
                     href={`/reports/${site.id}`}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                     aria-label="Open reports"
                   >
                     <ArrowUpRight size={16} strokeWidth={1} />
@@ -1038,7 +1038,7 @@ export function MalCareSiteOverview({
                 </p>
                 <Link
                   href={`/reports/${site.id}`}
-                  className="inline-flex h-8 shrink-0 items-center gap-2 rounded-md border border-zinc-200 bg-white px-2 text-sm font-medium text-accent shadow-xs hover:bg-zinc-50"
+                  className="sa-glass-btn inline-flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-sm font-medium text-accent"
                 >
                   <Plus size={16} strokeWidth={1} />
                   New Report
@@ -1294,7 +1294,7 @@ export function MalCareSiteOverview({
                         <button
                           type="button"
                           onClick={() => setTab("uptime")}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                          className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                           aria-label="Open advanced monitoring"
                         >
                           <ArrowUpRight size={16} strokeWidth={1} />

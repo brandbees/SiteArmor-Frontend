@@ -121,7 +121,7 @@ export function McCard({
       )}
     >
       {(title || action) && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3 border-b border-white/40 px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
             {icon ? <McIconBox icon={icon} tone="neutral" size="sm" /> : null}
             {title ? (
@@ -300,7 +300,7 @@ export function McAlert({
     <div
       role="alert"
       className={cn(
-        "relative flex overflow-hidden rounded-lg border border-border bg-white shadow-[0_1px_2px_rgb(26_29_35/0.04)]",
+        "relative flex overflow-hidden rounded-lg border border-white/70 bg-white/65 shadow-[inset_0_1px_0_rgb(255_255_255/0.8)] backdrop-blur-md",
         compact ? "items-center gap-2.5 px-3 py-2.5" : "gap-3 p-3.5",
         className
       )}
@@ -374,10 +374,10 @@ export function FilterRail({
   footer?: ReactNode;
 }) {
   return (
-    <aside className="flex w-full shrink-0 flex-col rounded-lg border border-border bg-surface lg:w-[220px]">
+    <aside className="mc-panel flex w-full shrink-0 flex-col lg:w-[220px]">
       <div className="flex-1 space-y-5 p-4">{children}</div>
       {footer ? (
-        <div className="flex items-center justify-between gap-2 border-t border-border p-3">
+        <div className="flex items-center justify-between gap-2 border-t border-white/50 p-3">
           {footer}
         </div>
       ) : null}
@@ -408,10 +408,8 @@ export function QuickPills({
               type="button"
               onClick={() => onChange(active ? "all" : item.value)}
               className={cn(
-                "rounded-[4px] border px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                active
-                  ? "border-accent bg-accent text-white"
-                  : "border-border bg-white text-muted-foreground hover:border-accent/40 hover:text-foreground"
+                "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                active ? "sa-glass-chip-active" : "sa-glass-chip text-muted-foreground hover:text-foreground"
               )}
             >
               {item.label}
@@ -431,10 +429,10 @@ export function InsightTableShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="min-w-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="mc-panel min-w-0 flex-1 overflow-hidden">
       <div className="overflow-x-auto">{children}</div>
       {footer ? (
-        <div className="border-t border-border px-4 py-3 text-xs font-medium text-muted-foreground">
+        <div className="border-t border-white/50 px-4 py-3 text-xs font-medium text-muted-foreground">
           {footer}
         </div>
       ) : null}
@@ -489,7 +487,7 @@ export function RoundedFilterTabs<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="flex w-fit max-w-full flex-wrap items-center gap-1 rounded-full bg-muted/50 p-1"
+      className="flex w-fit max-w-full flex-wrap items-center gap-1 rounded-full border border-white/60 bg-white/35 p-1 backdrop-blur-md"
     >
       {tabs.map((t) => {
         const selected = value === t.id;
@@ -502,8 +500,8 @@ export function RoundedFilterTabs<T extends string>({
             onClick={() => onChange(t.id)}
             className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 ${
               selected
-                ? "bg-white text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "sa-glass-chip-active shadow-sm"
+                : "text-muted-foreground hover:bg-white/40 hover:text-foreground"
             }`}
           >
             {t.label}

@@ -69,7 +69,7 @@ function McStatCard({
   children: ReactNode;
 }) {
   const inner = (
-    <div className="mc-panel flex h-[108px] w-full cursor-pointer flex-col justify-between overflow-hidden p-3 transition-colors duration-150 hover:bg-zinc-50/80">
+    <div className="mc-panel flex h-[108px] w-full cursor-pointer flex-col justify-between overflow-hidden p-3 transition-colors duration-150 hover:bg-white/55">
       <div className="flex w-full items-center justify-between">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
         <div className="flex items-center justify-center rounded text-muted-foreground [&_svg]:size-4">
@@ -111,13 +111,13 @@ function McMenu({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex h-8 min-w-[5.5rem] items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="sa-glass-btn flex h-8 min-w-[5.5rem] items-center justify-between gap-2 rounded-md px-2.5 py-1 text-xs text-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
         <span className="truncate">{current}</span>
         <ChevronDown size={16} className={cn("shrink-0 text-zinc-400 transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-1 min-w-[9rem] rounded-md border border-zinc-200 bg-white py-1 shadow-md">
+        <div className="absolute right-0 top-full z-30 mt-1 min-w-[9rem] rounded-md border border-white/70 bg-white/90 py-1 shadow-md backdrop-blur-xl">
           {options.map((opt) => (
             <button
               key={opt.id}
@@ -580,7 +580,7 @@ export function MalCareDashboard({
         )}
 
         {needsAuditSites.length > 0 && (
-          <div className="w-full rounded-2xl border border-accent/20 bg-white px-5 py-4 shadow-xs">
+          <div className="mc-shell w-full border-accent/25 px-5 py-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-zinc-950">
@@ -864,7 +864,7 @@ export function MalCareDashboard({
                   {sites[0] && (
                     <Link
                       href={`/sites/${sites[0].id}?tab=backups`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                      className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                       aria-label="Open backups"
                     >
                       <ChevronRight size={16} className="rotate-[-45deg]" />
@@ -1099,7 +1099,7 @@ export function MalCareDashboard({
                   />
                   <Link
                     href="/uptime"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                     aria-label="Open monitoring"
                   >
                     <ChevronRight size={16} className="rotate-[-45deg]" />
@@ -1195,7 +1195,7 @@ export function MalCareDashboard({
                   />
                   <Link
                     href="/reports"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white shadow-xs hover:bg-zinc-50"
+                    className="sa-glass-btn inline-flex h-8 w-8 items-center justify-center rounded-md"
                     aria-label="Open reports"
                   >
                     <ChevronRight size={16} className="rotate-[-45deg]" />
@@ -1220,8 +1220,8 @@ export function MalCareDashboard({
                           className={cn(
                             "h-8 rounded-md border px-3 text-xs font-normal transition-colors",
                             selected
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                              : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                              ? "border-emerald-200/80 bg-emerald-50/80 text-emerald-800 backdrop-blur-sm"
+                              : "sa-glass-chip text-zinc-700"
                           )}
                         >
                           {label} ({count})
@@ -1250,7 +1250,7 @@ export function MalCareDashboard({
                     </div>
                     <Link
                       href="/reports"
-                      className="inline-flex h-8 items-center rounded-md border border-zinc-200 bg-white px-4 text-xs font-medium text-zinc-900 shadow-xs hover:bg-zinc-50"
+                      className="sa-glass-btn inline-flex h-8 items-center rounded-md px-4 text-xs font-medium text-zinc-900"
                     >
                       View reports
                     </Link>

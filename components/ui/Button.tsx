@@ -16,9 +16,11 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary: "bg-accent text-white hover:bg-accent-hover shadow-sm",
-  secondary: "border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
-  outline: "border border-zinc-200 bg-transparent text-zinc-800 hover:bg-zinc-50",
-  ghost: "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+  secondary:
+    "border border-white/75 bg-white/55 text-zinc-800 shadow-[inset_0_1px_0_rgb(255_255_255/0.85)] backdrop-blur-md hover:bg-white/75",
+  outline:
+    "border border-white/70 bg-white/35 text-zinc-800 shadow-[inset_0_1px_0_rgb(255_255_255/0.7)] backdrop-blur-md hover:bg-white/55",
+  ghost: "bg-transparent text-zinc-600 hover:bg-white/40 hover:text-zinc-900",
   danger: "bg-destructive text-white hover:bg-red-700",
 };
 

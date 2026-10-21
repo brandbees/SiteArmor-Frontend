@@ -23,7 +23,7 @@ export function EmptyState({
   const body = (
     <>
       {icon ? (
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground">
+        <div className="sa-glass-btn mb-4 flex h-16 w-16 items-center justify-center rounded-xl text-muted-foreground">
           {icon}
         </div>
       ) : null}
