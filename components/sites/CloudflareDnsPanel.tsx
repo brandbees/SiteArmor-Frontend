@@ -210,7 +210,7 @@ export function CloudflareDnsPanel({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-[15px] font-bold text-foreground">DNS / Cloudflare</h2>
-                  {!connected && <McPill tone="neutral" dot>Not connected</McPill>}
+                  {/* Status badge lives in the site header when disconnected — avoid “Not connected” twice */}
                   {connected && status?.status === "active" && (
                     <McPill tone="good" icon={<CheckCircle2 size={11} />}>Active</McPill>
                   )}
@@ -227,7 +227,9 @@ export function CloudflareDnsPanel({
                   )}
                 </div>
                 <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-                  Manage DNS and security rules for this site through Cloudflare.
+                  {connected
+                    ? "Manage DNS and security rules for this site through Cloudflare."
+                    : "Connect Cloudflare to unlock DNS records and WAF rules for this site."}
                 </p>
                 <p className="mt-1.5 font-mono text-[11px] text-foreground/80">
                   Zone apex · {apex}
@@ -306,28 +308,38 @@ export function CloudflareDnsPanel({
           {sideNav === "connection" && (
             <>
               {!connected && modePick === "choose" && (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <ModeCard
-                    icon={<KeyRound size={18} />}
-                    tone="accent"
-                    title="Use an existing Cloudflare account"
-                    body="Connect with a scoped API token for this zone. The client retains ownership of their Cloudflare account."
-                    cta="Connect with token"
-                    onClick={() => setModePick("byo")}
-                  />
-                  <ModeCard
-                    icon={<Cloud size={18} />}
-                    tone="good"
-                    title="Hosted Free on Site Armor"
-                    body={
-                      status?.hosted_available === false
-                        ? "Hosted Free is not available on this server yet. Contact support if you need it enabled."
-                        : "Site Armor creates a Free Cloudflare zone. Update nameservers at the registrar to activate."
-                    }
-                    cta="Start Hosted Free"
-                    disabled={status?.hosted_available === false}
-                    onClick={() => setModePick("hosted")}
-                  />
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
+                    <p className="text-[12px] font-semibold text-foreground">How it works</p>
+                    <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12px] leading-relaxed text-muted-foreground">
+                      <li>Choose BYO token or Hosted Free</li>
+                      <li>Site Armor attaches the Cloudflare zone for this domain</li>
+                      <li>DNS records and WAF unlock once the zone is active</li>
+                    </ol>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <ModeCard
+                      icon={<KeyRound size={18} />}
+                      tone="accent"
+                      title="Use an existing Cloudflare account"
+                      body="Connect with a scoped API token for this zone. The client retains ownership of their Cloudflare account."
+                      cta="Connect with token"
+                      onClick={() => setModePick("byo")}
+                    />
+                    <ModeCard
+                      icon={<Cloud size={18} />}
+                      tone="good"
+                      title="Hosted Free on Site Armor"
+                      body={
+                        status?.hosted_available === false
+                          ? "Hosted Free is not available on this server yet. Contact support if you need it enabled."
+                          : "Site Armor creates a Free Cloudflare zone. Update nameservers at the registrar to activate."
+                      }
+                      cta="Start Hosted Free"
+                      disabled={status?.hosted_available === false}
+                      onClick={() => setModePick("hosted")}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -587,19 +599,16 @@ function ModeCard({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="flex h-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-[0_1px_2px_rgb(26_29_35/0.04)] transition hover:border-zinc-300 hover:bg-[#fafafa] disabled:cursor-not-allowed disabled:opacity-50"
-    >
+    <div className="flex h-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_1px_2px_rgb(26_29_35/0.04)]">
       <McIconBox icon={icon} tone={tone} size="md" />
       <div className="min-w-0 flex-1">
         <p className="text-[14px] font-bold text-foreground">{title}</p>
         <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{body}</p>
       </div>
-      <span className="text-[12px] font-semibold text-accent">{cta} →</span>
-    </button>
+      <Button type="button" disabled={disabled} onClick={onClick} className="w-full justify-center">
+        {cta}
+      </Button>
+    </div>
   );
 }
 

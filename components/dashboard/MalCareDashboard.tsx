@@ -397,14 +397,6 @@ export function MalCareDashboard({
     return { scheduled, withHistory, running, failed, enabled, listed };
   }, [sites]);
 
-  const alertSitesWithIssues = sites.filter(
-    (s) =>
-      s.malware_status === "threat" ||
-      s.uptime_status === "down" ||
-      (s.overall_score != null && s.overall_score < 80) ||
-      !s.plugin_connected
-  );
-
   const filteredAlerts = useMemo(() => {
     if (alertFilter === "hacked") return hackedSites;
     if (alertFilter === "critical") return criticalSites;
@@ -415,6 +407,15 @@ export function MalCareDashboard({
     }
     return [...byId.values()];
   }, [alertFilter, hackedSites, criticalSites, warningSites]);
+
+  /** Badge count must match the “All” filter union — not a looser set of sites. */
+  const alertSitesWithIssues = useMemo(() => {
+    const byId = new Map<string, Site>();
+    for (const s of [...hackedSites, ...criticalSites, ...warningSites]) {
+      if (!byId.has(s.id)) byId.set(s.id, s);
+    }
+    return [...byId.values()];
+  }, [hackedSites, criticalSites, warningSites]);
 
   const monitoringStats = useMemo(() => {
     let disabled = 0;
@@ -672,16 +673,16 @@ export function MalCareDashboard({
               </div>
             </McStatCard>
 
-            <McStatCard label="Updates" href="/sites" icon={<Plug size={24} strokeWidth={1.5} />}>
-              <div className="flex min-w-0 gap-6">
-                <div className="min-w-0 flex-1">
-                  <p className="text-2xl font-normal leading-none text-zinc-700">{totalUpdates}</p>
-                  <p className="mt-1 truncate text-xs leading-tight text-muted-foreground">Plugin updates</p>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-2xl font-normal leading-none text-zinc-700">{sitesWithUpdates.length}</p>
-                  <p className="mt-1 text-xs leading-tight text-muted-foreground">Sites with updates</p>
-                </div>
+            {/* Compact updates stat — detailed list is “Manage Updates” below (one story) */}
+            <McStatCard label="Updates" href="/sites?quick=updates" icon={<Plug size={24} strokeWidth={1.5} />}>
+              <div className="flex min-w-0 items-end gap-2">
+                <p className="text-2xl font-normal leading-none text-zinc-700">{totalUpdates}</p>
+                <p className="pb-0.5 text-xs leading-tight text-muted-foreground">
+                  plugin update{totalUpdates === 1 ? "" : "s"}
+                  {sitesWithUpdates.length > 0
+                    ? ` · ${sitesWithUpdates.length} site${sitesWithUpdates.length === 1 ? "" : "s"}`
+                    : ""}
+                </p>
               </div>
             </McStatCard>
           </div>
@@ -1021,16 +1022,16 @@ export function MalCareDashboard({
                 />
                 <div className="flex min-h-0 w-full flex-1 flex-col justify-center gap-6">
                   <div className="flex items-center justify-between gap-6">
-                    <div className="relative flex h-[166px] w-full max-w-[164px] items-center justify-center">
+                    <div className="relative flex h-[180px] w-[180px] shrink-0 items-center justify-center overflow-visible">
                       {perfPie.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width={180} height={180}>
                           <PieChart>
                             <Pie
                               data={perfPie}
                               cx="50%"
                               cy="50%"
-                              innerRadius={43}
-                              outerRadius={54}
+                              innerRadius={48}
+                              outerRadius={62}
                               dataKey="value"
                               stroke="#fff"
                               strokeWidth={2}
@@ -1046,7 +1047,7 @@ export function MalCareDashboard({
                           <span className="text-xs text-muted-foreground">No data</span>
                         </div>
                       )}
-                      <div className="absolute flex flex-col items-center">
+                      <div className="pointer-events-none absolute flex flex-col items-center">
                         <span className="text-center text-3xl font-medium leading-9 text-zinc-500">
                           {sites.length}
                         </span>

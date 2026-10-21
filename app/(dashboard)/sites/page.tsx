@@ -56,8 +56,7 @@ function siteAlerts(site: Site): { label: string; tone: "danger" | "warning" | "
   const out: { label: string; tone: "danger" | "warning" | "muted" }[] = [];
   if (site.uptime_status === "down") out.push({ label: "Site Unavailable", tone: "danger" });
   if (!site.plugin_connected) out.push({ label: "Plugin Disconnected", tone: "warning" });
-  if (site.malware_status === "threat")
-    out.push({ label: "Malware Detected", tone: "danger" });
+  // Hacked sites already show the HACKED thumb — skip duplicate “Malware Detected” chip
   if ((site.plugins_needing_updates ?? 0) > 0 || (site.themes_needing_updates ?? 0) > 0)
     out.push({ label: "Updates Available", tone: "warning" });
   else if ((site.plugin_vuln_count ?? 0) > 0)
@@ -632,13 +631,13 @@ export default function SitesPage() {
         {!loading && sites.length > 0 && (
           <div className="flex min-h-full flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white md:flex-row">
             {/* Filter panel — MalCare 246px */}
-            <aside className="sticky top-0 flex w-full shrink-0 flex-col border-b border-zinc-200 md:w-[246px] md:rounded-l-3xl md:border-b-0 md:border-r">
-              <div className="border-b border-zinc-200 px-4 py-6">
-                <div className="mb-4 flex items-center gap-2">
+            <aside className="sticky top-0 flex w-full shrink-0 flex-col border-b border-zinc-200 md:w-[220px] md:rounded-l-3xl md:border-b-0 md:border-r">
+              <div className="border-b border-zinc-200 px-3 py-4">
+                <div className="mb-3 flex items-center gap-2">
                   <Star size={16} strokeWidth={1.5} className="shrink-0 text-accent" />
                   <p className="text-sm font-semibold text-zinc-950">Quick Suggestions</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-1.5">
                   {QUICK.map((q) => (
                     <button
                       key={q.value}
@@ -648,7 +647,7 @@ export default function SitesPage() {
                         setFiltersDirty(true);
                       }}
                       className={cn(
-                        "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                        "w-full rounded-md border px-3 py-2 text-left text-sm font-medium transition-colors",
                         quick === q.value
                           ? "border-accent bg-accent text-white"
                           : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
@@ -660,7 +659,7 @@ export default function SitesPage() {
                 </div>
               </div>
 
-              <div className="flex flex-1 flex-col px-4 py-4">
+              <div className="flex flex-col px-3 py-4">
                 <div className="flex items-center gap-2 rounded bg-zinc-100 p-2">
                   <ListFilter size={16} strokeWidth={1.5} className="shrink-0 text-accent" />
                   <p className="text-sm font-semibold text-zinc-950">Filters</p>

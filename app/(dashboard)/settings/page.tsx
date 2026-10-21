@@ -38,7 +38,7 @@ type Tab = "general" | "branding" | "notifications" | "activity" | "team" | "int
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "general",       label: "General",            icon: Settings   },
   { id: "branding",      label: "Branding",           icon: Palette    },
-  { id: "notifications", label: "Notifications",      icon: Bell       },
+  { id: "notifications", label: "Notification preferences", icon: Bell },
   { id: "activity",      label: "Activity Log",       icon: Activity   },
   { id: "team",          label: "Team",               icon: Users      },
   { id: "integrations",  label: "API & Integrations", icon: Puzzle     },
@@ -166,8 +166,16 @@ function GeneralTab() {
   const { role } = useRole();
   const isOwner = role === "owner";
 
-  const displayName = isOwner ? (agency?.name ?? "") : (agency?.member_name ?? agency?.name ?? "");
+  const rawName = isOwner ? (agency?.name ?? "") : (agency?.member_name ?? agency?.name ?? "");
+  // Don't treat email-as-name as a real agency name (common after signup)
+  const displayName =
+    rawName && agency?.email && rawName.trim().toLowerCase() === agency.email.trim().toLowerCase()
+      ? ""
+      : rawName;
   const [name, setName]               = useState(displayName);
+  useEffect(() => {
+    setName(displayName);
+  }, [displayName]);
   const [profileSaving, setProfileSaving] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew]         = useState(false);
@@ -227,7 +235,13 @@ function GeneralTab() {
             )}
           </div>
         </div>
-        <Button onClick={saveProfile} loading={profileSaving} disabled={!name.trim() || name.trim() === displayName} className="w-full">
+        <Button
+          onClick={saveProfile}
+          loading={profileSaving}
+          disabled={!name.trim() || name.trim() === displayName}
+          className="w-full shadow-sm"
+          size="lg"
+        >
           Save Changes
         </Button>
       </div>

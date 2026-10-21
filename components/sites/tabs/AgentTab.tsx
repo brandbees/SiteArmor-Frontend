@@ -15,7 +15,7 @@ function AgentTabInner({ site }: { site: Site }) {
       className="flex min-h-0 flex-1 flex-col overflow-hidden"
       style={{ background: DASHBOARD_GRADIENT }}
     >
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-[1104px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-[#FDFDFD] shadow-xs">
           <AgentPanel
             fixedSiteId={site.id}

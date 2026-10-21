@@ -355,7 +355,7 @@ export function PlansBillingPage() {
           }}
         />
 
-        <div className="relative mx-auto max-w-6xl px-5 py-8 sm:px-8">
+        <div className="relative mx-auto w-full max-w-[1400px] px-5 py-8 sm:px-8">
           {checkoutError && (
             <div className="mb-6 flex items-start justify-between gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
               <p className="flex items-center gap-2">
@@ -512,9 +512,9 @@ export function PlansBillingPage() {
 
                       <div className="mt-6">
                         {isCurrent ? (
-                          <Button variant="secondary" className="w-full" disabled>
-                            Current plan
-                          </Button>
+                          <p className="py-2.5 text-center text-sm font-medium text-accent">
+                            Your current plan
+                          </p>
                         ) : isDowngrade || plan === "free" ? (
                           <Button variant="secondary" className="w-full" disabled>
                             {plan === "free" ? "Included" : "Lower tier"}

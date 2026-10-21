@@ -1614,7 +1614,7 @@ export function AgentPanel({
       {/* ── Messages ─────────────────────────────────────────────────────────── */}
       {!isFreePlan && (
         <div className={cn("relative min-h-0 flex-1 overflow-y-auto", embedded ? "bg-transparent" : "bg-[var(--background)]")}>
-          <div className={cn("relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10", embedded && "py-6 sm:py-8")}>
+          <div className={cn("relative mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10", embedded && "py-6 sm:py-8")}>
 
             {isEmpty ? (
               <div className="flex flex-col items-center text-center">
@@ -1880,7 +1880,7 @@ export function AgentPanel({
           )}
           style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 1rem))" }}
         >
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-4xl">
             <div className={cn(
               "flex items-end gap-2 border bg-white px-3 py-2 shadow-[0_1px_2px_rgb(26_29_35/0.04)] focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/10",
               embedded ? "rounded-2xl border-zinc-200" : "rounded-[4px] border-border"

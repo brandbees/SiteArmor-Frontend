@@ -191,7 +191,9 @@ function ClientRow({
         <td className="px-4 py-3.5">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Mail size={12} />
-            <span className="truncate max-w-[180px]">{local.email || "—"}</span>
+            <span className="truncate max-w-[180px]" title={local.email || undefined}>
+              {local.email || "—"}
+            </span>
           </div>
         </td>
         <td className="px-4 py-3.5">
@@ -408,15 +410,6 @@ export default function ClientsPage() {
             )}
             <div className="border-t border-border px-4 py-3 text-xs font-medium text-muted-foreground">
               {filtered.length} of {clients.length} clients
-              {canAdd && (
-                <button
-                  type="button"
-                  onClick={() => router.push("/clients/add")}
-                  className="ml-3 font-bold text-accent hover:underline"
-                >
-                  + Add client
-                </button>
-              )}
             </div>
           </div>
         </>

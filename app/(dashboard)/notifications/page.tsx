@@ -378,12 +378,14 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-white">
-        <StatCell label="Site alerts" value={counts.alerts} tone="warn" />
-        <StatCell label="Announcements" value={counts.announcements} tone="accent" />
-        <StatCell label="Total" value={counts.all} />
-      </div>
+      {/* Stats strip — hide when everything is zero (empty inbox) */}
+      {counts.all > 0 && (
+        <div className="grid grid-cols-3 divide-x divide-border border-b border-border bg-white">
+          <StatCell label="Site alerts" value={counts.alerts} tone="warn" />
+          <StatCell label="Announcements" value={counts.announcements} tone="accent" />
+          <StatCell label="Total" value={counts.all} />
+        </div>
+      )}
 
       {/* Tabs — 3 items, no horizontal scroll needed */}
       <div className="flex border-b border-border bg-white px-2 sm:px-4">
@@ -403,16 +405,18 @@ export default function NotificationsPage() {
               )}
             >
               {label}
-              <span
-                className={cn(
-                  "rounded-[3px] px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
-                  active
-                    ? "bg-accent/10 text-accent"
-                    : "bg-[#eef1f6] text-muted-foreground"
-                )}
-              >
-                {count}
-              </span>
+              {counts.all > 0 && (
+                <span
+                  className={cn(
+                    "rounded-[3px] px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                    active
+                      ? "bg-accent/10 text-accent"
+                      : "bg-[#eef1f6] text-muted-foreground"
+                  )}
+                >
+                  {count}
+                </span>
+              )}
               {active && (
                 <span className="absolute inset-x-1 bottom-0 h-[3px] rounded-t-full bg-accent sm:inset-x-2" />
               )}
@@ -437,14 +441,15 @@ export default function NotificationsPage() {
           </div>
         ) : items.length === 0 && !error ? (
           <EmptyState
-            icon={<Bell size={20} />}
-            title="No notifications"
+            className="min-h-[420px] py-24"
+            icon={<Bell size={28} />}
+            title="No notifications yet"
             description={
               tab === "alerts"
                 ? "Site alerts appear here when thresholds are breached."
                 : tab === "announcements"
                   ? "Platform announcements will appear here."
-                  : "Alerts and announcements will appear here."
+                  : "You're all caught up. Alerts and announcements will show here."
             }
           />
         ) : (

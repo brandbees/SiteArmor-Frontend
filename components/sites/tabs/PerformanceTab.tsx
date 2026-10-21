@@ -391,7 +391,7 @@ export function PerformanceTab({
   const tti: number | null = perf?.tti_ms ?? perf?.tti ?? null;
 
   const fmtMs = (ms: number | null) =>
-    ms == null ? "—" : ms >= 1000 ? `${(ms / 1000).toFixed(1)}\u00a0s` : `${Math.round(ms)}\u00a0ms`;
+    ms == null ? "Not reported" : ms >= 1000 ? `${(ms / 1000).toFixed(1)}\u00a0s` : `${Math.round(ms)}\u00a0ms`;
 
   const metricRows = [
     { label: "First Contentful Paint", value: fmtMs(fcp ?? ttfb) },
@@ -399,7 +399,7 @@ export function PerformanceTab({
     { label: "Largest Contentful Paint", value: fmtMs(lcp ?? total) },
     { label: "Time to Interactive", value: fmtMs(tti ?? total) },
     { label: "Total Blocking Time", value: fmtMs(tbt) },
-    { label: "Cumulative Layout Shift", value: cls != null ? cls.toFixed(3) : "—" },
+    { label: "Cumulative Layout Shift", value: cls != null ? cls.toFixed(3) : "Not reported" },
   ];
 
   type Rec = { title: string; detail: string; severity: "high" | "medium" | "low" };
@@ -493,7 +493,7 @@ export function PerformanceTab({
     score == null ? "#71717a" : score >= 80 ? "#059669" : score >= 50 ? "#f59e0b" : "#dc2626";
 
   return (
-    <div className="mx-auto w-full max-w-[1323px] space-y-8">
+    <div className="w-full space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <FileChartColumnIncreasing
