@@ -168,32 +168,28 @@ export function PluginFleetBanner({ siteId, className = "", onUpdated }: Props) 
 
   return (
     <div
-      className={`rounded-xl border border-amber-200/80 bg-amber-50/60 px-4 py-3 ${className}`}
+      className={`rounded-lg border border-amber-200/80 bg-amber-50/60 px-3 py-2 ${className}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-950">
-            <Shield size={15} className="shrink-0 text-amber-700" />
-            {siteId
-              ? `Site Armor update available (${latest})`
-              : `${sites.length} site${sites.length === 1 ? "" : "s"} need Site Armor ${latest}`}
-          </p>
-          <p className="text-[12px] leading-relaxed text-amber-900/80">
-            {pushReady.length > 0 && (
-              <>
-                {pushReady.length} ready for one-click update
-                {needsManual.length > 0 ? " · " : ""}
-              </>
-            )}
-            {needsManual.length > 0 && (
-              <>
-                {needsManual.length} need a one-time manual ZIP install
-                (requires {fleet.manifest.min_push_version}+ for push)
-              </>
-            )}
-            {fleet.manifest.release_notes
-              ? ` — ${fleet.manifest.release_notes}`
-              : ""}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-semibold text-amber-950">
+            <Shield size={14} className="shrink-0 text-amber-700" />
+            <span>
+              {siteId
+                ? `Site Armor ${latest} available`
+                : `${sites.length} site${sites.length === 1 ? "" : "s"} need Site Armor ${latest}`}
+            </span>
+            <span className="text-[12px] font-normal text-amber-900/80">
+              {pushReady.length > 0 && (
+                <>
+                  {pushReady.length} ready for one-click
+                  {needsManual.length > 0 ? " · " : ""}
+                </>
+              )}
+              {needsManual.length > 0 && (
+                <>{needsManual.length} need manual ZIP</>
+              )}
+            </span>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

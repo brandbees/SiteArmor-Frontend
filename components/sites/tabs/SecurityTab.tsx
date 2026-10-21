@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import {
-  Shield, ShieldAlert, ShieldCheck, Key, CheckCircle2, XCircle, AlertCircle, Wrench,
+  Shield, ShieldAlert, ShieldCheck, CheckCircle2, XCircle, Wrench,
 } from "lucide-react";
 import { McCard, McPill, ScoreHistoryList } from "@/components/shared/MalCareUI";
 import { SiteScoreWheel } from "@/components/shared/SiteScoreWheel";
@@ -21,12 +21,6 @@ type HardenAction =
 function sslDaysRemaining(date: string | null | undefined): number | null {
   if (!date) return null;
   return Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
-}
-
-function CheckIcon({ safe }: { safe: boolean | null }) {
-  if (safe === true) return <CheckCircle2 size={14} className="shrink-0 text-[var(--score-good)]" />;
-  if (safe === false) return <XCircle size={14} className="shrink-0 text-[var(--score-bad)]" />;
-  return <span className="shrink-0 text-xs text-muted-foreground">—</span>;
 }
 
 export function SecurityTab({
@@ -47,8 +41,6 @@ export function SecurityTab({
 
   const score = site.latest_scores?.security;
   const sslDays = sslDaysRemaining(site.ssl_expiry_date);
-  const sslTone =
-    sslDays === null ? "neutral" : sslDays <= 7 ? "bad" : sslDays <= 30 ? "warn" : "good";
   const sslLabel =
     sslDays === null ? "Unknown" : sslDays <= 0 ? "Expired" : sslDays <= 30 ? "Expiring soon" : "Valid";
   const adminNames = site.admin_usernames ?? [];
@@ -252,133 +244,24 @@ export function SecurityTab({
             {trendPts.length > 0 && (
               <div className="mt-4">
                 <p className="mb-2 text-xs font-semibold text-muted-foreground">Recent scores</p>
-                <ScoreHistoryList points={trendPts} />
+                <ScoreHistoryList points={trendPts.slice(-5)} />
               </div>
+            )}
+            {(sslDays != null || sslLabel) && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                SSL:{" "}
+                <span className="font-semibold text-foreground">{sslLabel}</span>
+                {sslDays != null && sslDays > 0 ? ` · ${sslDays}d left` : ""}
+                {adminNames.length > 0
+                  ? ` · ${adminNames.length} admin account${adminNames.length === 1 ? "" : "s"}`
+                  : ""}
+              </p>
             )}
           </div>
         </div>
       </McCard>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <McCard title="SSL Certificate" icon={<Shield size={15} />}>
-          <div className="divide-y divide-border text-xs">
-            <div className="flex items-center justify-between py-2 first:pt-0">
-              <span className="text-muted-foreground">Domain</span>
-              <span className="ml-2 truncate font-semibold text-foreground">
-                {site.url.replace(/^https?:\/\//, "")}
-              </span>
-            </div>
-            {site.ssl_expiry_date && (
-              <div className="flex items-center justify-between py-2">
-                <span className="text-muted-foreground">Expires</span>
-                <span className="font-semibold text-foreground">
-                  {new Date(site.ssl_expiry_date).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-            )}
-            {sslDays !== null && (
-              <div className="flex items-center justify-between py-2">
-                <span className="text-muted-foreground">Days Left</span>
-                <span className="font-bold tabular-nums text-foreground">
-                  {sslDays <= 0 ? "Expired" : `${sslDays} days`}
-                </span>
-              </div>
-            )}
-            <div className="pt-3">
-              <McPill tone={sslTone as "neutral" | "good" | "warn" | "bad"}>
-                {sslLabel === "Valid" ? <CheckCircle2 size={11} /> : <AlertCircle size={11} />}
-                {sslLabel}
-              </McPill>
-            </div>
-          </div>
-        </McCard>
-
-        <McCard title="Login Checks" icon={<Key size={15} />}>
-          <div className="space-y-2.5">
-            {[
-              { label: "XML-RPC disabled", safe: site.xml_rpc_enabled === undefined ? null : !site.xml_rpc_enabled },
-              { label: "Custom login URL", safe: site.login_url_default === undefined ? null : !site.login_url_default },
-              { label: "No default admin user", safe: adminNames.length > 0 ? !hasDefaultAdmin : null },
-              { label: "wp-config protected", safe: site.wp_config_writable === undefined ? null : !site.wp_config_writable },
-            ].map(({ label, safe }) => (
-              <div key={label} className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-foreground">{label}</span>
-                <CheckIcon safe={safe} />
-              </div>
-            ))}
-          </div>
-        </McCard>
-
-        <McCard title="File Checks" icon={<Shield size={15} />}>
-          <div className="space-y-2.5">
-            {[
-              { label: "File editor disabled", safe: site.file_editor_enabled === undefined ? null : !site.file_editor_enabled },
-              { label: "Debug mode off", safe: site.wp_debug_enabled === undefined ? null : !site.wp_debug_enabled },
-              { label: ".htaccess protected", safe: site.htaccess_writable === undefined ? null : !site.htaccess_writable },
-              { label: "PHP in uploads blocked", safe: site.uploads_php_enabled === undefined ? null : !site.uploads_php_enabled },
-            ].map(({ label, safe }) => (
-              <div key={label} className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-foreground">{label}</span>
-                <CheckIcon safe={safe} />
-              </div>
-            ))}
-          </div>
-        </McCard>
-
-        <McCard
-          title="Admin Accounts"
-          icon={<Key size={15} />}
-          action={
-            site.admin_users_count != null ? (
-              <McPill
-                tone={
-                  site.admin_users_count > 4 ? "bad" : site.admin_users_count > 2 ? "warn" : "good"
-                }
-              >
-                {site.admin_users_count} admin{site.admin_users_count !== 1 ? "s" : ""}
-              </McPill>
-            ) : null
-          }
-        >
-          {adminNames.length > 0 ? (
-            <div className="divide-y divide-border">
-              {adminNames.map((name) => {
-                const risky = name.toLowerCase() === "admin";
-                return (
-                  <div key={name} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
-                    <div
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold ${
-                        risky
-                          ? "bg-[var(--score-bad-bg)] text-[var(--score-bad)]"
-                          : "bg-accent-light text-accent"
-                      }`}
-                    >
-                      {name[0]?.toUpperCase() ?? "?"}
-                    </div>
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
-                      {name}
-                    </span>
-                    {risky ? (
-                      <AlertCircle size={14} className="shrink-0 text-[var(--score-bad)]" />
-                    ) : (
-                      <CheckCircle2 size={14} className="shrink-0 text-[var(--score-good)]" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="py-4 text-center text-xs text-muted-foreground">
-              Connect the plugin to view accounts
-            </p>
-          )}
-        </McCard>
-      </div>
-
+      {/* Single checks table — mini-cards removed (they duplicated the same checks) */}
       <McCard
         title="Security Checks"
         icon={<Shield size={15} />}
@@ -393,7 +276,10 @@ export function SecurityTab({
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["Check", "Category", "Status", "Details", "Action"].map((h) => (
+                {(fixableRows.length > 0
+                  ? ["Check", "Category", "Status", "Details", "Action"]
+                  : ["Check", "Category", "Status", "Details"]
+                ).map((h) => (
                   <th
                     key={h}
                     className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground"
@@ -424,27 +310,27 @@ export function SecurityTab({
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-xs text-muted-foreground">{detail}</td>
-                  <td className="px-4 py-2.5">
-                    {fixAction && safe === false ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!pluginReady || !!fixing}
-                        loading={fixing === fixAction}
-                        onClick={() => void applyFix([fixAction])}
-                        title={
-                          pluginReady
-                            ? "Apply one-click fix via Site Armor plugin"
-                            : "Plugin required"
-                        }
-                      >
-                        <Wrench size={12} />
-                        Fix
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </td>
+                  {fixableRows.length > 0 && (
+                    <td className="px-4 py-2.5">
+                      {fixAction && safe === false ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!pluginReady || !!fixing}
+                          loading={fixing === fixAction}
+                          onClick={() => void applyFix([fixAction])}
+                          title={
+                            pluginReady
+                              ? "Apply one-click fix via Site Armor plugin"
+                              : "Plugin required"
+                          }
+                        >
+                          <Wrench size={12} />
+                          Fix
+                        </Button>
+                      ) : null}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

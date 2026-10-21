@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  CheckCircle2, XCircle, AlertCircle, RefreshCw, ExternalLink,
+  CheckCircle2, AlertCircle, RefreshCw, ExternalLink,
   Search, Wrench, TrendingUp,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -615,39 +615,6 @@ export function SeoTab({
 
       <BrokenLinksSection siteId={site.id} brandColor={brandColor} />
       <SearchConsoleSection site={site} brandColor={brandColor} />
-
-      <McCard title="Homepage Checklist" icon={<CheckCircle2 size={15} />} bodyClassName="p-0">
-        {checksArray.length === 0 ? (
-          <p className="px-4 py-10 text-center text-xs text-muted-foreground">
-            Run an audit to see SEO checklist
-          </p>
-        ) : (
-          <div className="divide-y divide-border">
-            {checksArray.map(({ id, label, status, detail }) => (
-              <div key={id} className="flex items-start justify-between gap-3 px-4 py-2.5">
-                <div className="flex min-w-0 items-start gap-2">
-                  {status === "pass" ? (
-                    <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[var(--score-good)]" />
-                  ) : status === "warn" ? (
-                    <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--score-warn)]" />
-                  ) : (
-                    <XCircle size={14} className="mt-0.5 shrink-0 text-[var(--score-bad)]" />
-                  )}
-                  <div className="min-w-0">
-                    <span className="text-sm text-foreground">{label}</span>
-                    {detail && <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>}
-                  </div>
-                </div>
-                <McPill
-                  tone={status === "pass" ? "good" : status === "warn" ? "warn" : "bad"}
-                >
-                  {status === "pass" ? "Pass" : status === "warn" ? "Warn" : "Fail"}
-                </McPill>
-              </div>
-            ))}
-          </div>
-        )}
-      </McCard>
     </div>
   );
 }

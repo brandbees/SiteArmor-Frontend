@@ -23,7 +23,6 @@ import {
   Loader2,
   Lock,
   LockOpen,
-  Palette,
   Plug,
   Plus,
   Search,
@@ -647,7 +646,8 @@ export function MalCareSiteOverview({
                         )}
                       </div>
                       <span className="truncate text-xs text-zinc-800">
-                        Active Plugins: {pluginCount ?? "—"}
+                        {pluginCount != null ? `${pluginCount} active plugins` : "Plugins"}
+                        {!isClientPortal && updates > 0 ? ` · ${updates} update${updates === 1 ? "" : "s"}` : ""}
                       </span>
                     </button>
 
@@ -655,12 +655,9 @@ export function MalCareSiteOverview({
                     <button
                       type="button"
                       onClick={() => setTab("plugins")}
-                      className="flex max-w-fit items-center gap-2 transition-opacity hover:opacity-80"
+                      className="text-xs font-medium text-accent hover:underline"
                     >
-                      <div className="relative flex h-7 w-7 items-center justify-center rounded-md bg-zinc-50">
-                        <Palette size={16} strokeWidth={1} className="text-zinc-600" />
-                      </div>
-                      <span className="truncate text-xs text-zinc-800">Manage themes & plugins</span>
+                      Manage themes & plugins
                     </button>
                     )}
                   </div>
@@ -743,12 +740,22 @@ export function MalCareSiteOverview({
               {backupsLoading ? (
                 <CubeLoader label="Loading backups" sublabel="Checking schedule and history…" />
               ) : lastBackup ? (
-                <div className="space-y-2 px-2">
-                  <p className="text-sm font-medium text-zinc-900">Last backup</p>
-                  <p className="text-xs text-muted-foreground">
-                    {timeAgo(lastBackup.created_at)}
-                    {lastBackup.size_mb ? ` · ${lastBackup.size_mb} MB` : ""}
-                  </p>
+                <div className="flex flex-wrap items-center justify-between gap-3 px-2">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">Last backup</p>
+                    <p className="text-xs text-muted-foreground">
+                      {timeAgo(lastBackup.created_at)}
+                      {lastBackup.size_mb ? ` · ${lastBackup.size_mb} MB` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTab("backups")}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-accent shadow-xs hover:bg-zinc-50"
+                  >
+                    Manage
+                    <ArrowUpRight size={14} strokeWidth={1.5} />
+                  </button>
                 </div>
               ) : (
                 <EmptyWidget

@@ -455,33 +455,40 @@ function GroupRow({ group, siteId, onChange }: {
           <div className="flex items-center gap-2 flex-wrap">
             {open ? <ChevronDown size={13} className="text-muted-foreground shrink-0" />
                   : <ChevronRight size={13} className="text-muted-foreground shrink-0" />}
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${SEVERITY_CLS[group.severity]}`}>
-              {group.severity}
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                group.severity === "critical"
+                  ? "bg-red-600"
+                  : group.severity === "high"
+                    ? "bg-orange-500"
+                    : group.severity === "medium"
+                      ? "bg-amber-400"
+                      : "bg-zinc-400"
+              }`}
+              title={group.severity}
+              aria-label={group.severity}
+            />
+            <span className="text-xs font-medium text-foreground group-hover:underline sm:text-[13px]">
+              {label}
             </span>
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${tier.cls}`}>
-              {tier.label}
+            <span className="text-xs tabular-nums text-muted-foreground">
+              · {group.affected_pages} page{many ? "s" : ""}
+              {group.fix_tier === "C"
+                ? " · manual"
+                : group.fix_tier === "B"
+                  ? " · needs approval"
+                  : " · auto-fixable"}
             </span>
-            <span className="text-sm font-medium text-foreground group-hover:underline">{label}</span>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap mt-1 ml-5 text-[11px] text-muted-foreground">
-            <span className="tabular-nums font-medium">
-              {group.affected_pages} page{many ? "s" : ""}
-            </span>
-            {group.impressions_at_stake > 0 && (
-              <span className="tabular-nums">
-                · {group.impressions_at_stake.toLocaleString()} impressions at stake
-              </span>
-            )}
           </div>
           {group.evidence?.note && (
-            <p className="text-[11px] text-muted-foreground mt-1 ml-5">{group.evidence.note}</p>
+            <p className="ml-5 mt-1 text-xs text-muted-foreground">{group.evidence.note}</p>
           )}
         </button>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-1.5">
           {group.fix_tier === "C" ? (
             <span
-              className="text-[11px] text-muted-foreground flex items-center gap-1 px-2 py-1"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground"
               title="Needs editorial or commercial judgement — never applied automatically."
             >
               <Lock size={11} /> Manual
@@ -490,15 +497,13 @@ function GroupRow({ group, siteId, onChange }: {
             <button
               onClick={fixAll}
               disabled={busy}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white disabled:opacity-50 inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
               style={{ background: "#16a34a" }}
             >
               <Wand2 size={11} /> {busy ? "Fixing…" : many ? `Fix all ${group.affected_pages}` : "Fix"}
             </button>
           ) : (
-            <span className="text-[11px] text-amber-700 px-2 py-1">
-              Approve each page
-            </span>
+            <span className="px-2 py-1 text-xs text-amber-700">Approve each</span>
           )}
         </div>
       </div>
