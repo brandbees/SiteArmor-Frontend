@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, Fragment, Suspense } from "react";
+import { useState, useRef, useEffect, useMemo, Fragment, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -840,6 +840,8 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
   const [confirmRestore,   setConfirmRestore]   = useState<string | null>(null);
   const [confirmDelete,    setConfirmDelete]    = useState<string | null>(null);
   const [downloadLoading,  setDownloadLoading]  = useState<string | null>(null);
+  /** Expand grouped identical failure rows (same health_error) */
+  const [expandedFailGroups, setExpandedFailGroups] = useState<Record<string, boolean>>({});
   const [restoreProgress, setRestoreProgress]  = useState<Record<string, {
     stage: string; progress: number; status: string;
   }>>({});
@@ -1016,6 +1018,40 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
     const map: Record<string, string> = { db: "bg-purple-100 text-purple-700", files: "bg-[var(--accent-light)] text-[var(--accent-hover)]", full: "bg-teal-100 text-teal-700" };
     return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${map[t] ?? ""}`}>{t.toUpperCase()}</span>;
   };
+
+  type BackupHistoryEntry =
+    | { kind: "row"; backup: BackupRecord }
+    | { kind: "fail_group"; key: string; error: string; items: BackupRecord[] };
+
+  const backupHistoryRows = useMemo((): BackupHistoryEntry[] => {
+    const FAIL_COLLAPSE_AT = 3;
+    const groups = new Map<string, BackupRecord[]>();
+    for (const b of backups) {
+      if (b.status !== "failed" || !b.health_error?.trim()) continue;
+      const key = b.health_error.trim().toLowerCase();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(b);
+    }
+    const collapsedIds = new Set<string>();
+    const failGroups: BackupHistoryEntry[] = [];
+    for (const [key, items] of groups) {
+      if (items.length < FAIL_COLLAPSE_AT) continue;
+      items.forEach((b) => collapsedIds.add(b.id));
+      failGroups.push({
+        kind: "fail_group",
+        key,
+        error: items[0].health_error!.trim(),
+        items: [...items].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
+      });
+    }
+    const rows: BackupHistoryEntry[] = backups
+      .filter((b) => !collapsedIds.has(b.id))
+      .map((backup) => ({ kind: "row", backup }));
+    // Show collapsed failure groups after individual rows (keeps successes visible first)
+    return [...rows, ...failGroups];
+  }, [backups]);
 
   if (!canUseAdvancedFeatures) {
     return (
@@ -1194,7 +1230,91 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {backups.map(backup => (
+              {/* Collapse identical failure messages (e.g. 47× timed out) into one row */}
+              {backupHistoryRows.map((entry) => {
+                if (entry.kind === "fail_group") {
+                  const open = !!expandedFailGroups[entry.key];
+                  const latest = entry.items[0];
+                  return (
+                    <Fragment key={`fg-${entry.key}`}>
+                      <tr className="bg-red-50/40 hover:bg-red-50/70">
+                        <td className="px-4 py-3">{typeBadge(latest.type)}</td>
+                        <td className="px-4 py-3" colSpan={3}>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {statusBadge("failed")}
+                            <span className="text-xs font-semibold text-red-700">
+                              {entry.items.length}× same failure
+                            </span>
+                          </div>
+                          <p className="mt-0.5 max-w-lg text-xs text-red-600" title={entry.error}>
+                            {entry.error}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            Latest {timeAgo(latest.created_at)}
+                            {entry.items.length > 1
+                              ? ` · oldest ${timeAgo(entry.items[entry.items.length - 1].created_at)}`
+                              : ""}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedFailGroups((prev) => ({
+                                ...prev,
+                                [entry.key]: !open,
+                              }))
+                            }
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                          >
+                            <ChevronDown
+                              size={12}
+                              className={`transition-transform ${open ? "rotate-180" : ""}`}
+                            />
+                            {open ? "Hide" : "Show"} {entry.items.length}
+                          </button>
+                        </td>
+                      </tr>
+                      {open &&
+                        entry.items.map((backup) => (
+                          <tr key={backup.id} className="bg-red-50/20 hover:bg-gray-50/50">
+                            <td className="px-4 py-3 pl-8">{typeBadge(backup.type)}</td>
+                            <td className="px-4 py-3">
+                              {statusBadge(backup.status)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {backup.size_mb != null ? `${backup.size_mb} MB` : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-500">
+                              {timeAgo(backup.created_at)}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-500">
+                              {backup.expires_at
+                                ? new Date(backup.expires_at).toLocaleDateString()
+                                : "—"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap items-center justify-end gap-1">
+                                <button
+                                  onClick={() => handleDelete(backup)}
+                                  className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+                                    confirmDelete === backup.id
+                                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                      : "text-red-500 hover:bg-red-50"
+                                  }`}
+                                >
+                                  <Trash2 size={11} />
+                                  {confirmDelete === backup.id ? "Confirm?" : "Delete"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </Fragment>
+                  );
+                }
+                const backup = entry.backup;
+                return (
                 <tr key={backup.id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-3">{typeBadge(backup.type)}</td>
                   <td className="px-4 py-3">
@@ -1289,7 +1409,8 @@ function BackupsTab({ site, brandColor, canUseAdvancedFeatures }: { site: Site; 
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

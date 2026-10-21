@@ -196,7 +196,7 @@ function ClientRow({
         </td>
         <td className="px-4 py-3.5">
           <span className="text-sm font-bold tabular-nums text-foreground">
-            {local.site_count ?? 0}
+            {Number(local.site_count) || 0}
           </span>
           <span className="ml-1 text-xs text-muted-foreground">sites</span>
         </td>
@@ -286,8 +286,9 @@ export default function ClientsPage() {
 
   const [search, setSearch] = useState("");
 
+  // Coerce to number — API sometimes returns site_count as a string ("1"+"1"="011")
   const totalSites = useMemo(
-    () => clients.reduce((sum, c) => sum + (c.site_count ?? 0), 0),
+    () => clients.reduce((sum, c) => sum + (Number(c.site_count) || 0), 0),
     [clients]
   );
   const withCompany = useMemo(() => clients.filter((c) => c.company).length, [clients]);

@@ -149,7 +149,9 @@ export function SecurityTab({
   const knownChecks = checks.filter((c) => c.safe !== null);
   const safeCount = knownChecks.filter((c) => c.safe === true).length;
   const issueCount = knownChecks.filter((c) => c.safe === false).length;
-  const quickFixes = [...new Set(checks.map((c) => c.fixAction).filter(Boolean))] as HardenAction[];
+  // Unique actions for the API batch; row count for the button label (wp-config + .htaccess share one action)
+  const fixableRows = checks.filter((c) => c.safe === false && c.fixAction);
+  const quickFixes = [...new Set(fixableRows.map((c) => c.fixAction).filter(Boolean))] as HardenAction[];
 
   const applyFix = useCallback(
     async (actions: HardenAction[]) => {
@@ -215,7 +217,7 @@ export function SecurityTab({
                 onClick={() => void applyFix(quickFixes)}
               >
                 <Wrench size={13} />
-                Fix all ({quickFixes.length})
+                Fix all ({fixableRows.length})
               </Button>
             )}
             {canRunAudit && runAudit && (

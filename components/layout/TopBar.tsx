@@ -119,7 +119,7 @@ function TopBarFallback({
   onToggleSidebar: () => void;
 }) {
   return (
-    <header className="sticky z-50 flex h-20 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background p-4">
+    <header className="sticky z-50 flex h-14 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background px-3 py-2 md:h-20 md:p-4">
       <button
         type="button"
         onClick={onToggleSidebar}
@@ -159,7 +159,18 @@ function TopBarInner({
   const avatarRef    = useRef<HTMLDivElement>(null);
 
   const displayName = agency?.member_name ?? agency?.name ?? "";
-  const initials    = displayName.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+  const email = agency?.email ?? "";
+  // When name is missing/equals email, don't print email twice in the header
+  const nameLooksLikeEmail =
+    !!email && displayName.trim().toLowerCase() === email.trim().toLowerCase();
+  const showEmailUnderName = !!email && !nameLooksLikeEmail;
+  const initials = (nameLooksLikeEmail ? email : displayName)
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "S";
 
   useEffect(() => {
     function openAdd() {
@@ -220,7 +231,7 @@ function TopBarInner({
 
   return (
     <>
-      <header className="sticky z-50 flex h-20 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background p-4">
+      <header className="sticky z-50 flex h-14 w-full shrink-0 items-center gap-2.5 border-b border-zinc-300 bg-background px-3 py-2 md:h-20 md:p-4">
         {/* Left: collapse + breadcrumbs */}
         <button
           type="button"
@@ -279,8 +290,12 @@ function TopBarInner({
           {!!agency && (
             <div className="flex items-center gap-2.5">
               <div className="hidden min-w-0 sm:block">
-                <div className="truncate text-sm font-semibold">{displayName}</div>
-                <div className="truncate text-xs text-zinc-600">{agency?.email}</div>
+                <div className="truncate text-sm font-semibold">
+                  {nameLooksLikeEmail ? email : displayName || email}
+                </div>
+                {showEmailUnderName && (
+                  <div className="truncate text-xs text-zinc-600">{email}</div>
+                )}
               </div>
 
               <div className="relative" ref={avatarRef}>
@@ -288,7 +303,7 @@ function TopBarInner({
                   type="button"
                   onClick={() => setShowAvatarMenu((v) => !v)}
                   className="relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-gray-300 bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-medium text-white shadow-xs ring-2 ring-orange-400 ring-offset-1 transition-all hover:border-gray-400 hover:shadow-md"
-                  title={agency?.email ?? ""}
+                  title={email}
                 >
                   {initials}
                   <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-orange-500" />
@@ -302,8 +317,12 @@ function TopBarInner({
                           {initials}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-bold text-zinc-950">{displayName}</p>
-                          <p className="mt-0.5 truncate text-[11px] text-zinc-500">{agency?.email}</p>
+                          <p className="truncate text-xs font-bold text-zinc-950">
+                            {nameLooksLikeEmail ? email : displayName || email}
+                          </p>
+                          {showEmailUnderName && (
+                            <p className="mt-0.5 truncate text-[11px] text-zinc-500">{email}</p>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -40,13 +40,17 @@ export function MobileNav() {
     pathname === href || pathname.startsWith(href + "/");
 
   const displayName = agency?.member_name ?? agency?.name ?? "";
-  const initials = displayName
-    .split(" ")
+  const email = agency?.email ?? "";
+  const nameLooksLikeEmail =
+    !!email && displayName.trim().toLowerCase() === email.trim().toLowerCase();
+  const showEmailUnderName = !!email && !nameLooksLikeEmail;
+  const initials = (nameLooksLikeEmail ? email : displayName)
+    .split(/[\s@._-]+/)
     .filter(Boolean)
     .map((n: string) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "S";
 
   function handleLogout() {
     setOpen(false);
@@ -133,11 +137,11 @@ export function MobileNav() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate leading-none">
-                      {displayName}
+                      {nameLooksLikeEmail ? email : displayName || email}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                      {agency.email}
-                    </p>
+                    {showEmailUnderName && (
+                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{email}</p>
+                    )}
                   </div>
                   <button
                     onClick={handleLogout}

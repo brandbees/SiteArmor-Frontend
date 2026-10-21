@@ -287,7 +287,12 @@ export function SeoAuditPanel({ siteId }: { siteId: string }) {
             Issues{" "}
             <span className="text-muted-foreground font-normal">
               ({groups.length} finding{groups.length === 1 ? "" : "s"}
-              {totalAffected > groups.length && ` · ${totalAffected} pages`})
+              {pagesCrawled > 0
+                ? ` on ${pagesCrawled} crawled page${pagesCrawled === 1 ? "" : "s"}`
+                : totalAffected > groups.length
+                  ? ` · ${totalAffected} page mentions`
+                  : ""}
+              )
             </span>
           </p>
           <div className="flex gap-1">
